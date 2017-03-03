@@ -1212,6 +1212,12 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		break;
 #endif
 
+#ifdef __CHERI__
+	case DT_CHERI_MCT:
+	    obj->mct = (Elf_Addr) (obj->relocbase + dynp->d_un.d_ptr);
+	    break;
+#endif
+
 #ifdef __powerpc64__
 	case DT_PPC64_GLINK:
 		obj->glink = (Elf_Addr) (obj->relocbase + dynp->d_un.d_ptr);
@@ -2015,6 +2021,10 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
     /* Initialize the object list. */
     TAILQ_INIT(&obj_list);
 
+    /*
+     * relocbase is given as 0, since the capreloc fields have already been
+     * relocated relative to relocbase.
+     */
     crt_init_globals((size_t)0);
 
     /* Now that non-local variables can be accesses, copy out obj_rtld. */

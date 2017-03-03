@@ -537,6 +537,8 @@ vtpci_setup_intr(device_t dev, enum intr_type type)
 		 * Start with the most desirable interrupt configuration and
 		 * fallback towards less desirable ones.
 		 */
+		device_printf(dev,
+		    "attempt %d\n", attempt);
 		switch (attempt) {
 		case 0:
 			error = vtpci_alloc_intr_msix_pervq(sc);
@@ -889,6 +891,7 @@ vtpci_alloc_interrupt(struct vtpci_softc *sc, int rid, int flags,
 	struct resource *irq;
 
 	irq = bus_alloc_resource_any(sc->vtpci_dev, SYS_RES_IRQ, &rid, flags);
+	device_printf(sc->vtpci_dev, "%s: bus_alloc_resource_any gave %p\n", __func__, irq);
 	if (irq == NULL)
 		return (ENXIO);
 
@@ -948,6 +951,7 @@ vtpci_setup_legacy_interrupt(struct vtpci_softc *sc, enum intr_type type)
 	intr = &sc->vtpci_device_interrupt;
 	error = bus_setup_intr(sc->vtpci_dev, intr->vti_irq, type, NULL,
 	    vtpci_legacy_intr, sc, &intr->vti_handler);
+	device_printf(sc->vtpci_dev, "%s: bus_setup_intr gave %d\n", __func__, error);
 
 	return (error);
 }
@@ -1015,6 +1019,7 @@ vtpci_setup_interrupts(struct vtpci_softc *sc, enum intr_type type)
 	    ("%s: no interrupt type selected %#x", __func__, sc->vtpci_flags));
 
 	error = vtpci_alloc_intr_resources(sc);
+	device_printf(sc->vtpci_dev, "%s: vtpci_alloc_intr_resources gave %d\n", __func__, error);
 	if (error)
 		return (error);
 
@@ -1024,6 +1029,8 @@ vtpci_setup_interrupts(struct vtpci_softc *sc, enum intr_type type)
 		error = vtpci_setup_msi_interrupt(sc, type);
 	else
 		error = vtpci_setup_msix_interrupts(sc, type);
+
+	device_printf(sc->vtpci_dev, "%s: vtpci_setup_foo_interrupt(s) gave %d\n", __func__, error);
 
 	return (error);
 }

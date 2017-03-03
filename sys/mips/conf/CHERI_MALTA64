@@ -26,3 +26,11 @@ options 	TMPFS
 # Qemu-CHERI tracing is permitted per thread, not just globally.
 #
 options 	CPU_QEMU_MALTA
+
+device		em
+#
+# VirtIO for Qemu networking
+#
+device		virtio
+device		virtio_pci
+device		vtnet
