@@ -41,7 +41,7 @@ static const char rel_header[] =
     " ------------------------------------------------------------------------------\n";
 static const char rel_format[] =  " %-25s %6lx %08lx %08lx %7d %10p %08lx\n";
 
-int debug = 0;
+int debug = 1;
 
 void
 debug_printf(const char *format, ...)

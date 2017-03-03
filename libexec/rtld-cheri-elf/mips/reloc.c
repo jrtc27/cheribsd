@@ -90,6 +90,7 @@ void _rtld_relocate_nonplt_self(Elf_Dyn *, caddr_t);
  * in big-endian integer with first relocation in LSB.  This means for little
  * endian we have to byte swap that integer (r_type).
  */
+#define	Elf_Xword			Elf64_Xword
 #define	Elf_Sxword			Elf64_Sxword
 #define	ELF_R_NXTTYPE_64_P(r_type)	((((r_type) >> 8) & 0xff) == R_TYPE(64))
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -143,13 +144,104 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 #endif
 }
 
+static __inline void
+initialise_cap(void *where)
+{
+	// TODO: Permissions
+	__capability void *cap;
+	size_t base, offset, length, perms;
+
+	/* Check this is not a duplicate call */
+	if (__builtin_memcap_tag_get(*(__capability void **)where))
+		return;
+
+	(void)memcpy(&base,   where + 0*sizeof(size_t), sizeof(size_t));
+	(void)memcpy(&offset, where + 1*sizeof(size_t), sizeof(size_t));
+	(void)memcpy(&length, where + 2*sizeof(size_t), sizeof(size_t));
+	(void)memcpy(&perms,  where + 3*sizeof(size_t), sizeof(size_t));
+
+	__capability void *global_data = __builtin_memcap_global_data_get();
+	cap = __builtin_memcap_offset_increment(global_data, base);
+	cap = __builtin_memcap_bounds_set(cap, length);
+	cap = __builtin_memcap_offset_increment(cap, offset);
+	//cap = __builtin_memcap_perms_and(cap, perms);
+
+	*(__capability void **)where = cap;
+
+	/*
+	__asm__ __volatile__ (
+	    "cld\t$t0, $t1, 0($c14)\n\t"
+	    "cfromptr\t$c4, $c0, $t0\n\t"
+	    "cld\t$t0, $t1, 16($c14)\n\t"
+	    "csetbounds\t$c4, $c4, $t0\n\t"
+	    "cld\t$t0, $t1, 8($c14)\n\t"
+	    "cincoffset\t$c4, $c4, $t0\n\t"
+	    "csc\t$c4, $t1, 0($c14)"
+	    : "=r" (where));
+	*/
+}
+
+static void
+_rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
+    const Elf_Sym *symtab, Elf_Xword r_info, Elf_Addr r_offset,
+    Elf_Sxword r_addend, bool rela)
+{
+	const Elf_Sym *sym;
+	Elf_Word r_symndx, r_type;
+	void *where;
+
+	where = (void *)(relocbase + r_offset);
+	r_symndx = ELF_R_SYM(r_info);
+	r_type = ELF_R_TYPE(r_info);
+
+	switch (r_type & 0xff) {
+	case R_TYPE(REL32): {
+		const size_t rlen =
+			ELF_R_NXTTYPE_64_P(r_type)
+			? sizeof(Elf_Sxword)
+			: sizeof(Elf_Sword);
+		Elf_Sxword old = load_ptr(where, rlen);
+		Elf_Sxword val;
+		if (rela)
+			val = r_addend;
+		else
+			val = old;
+#ifdef __mips_n64
+		assert(r_type == R_TYPE(REL32)
+			|| r_type == (R_TYPE(REL32)|(R_TYPE(64) << 8)));
+#endif
+		assert(r_symndx < gotsym);
+		sym = symtab + r_symndx;
+		assert(ELF_ST_BIND(sym->st_info) == STB_LOCAL);
+		val += (uintptr_t)relocbase;
+#ifdef DEBUG_VERBOSE
+		dbg("REL32/L(%p) %p -> %p in <self>",
+			where, (void *)(uintptr_t)old,
+			(void *)(uintptr_t)val);
+#endif
+		store_ptr(where, val, rlen);
+		break;
+	}
+
+	case R_TYPE(GPREL32):
+	case R_TYPE(NONE):
+		break;
+
+
+	default:
+		abort();
+		break;
+	}
+}
+
 void
 _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 {
 	const Elf_Rel *rel = NULL, *rellim;
 	Elf_Addr relsz = 0;
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
 	const Elf_Sym *symtab = NULL, *sym;
-	Elf_Addr *where;
 	Elf_Addr *got = NULL;
 	Elf_Word local_gotno = 0, symtabno = 0, gotsym = 0;
 	size_t i;
@@ -161,6 +253,12 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 			break;
 		case DT_RELSZ:
 			relsz = dynp->d_un.d_val;
+			break;
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
 			break;
 		case DT_SYMTAB:
 			symtab = (const Elf_Sym *)(relocbase + dynp->d_un.d_ptr);
@@ -197,47 +295,14 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 
 	rellim = (const Elf_Rel *)((char *)rel + relsz);
 	for (; rel < rellim; rel++) {
-		Elf_Word r_symndx, r_type;
+		_rtld_relocate_nonplt_self_single_reloc(relocbase, gotsym, symtab,
+		    rel->r_info, rel->r_offset, 0, false);
+	}
 
-		where = (void *)(relocbase + rel->r_offset);
-
-		r_symndx = ELF_R_SYM(rel->r_info);
-		r_type = ELF_R_TYPE(rel->r_info);
-
-		switch (r_type & 0xff) {
-		case R_TYPE(REL32): {
-			const size_t rlen =
-			    ELF_R_NXTTYPE_64_P(r_type)
-				? sizeof(Elf_Sxword)
-				: sizeof(Elf_Sword);
-			Elf_Sxword old = load_ptr(where, rlen);
-			Elf_Sxword val = old;
-#ifdef __mips_n64
-			assert(r_type == R_TYPE(REL32)
-			    || r_type == (R_TYPE(REL32)|(R_TYPE(64) << 8)));
-#endif
-			assert(r_symndx < gotsym);
-			sym = symtab + r_symndx;
-			assert(ELF_ST_BIND(sym->st_info) == STB_LOCAL);
-			val += (uintptr_t)relocbase;
-#ifdef DEBUG_VERBOSE
-			dbg("REL32/L(%p) %p -> %p in <self>",
-			    where, (void *)(uintptr_t)old,
-			    (void *)(uintptr_t)val);
-#endif
-			store_ptr(where, val, rlen);
-			break;
-		}
-
-		case R_TYPE(GPREL32):
-		case R_TYPE(NONE):
-			break;
-
-
-		default:
-			abort();
-			break;
-		}
+	relalim = (const Elf_Rela *)((char *)rela + relasz);
+	for (; rela < relalim; rela++) {
+		_rtld_relocate_nonplt_self_single_reloc(relocbase, gotsym, symtab,
+		    rela->r_info, rel->r_offset, rela->r_addend, true);
 	}
 }
 
@@ -271,12 +336,215 @@ _mips_rtld_bind(Obj_Entry *obj, Elf_Size reloff)
 	return (Elf_Addr)target;
 }
 
+static int
+reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
+    Elf_Addr *got, Elf_Xword r_info, Elf_Addr r_offset, Elf_Sxword r_addend,
+    bool rela)
+{
+	Elf_Word	r_symndx, r_type;
+	void		*where;
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+
+	where = obj->relocbase + r_offset;
+	r_symndx = ELF_R_SYM(r_info);
+	r_type = ELF_R_TYPE(r_info);
+
+	dbg("info 0x%llx type 0x%llx symndx 0x%llx at %p",
+	    (unsigned long long)r_info,
+	    (unsigned long long)r_type,
+	    (unsigned long long)r_symndx,
+	    where);
+
+	switch (r_type & 0xff) {
+	case R_TYPE(NONE):
+		break;
+
+	case R_TYPE(REL32): {
+		/* 32-bit PC-relative reference */
+		const size_t rlen =
+			ELF_R_NXTTYPE_64_P(r_type)
+			? sizeof(Elf_Sxword)
+			: sizeof(Elf_Sword);
+		Elf_Sxword old = load_ptr(where, rlen);
+		Elf_Sxword val;
+		if (rela)
+			val = r_addend;
+		else
+			val = old;
+
+		def = obj->symtab + r_symndx;
+
+		if (r_symndx >= obj->gotsym) {
+			val += got[obj->local_gotno + r_symndx - obj->gotsym];
+#ifdef DEBUG_VERBOSE
+			dbg("REL32/G(%p) %p --> %p (%s) in %s",
+				where, (void *)(uintptr_t)old, (void *)(uintptr_t)val,
+				obj->strtab + def->st_name,
+				obj->path);
+#endif
+		} else {
+			/*
+			 * XXX: ABI DIFFERENCE!
+			 *
+			 * Old NetBSD binutils would generate shared
+			 * libs with section-relative relocations being
+			 * already adjusted for the start address of
+			 * the section.
+			 *
+			 * New binutils, OTOH, generate shared libs
+			 * with the same relocations being based at
+			 * zero, so we need to add in the start address
+			 * of the section.
+			 *
+			 * --rkb, Oct 6, 2001
+			 */
+
+			if (def->st_info ==
+				ELF_ST_INFO(STB_LOCAL, STT_SECTION)
+#ifdef SUPPORT_OLD_BROKEN_LD
+				&& !broken
+#endif
+				)
+				val += (Elf_Addr)def->st_value;
+
+			val += (Elf_Addr)obj->relocbase;
+
+#ifdef DEBUG_VERBOSE
+			dbg("REL32/L(%p) %p -> %p (%s) in %s",
+				where, (void *)(uintptr_t)old, (void *)(uintptr_t)val,
+				obj->strtab + def->st_name, obj->path);
+#endif
+		}
+		store_ptr(where, val, rlen);
+		break;
+	}
+
+#ifdef __mips_n64
+	case R_TYPE(TLS_DTPMOD64):
+#else
+	case R_TYPE(TLS_DTPMOD32):
+#endif
+	{
+
+		const size_t rlen = sizeof(Elf_Addr);
+		Elf_Sxword old = load_ptr(where, rlen);
+		Elf_Sxword val;
+		if (rela)
+			val = r_addend;
+		else
+			val = old;
+
+		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+			lockstate);
+		if (def == NULL)
+			return -1;
+
+		val += (Elf_Addr)defobj->tlsindex;
+
+		store_ptr(where, val, rlen);
+		dbg("DTPMOD %s in %s %p --> %p in %s",
+			obj->strtab + obj->symtab[r_symndx].st_name,
+			obj->path, (void *)(uintptr_t)old, (void*)(uintptr_t)val, defobj->path);
+		break;
+	}
+
+#ifdef __mips_n64
+	case R_TYPE(TLS_DTPREL64):
+#else
+	case R_TYPE(TLS_DTPREL32):
+#endif
+	{
+		const size_t rlen = sizeof(Elf_Addr);
+		Elf_Sxword old = load_ptr(where, rlen);
+		Elf_Sxword val;
+		if (rela)
+			val = r_addend;
+		else
+			val = old;
+
+		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+			lockstate);
+		if (def == NULL)
+			return -1;
+
+		if (!defobj->tls_done && allocate_tls_offset(obj))
+			return -1;
+
+		val += (Elf_Addr)def->st_value - TLS_DTP_OFFSET;
+		store_ptr(where, val, rlen);
+
+		dbg("DTPREL %s in %s %p --> %p in %s",
+			obj->strtab + obj->symtab[r_symndx].st_name,
+			obj->path, (void*)(uintptr_t)old, (void *)(uintptr_t)val, defobj->path);
+		break;
+	}
+
+#ifdef __mips_n64
+	case R_TYPE(TLS_TPREL64):
+#else
+	case R_TYPE(TLS_TPREL32):
+#endif
+	{
+		const size_t rlen = sizeof(Elf_Addr);
+		Elf_Sxword old = load_ptr(where, rlen);
+		Elf_Sxword val;
+		if (rela)
+			val = r_addend;
+		else
+			val = old;
+
+		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+			lockstate);
+
+		if (def == NULL)
+			return -1;
+
+		if (!defobj->tls_done && allocate_tls_offset(obj))
+			return -1;
+
+		val += (Elf_Addr)(def->st_value + defobj->tlsoffset
+			- TLS_TP_OFFSET - TLS_TCB_SIZE);
+		store_ptr(where, val, rlen);
+
+		dbg("TPREL %s in %s %p --> %p in %s",
+			obj->strtab + obj->symtab[r_symndx].st_name,
+			obj->path, (void*)(uintptr_t)old, (void *)(uintptr_t)val, defobj->path);
+		break;
+	}
+
+	case R_CHERI_MEMCAP:
+		initialise_cap(where);
+		dbg("MEMCAP/L(%p) in %s",
+			where, obj->path);
+		break;
+
+
+
+	default:
+		dbg("sym = %lu, type = %lu, offset = %p, "
+			"contents = %p, symbol = %s",
+			(u_long)r_symndx, (u_long)ELF_R_TYPE(r_info),
+			(void *)(uintptr_t)r_offset,
+			(void *)(uintptr_t)load_ptr(where, sizeof(Elf_Sword)),
+			obj->strtab + obj->symtab[r_symndx].st_name);
+		_rtld_error("%s: Unsupported relocation type %ld "
+			"in non-PLT relocations",
+			obj->path, (u_long) ELF_R_TYPE(r_info));
+		return -1;
+	}
+
+	return 0;
+}
+
 int
 reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
     RtldLockState *lockstate)
 {
 	const Elf_Rel *rel;
 	const Elf_Rel *rellim;
+	const Elf_Rela *rela;
+	const Elf_Rela *relalim;
 	Elf_Addr *got = obj->pltgot;
 	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
@@ -444,170 +712,52 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 
 	got = obj->pltgot;
 	rellim = (const Elf_Rel *)((caddr_t)obj->rel + obj->relsize);
+	dbg("rel:%p to %p", obj->rel, rellim);
 	for (rel = obj->rel; rel < rellim; rel++) {
-		Elf_Word	r_symndx, r_type;
-		void		*where;
-
-		where = obj->relocbase + rel->r_offset;
-		r_symndx = ELF_R_SYM(rel->r_info);
-		r_type = ELF_R_TYPE(rel->r_info);
-
-		switch (r_type & 0xff) {
-		case R_TYPE(NONE):
-			break;
-
-		case R_TYPE(REL32): {
-			/* 32-bit PC-relative reference */
-			const size_t rlen =
-			    ELF_R_NXTTYPE_64_P(r_type)
-				? sizeof(Elf_Sxword)
-				: sizeof(Elf_Sword);
-			Elf_Sxword old = load_ptr(where, rlen);
-			Elf_Sxword val = old;
-
-			def = obj->symtab + r_symndx;
-
-			if (r_symndx >= obj->gotsym) {
-				val += got[obj->local_gotno + r_symndx - obj->gotsym];
-#ifdef DEBUG_VERBOSE
-				dbg("REL32/G(%p) %p --> %p (%s) in %s",
-				    where, (void *)(uintptr_t)old, (void *)(uintptr_t)val,
-				    obj->strtab + def->st_name,
-				    obj->path);
-#endif
-			} else {
-				/*
-				 * XXX: ABI DIFFERENCE!
-				 *
-				 * Old NetBSD binutils would generate shared
-				 * libs with section-relative relocations being
-				 * already adjusted for the start address of
-				 * the section.
-				 *
-				 * New binutils, OTOH, generate shared libs
-				 * with the same relocations being based at
-				 * zero, so we need to add in the start address
-				 * of the section.
-				 *
-				 * --rkb, Oct 6, 2001
-				 */
-
-				if (def->st_info ==
-				    ELF_ST_INFO(STB_LOCAL, STT_SECTION)
-#ifdef SUPPORT_OLD_BROKEN_LD
-				    && !broken
-#endif
-				    )
-					val += (Elf_Addr)def->st_value;
-
-				val += (Elf_Addr)obj->relocbase;
-
-#ifdef DEBUG_VERBOSE
-				dbg("REL32/L(%p) %p -> %p (%s) in %s",
-				    where, (void *)(uintptr_t)old, (void *)(uintptr_t)val,
-				    obj->strtab + def->st_name, obj->path);
-#endif
-			}
-			store_ptr(where, val, rlen);
-			break;
-		}
-
-#ifdef __mips_n64
-		case R_TYPE(TLS_DTPMOD64):
-#else
-		case R_TYPE(TLS_DTPMOD32):
-#endif
-		{
-
-			const size_t rlen = sizeof(Elf_Addr);
-			Elf_Addr old = load_ptr(where, rlen);
-			Elf_Addr val = old;
-
-			def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
-			    lockstate);
-			if (def == NULL)
-				return -1;
-
-			val += (Elf_Addr)defobj->tlsindex;
-
-			store_ptr(where, val, rlen);
-			dbg("DTPMOD %s in %s %p --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
-			    obj->path, (void *)(uintptr_t)old, (void*)(uintptr_t)val, defobj->path);
-			break;
-		}
-
-#ifdef __mips_n64
-		case R_TYPE(TLS_DTPREL64):
-#else
-		case R_TYPE(TLS_DTPREL32):
-#endif
-		{
-			const size_t rlen = sizeof(Elf_Addr);
-			Elf_Addr old = load_ptr(where, rlen);
-			Elf_Addr val = old;
-
-			def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
-			    lockstate);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done && allocate_tls_offset(obj))
-				return -1;
-
-			val += (Elf_Addr)def->st_value - TLS_DTP_OFFSET;
-			store_ptr(where, val, rlen);
-
-			dbg("DTPREL %s in %s %p --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
-			    obj->path, (void*)(uintptr_t)old, (void *)(uintptr_t)val, defobj->path);
-			break;
-		}
-
-#ifdef __mips_n64
-		case R_TYPE(TLS_TPREL64):
-#else
-		case R_TYPE(TLS_TPREL32):
-#endif
-		{
-			const size_t rlen = sizeof(Elf_Addr);
-			Elf_Addr old = load_ptr(where, rlen);
-			Elf_Addr val = old;
-
-			def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
-			    lockstate);
-
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done && allocate_tls_offset(obj))
-				return -1;
-
-			val += (Elf_Addr)(def->st_value + defobj->tlsoffset
-			    - TLS_TP_OFFSET - TLS_TCB_SIZE);
-			store_ptr(where, val, rlen);
-
-			dbg("TPREL %s in %s %p --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
-			    obj->path, (void*)(uintptr_t)old, (void *)(uintptr_t)val, defobj->path);
-			break;
-		}
-
-
-
-		default:
-			dbg("sym = %lu, type = %lu, offset = %p, "
-			    "contents = %p, symbol = %s",
-			    (u_long)r_symndx, (u_long)ELF_R_TYPE(rel->r_info),
-			    (void *)(uintptr_t)rel->r_offset,
-			    (void *)(uintptr_t)load_ptr(where, sizeof(Elf_Sword)),
-			    obj->strtab + obj->symtab[r_symndx].st_name);
-			_rtld_error("%s: Unsupported relocation type %ld "
-			    "in non-PLT relocations",
-			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
-			return -1;
-		}
+		int err = reloc_non_plt_single_reloc(obj, flags, lockstate, got,
+		    rel->r_info, rel->r_offset, 0, false);
+		if (err != 0)
+			return err;
 	}
+
+	relalim = (const Elf_Rela *)((caddr_t)obj->rela + obj->relasize);
+	dbg("rela:%p to %p", obj->rela, relalim);
+	for (rela = obj->rela; rela < relalim; rela++) {
+		int err = reloc_non_plt_single_reloc(obj, flags, lockstate, got,
+		    rela->r_info, rela->r_offset, rela->r_addend, true);
+		if (err != 0)
+			return err;
+	}
+
+	/* MemCap Table */
+	/*if (obj->mctrel) {
+		rellim = (const Elf_Rel *)((caddr_t)obj->mctrel + obj->mctrelsize);
+		for (rel = obj->mctrel; rel < rellim; rel++) {
+			Elf_Word	r_symndx, r_type;
+			void		*where;
+
+			where = obj->relocbase + rel->r_offset;
+			r_symndx = ELF_R_SYM(rel->r_info);
+			r_type = ELF_R_TYPE(rel->r_info);
+
+			switch (r_type & 0xff) {
+			case R_CHERI_MEMCAP:
+				initialise_cap(where);
+				break;
+			default:
+				dbg("sym = %lu, type = %lu, offset = %p, "
+					"contents = %p, symbol = %s",
+					(u_long)r_symndx, (u_long)ELF_R_TYPE(rel->r_info),
+					(void *)(uintptr_t)rel->r_offset,
+					(void *)(uintptr_t)load_ptr(where, sizeof(Elf_Sword)),
+					obj->strtab + obj->symtab[r_symndx].st_name);
+				_rtld_error("%s: Unsupported relocation type %ld "
+					"in non-PLT relocations",
+					obj->path, (u_long) ELF_R_TYPE(rel->r_info));
+				return -1;
+			}
+		}
+	}*/
 
 	return 0;
 }
