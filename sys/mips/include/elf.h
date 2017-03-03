@@ -226,6 +226,16 @@ __ElfType(Auxinfo);
 
 #define	R_TYPE(name)		__CONCAT(R_MIPS_,name)
 
+/* CHERI relocations */
+
+#define	R_CHERI_MCTDATA11	66
+#define	R_CHERI_MCTDATA_HI16	67
+#define	R_CHERI_MCTDATA_LO16	68
+#define	R_CHERI_MCTCALL		69
+#define	R_CHERI_MCTCALL_HI16	70
+#define	R_CHERI_MCTCALL_LO16	71
+#define	R_CHERI_MEMCAP		72
+
 #define	R_MIPS16_min		100
 #define	R_MIPS16_26		100
 #define	R_MIPS16_GPREL		101
