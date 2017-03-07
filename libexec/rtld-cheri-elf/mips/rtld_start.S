@@ -74,6 +74,9 @@ LEAF(rtld_start)
 	cgetdefault	$c4
 	csetoffset	$c4, $c4, a1	/* relocbase */
 
+	dla		a0, _cp
+	cincoffset	$c14, $c4, a0	/* $cp */
+
 	dla		a0, _DYNAMIC
 	cincoffset	$c3, $c4, a0	/* dynp */
 
