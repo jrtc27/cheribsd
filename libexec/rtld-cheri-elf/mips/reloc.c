@@ -144,7 +144,7 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 #endif
 }
 
-static __inline void
+static __inline __always_inline void
 initialise_cap(void *where)
 {
 	// TODO: Permissions
@@ -181,7 +181,7 @@ initialise_cap(void *where)
 	*/
 }
 
-static void
+static __inline __always_inline void
 _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
     const Elf_Sym *symtab, Elf_Xword r_info, Elf_Addr r_offset,
     Elf_Sxword r_addend, bool rela)
