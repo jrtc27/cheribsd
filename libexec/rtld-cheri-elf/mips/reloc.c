@@ -145,7 +145,7 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 }
 
 static __inline __always_inline void
-initialise_cap(void *where)
+initialise_cap(void *where, caddr_t relocbase)
 {
 	// TODO: Permissions
 	union {
@@ -166,7 +166,7 @@ initialise_cap(void *where)
 		return;
 
 	__capability void *global_data = __builtin_memcap_global_data_get();
-	cap = __builtin_memcap_offset_increment(global_data, u->info.base);
+	cap = __builtin_memcap_offset_increment(global_data, u->info.base + (uintptr_t)relocbase);
 	cap = __builtin_memcap_bounds_set(cap, u->info.length);
 	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
 	//cap = __builtin_memcap_perms_and(cap, u->info.perms);
@@ -233,7 +233,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
-		initialise_cap(where);
+		initialise_cap(where, relocbase);
 		break;
 
 
@@ -523,7 +523,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	}
 
 	case R_CHERI_MEMCAP:
-		initialise_cap(where);
+		initialise_cap(where, 0);
 		dbg("MEMCAP/L(%p) in %s",
 			where, obj->path);
 		break;
