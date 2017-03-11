@@ -148,25 +148,30 @@ static __inline __always_inline void
 initialise_cap(void *where)
 {
 	// TODO: Permissions
+	union {
+		__capability void *cap;
+		struct rtld_capinfo {
+			uint64_t base;
+			uint64_t offset;
+			uint64_t length;
+			uint64_t perms;
+		} info;
+	} *u;
 	__capability void *cap;
-	size_t base, offset, length, perms;
+
+	u = where;
 
 	/* Check this is not a duplicate call */
-	if (__builtin_memcap_tag_get(*(__capability void **)where))
+	if (__builtin_memcap_tag_get(u->cap))
 		return;
 
-	(void)memcpy(&base,   where + 0*sizeof(size_t), sizeof(size_t));
-	(void)memcpy(&offset, where + 1*sizeof(size_t), sizeof(size_t));
-	(void)memcpy(&length, where + 2*sizeof(size_t), sizeof(size_t));
-	(void)memcpy(&perms,  where + 3*sizeof(size_t), sizeof(size_t));
-
 	__capability void *global_data = __builtin_memcap_global_data_get();
-	cap = __builtin_memcap_offset_increment(global_data, base);
-	cap = __builtin_memcap_bounds_set(cap, length);
-	cap = __builtin_memcap_offset_increment(cap, offset);
-	//cap = __builtin_memcap_perms_and(cap, perms);
+	cap = __builtin_memcap_offset_increment(global_data, u->info.base);
+	cap = __builtin_memcap_bounds_set(cap, u->info.length);
+	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
+	//cap = __builtin_memcap_perms_and(cap, u->info.perms);
 
-	*(__capability void **)where = cap;
+	u->cap = cap;
 
 	/*
 	__asm__ __volatile__ (
