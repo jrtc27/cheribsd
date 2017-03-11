@@ -234,6 +234,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 
 	case R_CHERI_MEMCAP:
 		initialise_cap(where);
+		break;
 
 
 	default:
