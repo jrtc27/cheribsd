@@ -97,7 +97,17 @@ crt_call_constructors(void)
 {
 	mips_function_ptr *func;
 
-	for (func = &__CTOR_LIST__[0];
+	// XXX: __CTOR_LIST__ symbol is (rightly) given a size of 8 bytes, so
+	//      getting the second entry in the array gives a length violation.
+	//      Work around this by explicitly constructing the right capability
+	//      with $c0.
+
+	size_t ctorptr = (size_t)&__CTOR_LIST__[0];
+	void *gdc = __builtin_memcap_global_data_get();
+	func = __builtin_memcap_offset_set(gdc, ctorptr);
+	func = __builtin_memcap_bounds_set(func, ((size_t)&__CTOR_END__)-ctorptr);
+
+	for (;
 	    func != &__CTOR_END__;
 	    func++) {
 		if (*func != (mips_function_ptr)-1) {
