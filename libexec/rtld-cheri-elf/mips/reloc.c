@@ -61,6 +61,55 @@ __FBSDID("$FreeBSD$");
 #define GOT1_RESERVED_FOR_RTLD(got)					\
 	(((got)[1] == 0x80000000) || (got)[1] & GOT1_MASK)
 
+uintcap_t
+set_cp(Obj_Entry *obj)
+{
+	uintcap_t old;
+
+	__asm __volatile("cmove	%0, $c14\n\t"
+	                 "cmove	$c14, %1"
+	                 : "=C"(old) : "C"(obj->cp));
+
+	return old;
+}
+
+int
+init_cp(Obj_Entry *obj)
+{
+	// XXX: Hard-coded _cp offset, should use symlook instead
+	//      Seems to be giving ESRCH currently (maybe because not absolute?)
+	//SymLook req;
+	//int res;
+	__capability void *cap;
+
+	//symlook_init(&req, "_cp");
+	//req.ventry = NULL;
+	//req.flags = SYMLOOK_EARLY;
+	//res = symlook_obj(&req, obj);
+
+	//dbg("%s: _cp lookup gave %d", obj->path, res);
+
+	//if (res != 0)
+	//	return -1;
+
+	//dbg("%s: _cp is at %p", obj->path, (void *)(uintptr_t)req.sym_out->st_value);
+
+	uint64_t base = obj->mct;
+	uint64_t len = obj->mctsize;
+	uint64_t perm = __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ | __CHERI_CAP_PERMISSION_GLOBAL__;
+	//uint64_t off = req.sym_out->st_value - base;
+	uint64_t off = 0x3ff0;
+
+	__capability void *global_data = __builtin_memcap_global_data_get();
+	cap = __builtin_memcap_offset_increment(global_data, base);
+	cap = __builtin_memcap_bounds_set(cap, len);
+	cap = __builtin_memcap_offset_increment(cap, off);
+	cap = __builtin_memcap_perms_and(cap, perm);
+	obj->cp = (uintcap_t) cap;
+	dbg("%s: saving cp as %p", obj->path, cap);
+	return 0;
+}
+
 void
 init_pltgot(Obj_Entry *obj)
 {
@@ -359,11 +408,13 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	r_symndx = ELF_R_SYM(r_info);
 	r_type = ELF_R_TYPE(r_info);
 
+#ifdef DEBUG_VERBOSE
 	dbg("info 0x%llx type 0x%llx symndx 0x%llx at %p",
 	    (unsigned long long)r_info,
 	    (unsigned long long)r_type,
 	    (unsigned long long)r_symndx,
 	    where);
+#endif
 
 	switch (r_type & 0xff) {
 	case R_TYPE(NONE):
@@ -524,8 +575,10 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 
 	case R_CHERI_MEMCAP:
 		initialise_cap(where, 0);
+#ifdef DEBUG_VERBOSE
 		dbg("MEMCAP/L(%p) in %s",
 			where, obj->path);
+#endif
 		break;
 
 
