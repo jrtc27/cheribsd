@@ -195,6 +195,7 @@ static Obj_Entry *obj_main;	/* The main program shared object */
 static Obj_Entry obj_rtld;	/* The dynamic linker shared object */
 static unsigned int obj_count;	/* Number of objects in obj_list */
 static unsigned int obj_loads;	/* Number of loads of objects (gen count) */
+static struct fdesc obj_main_entry_fdesc;
 
 static Objlist list_global =	/* Objects dlopened with RTLD_GLOBAL */
   STAILQ_HEAD_INITIALIZER(list_global);
@@ -726,7 +727,7 @@ _rtld(struct cheriabi_execdata *ce, func_ptr_type *exit_proc, Obj_Entry **objp)
     /* Return the exit procedure and the program entry point. */
     *exit_proc = rtld_exit;
     *objp = obj_main;
-    return (func_ptr_type) obj_main->entry;
+    return (func_ptr_type) make_entry_function_pointer(obj_main->entry, obj_main, &obj_main_entry_fdesc);
 }
 
 void *
@@ -1214,7 +1215,10 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 
 #ifdef __CHERI__
 	case DT_CHERI_MCT:
-	    obj->mct = (Elf_Addr) (obj->relocbase + dynp->d_un.d_ptr);
+	    obj->mct = (uintptr_t)(obj->relocbase + dynp->d_un.d_ptr);
+	    break;
+	case DT_CHERI_MCTSZ:
+	    obj->mctsize = dynp->d_un.d_val;
 	    break;
 #endif
 
@@ -2771,6 +2775,12 @@ relocate_object(Obj_Entry *obj, bool bind_now, Obj_Entry *rtldobj,
 	    !(obj->valid_hash_sysv || obj->valid_hash_gnu)) {
 		_rtld_error("%s: Shared object has no run-time symbol table",
 			    obj->path);
+		return (-1);
+	}
+
+	/* Initialise Capability Pointer */
+	if (init_cp(obj)) {
+		_rtld_error("%s: Could not initialise CP", obj->path);
 		return (-1);
 	}
 
@@ -5187,12 +5197,12 @@ int
 obj_enforce_relro(Obj_Entry *obj)
 {
 
-	if (obj->relro_size > 0 && mprotect(obj->relro_page, obj->relro_size,
-	    PROT_READ) == -1) {
-		_rtld_error("%s: Cannot enforce relro protection: %s",
-		    obj->path, rtld_strerror(errno));
-		return (-1);
-	}
+	//if (obj->relro_size > 0 && mprotect(obj->relro_page, obj->relro_size,
+	//    PROT_READ) == -1) {
+	//	_rtld_error("%s: Cannot enforce relro protection: %s",
+	//	    obj->path, rtld_strerror(errno));
+	//	return (-1);
+	//}
 	return (0);
 }
 

@@ -189,7 +189,9 @@ typedef struct Struct_Obj_Entry {
     Elf_Word gotsym;		/* First dynamic symbol in GOT */
 #endif
 #ifdef __CHERI__
-    Elf_Addr mct;		/* MemCap table */
+    uintptr_t mct;		/* MemCap table */
+    unsigned long mctsize;	/* Size in bytes of MemCap Table */
+    uintcap_t cp;		/* Capability Pointer */
 #endif
 #ifdef __powerpc64__
     Elf_Addr glink;		/* GLINK PLT call stub section */
@@ -370,6 +372,7 @@ void dump_Elf_Rela(Obj_Entry *, const Elf_Rela *, u_long);
 /*
  * Function declarations.
  */
+int init_cp(Obj_Entry *);
 unsigned long elf_hash(const char *);
 const Elf_Sym *find_symdef(unsigned long, const Obj_Entry *,
   const Obj_Entry **, int, SymCache *, struct Struct_RtldLockState *);

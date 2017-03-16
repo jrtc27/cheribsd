@@ -33,7 +33,11 @@
 #include <machine/atomic.h>
 #include <machine/tls.h>
 
+#include <memcap.h>
+
 struct Struct_Obj_Entry;
+
+uintcap_t set_cp(struct Struct_Obj_Entry *obj);
 
 /* Return the address of the .dynamic section in the dynamic linker. */
 #define rtld_dynamic(obj) (&_DYNAMIC)
@@ -43,15 +47,64 @@ Elf_Addr reloc_jmpslot(Elf_Addr *where, Elf_Addr target,
 		       const struct Struct_Obj_Entry *obj,
 		       const Elf_Rel *rel);
 
+struct fdesc {
+	uintcap_t pcc;
+	uintcap_t cp;
+};
+
+#define ptr_to_fdesc(_ptr)						\
+({									\
+	union {								\
+		void *ptr;						\
+		struct fdesc *fdesc;					\
+	} u;								\
+	u.ptr = _ptr;							\
+	u.fdesc;							\
+})
+
+#define fdesc_to_ptr(_fdesc)						\
+({									\
+	union {								\
+		void *ptr;						\
+		struct fdesc *fdesc;					\
+	} u;								\
+	u.fdesc = _fdesc;						\
+	u.ptr;								\
+})
+
 #define make_function_pointer(def, defobj)				\
 	((defobj)->relocbase + (def)->st_value)
 
+#define make_entry_function_pointer(entry, obj_main, fdesc_out)		\
+({									\
+	(fdesc_out)->pcc = (uintcap_t)(entry);				\
+	(fdesc_out)->cp = (obj_main)->cp;				\
+	fdesc_to_ptr(fdesc_out);					\
+})
+
+//#define call_initfini_pointer(obj, target)				\
+//	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))())
+//
+//#define call_init_pointer(obj, target)					\
+//	(((InitArrFunc)(cheri_setoffset(cheri_getpcc(), (target))))	\
+//	    (main_argc, main_argv, environ))
+
 #define call_initfini_pointer(obj, target)				\
-	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))())
+({									\
+	uintcap_t old0;							\
+	old0 = set_cp(obj);						\
+	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))());	\
+	__asm__ __volatile__ ("cmove	$c14, %0" :: "C"(old0));	\
+})
 
 #define call_init_pointer(obj, target)					\
+({									\
+	uintcap_t old1;							\
+	old1 = set_cp(obj);						\
 	(((InitArrFunc)(cheri_setoffset(cheri_getpcc(), (target))))	\
-	    (main_argc, main_argv, environ))
+	    (main_argc, main_argv, environ));				\
+	__asm__ __volatile__ ("cmove	$c14, %0" :: "C"(old1));	\
+})
 
 #define	call_ifunc_resolver(ptr) \
 	(((Elf_Addr (*)(void))ptr)())

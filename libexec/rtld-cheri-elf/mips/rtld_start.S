@@ -109,6 +109,9 @@ LEAF(rtld_start)
 	clc		$c4, sp, 0*CHERICAP_SIZE($c11)	/* cleanup */
 	clc		$c5, sp, 1*CHERICAP_SIZE($c11)	/* objp */
 
+	/* $c12 contains function descriptor */
+	clc		$c14, zero, 1*CHERICAP_SIZE($c12) /* load CP */
+	clc		$c12, zero, 0*CHERICAP_SIZE($c12) /* load PCC */
 	cmove		$c17, $c12 /* return == PCC signals backtrace routine to stop */
 	cjr		$c12
 	nop
