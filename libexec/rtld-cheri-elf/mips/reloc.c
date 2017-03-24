@@ -193,10 +193,9 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 #endif
 }
 
-static __inline __always_inline void
-initialise_cap(void *where, caddr_t relocbase)
+static __inline __always_inline int
+initialise_cap(void *where, caddr_t relocbase, bool can_print)
 {
-	// TODO: Permissions
 	union {
 		__capability void *cap;
 		struct rtld_capinfo {
@@ -212,27 +211,30 @@ initialise_cap(void *where, caddr_t relocbase)
 
 	/* Check this is not a duplicate call */
 	if (__builtin_memcap_tag_get(u->cap))
-		return;
+		return 0;
 
-	__capability void *global_data = __builtin_memcap_global_data_get();
-	cap = __builtin_memcap_offset_increment(global_data, u->info.base + (uintptr_t)relocbase);
+	__capability void *derive_from;
+	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__)
+		derive_from = __builtin_memcap_program_counter_get();
+	else
+		derive_from = __builtin_memcap_global_data_get();
+
+	cap = __builtin_memcap_offset_increment(derive_from, u->info.base + (size_t)relocbase);
 	cap = __builtin_memcap_bounds_set(cap, u->info.length);
 	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
-	//cap = __builtin_memcap_perms_and(cap, u->info.perms);
+	cap = __builtin_memcap_perms_and(cap, u->info.perms);
+
+	uint64_t derived_perms = __builtin_memcap_perms_get(cap);
+	if (derived_perms != u->info.perms) {
+		if (can_print)
+			_rtld_error("capability at %p requested permissions 0x%llx but got 0x%llx",
+				where, u->info.perms, derived_perms);
+		return -1;
+	}
 
 	u->cap = cap;
 
-	/*
-	__asm__ __volatile__ (
-	    "cld\t$t0, $t1, 0($c14)\n\t"
-	    "cfromptr\t$c4, $c0, $t0\n\t"
-	    "cld\t$t0, $t1, 16($c14)\n\t"
-	    "csetbounds\t$c4, $c4, $t0\n\t"
-	    "cld\t$t0, $t1, 8($c14)\n\t"
-	    "cincoffset\t$c4, $c4, $t0\n\t"
-	    "csc\t$c4, $t1, 0($c14)"
-	    : "=r" (where));
-	*/
+	return 0;
 }
 
 static __inline __always_inline void
@@ -282,7 +284,8 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
-		initialise_cap(where, relocbase);
+		if (initialise_cap(where, relocbase, false))
+			abort();
 		break;
 
 
@@ -574,7 +577,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	}
 
 	case R_CHERI_MEMCAP:
-		initialise_cap(where, 0);
+		if (initialise_cap(where, 0, false))
+			return -1;
+
 #ifdef DEBUG_VERBOSE
 		dbg("MEMCAP/L(%p) in %s",
 			where, obj->path);
