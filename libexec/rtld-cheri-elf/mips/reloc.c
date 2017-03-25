@@ -232,7 +232,9 @@ initialise_cap(void *where, caddr_t relocbase, bool can_print)
 	if (derived_perms != u->info.perms) {
 		if (can_print)
 			_rtld_error("capability at %p requested permissions 0x%llx but got 0x%llx",
-				where, u->info.perms, derived_perms);
+				where,
+				(unsigned long long)u->info.perms,
+				(unsigned long long)derived_perms);
 		return -1;
 	}
 
