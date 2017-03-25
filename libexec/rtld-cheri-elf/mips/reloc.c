@@ -193,8 +193,10 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 #endif
 }
 
+static __capability void *saved_global_pcc;
+
 static __inline __always_inline int
-initialise_cap(void *where, caddr_t relocbase, bool can_print)
+initialise_cap(void *where, caddr_t relocbase, bool early)
 {
 	union {
 		__capability void *cap;
@@ -220,17 +222,19 @@ initialise_cap(void *where, caddr_t relocbase, bool can_print)
 	__capability void *derive_from;
 	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__)
 		derive_from = __builtin_memcap_program_counter_get();
-	else
+	else if (early)
 		derive_from = __builtin_memcap_global_data_get();
+	else
+		derive_from = saved_global_pcc;
 
-	cap = __builtin_memcap_offset_increment(derive_from, u->info.base + (size_t)relocbase);
+	cap = __builtin_memcap_offset_set(derive_from, u->info.base + (size_t)relocbase);
 	cap = __builtin_memcap_bounds_set(cap, u->info.length);
 	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
 	cap = __builtin_memcap_perms_and(cap, u->info.perms);
 
 	uint64_t derived_perms = __builtin_memcap_perms_get(cap);
 	if (derived_perms != u->info.perms) {
-		if (can_print)
+		if (!early)
 			_rtld_error("capability at %p requested permissions 0x%llx but got 0x%llx",
 				where,
 				(unsigned long long)u->info.perms,
@@ -290,7 +294,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
-		if (initialise_cap(where, relocbase, false))
+		if (initialise_cap(where, relocbase, true))
 			abort();
 		break;
 
@@ -371,6 +375,16 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 		_rtld_relocate_nonplt_self_single_reloc(relocbase, gotsym, symtab,
 		    rela->r_info, rel->r_offset, rela->r_addend, true);
 	}
+
+	__asm__ __volatile__ ("": : :"memory");
+
+	/*
+	 * $c14 was set up before entry, and memcaps have been initialised, so now
+	 * safe to access globals. Stash PCC covering the entire address space so
+	 * we can construct new executable capabilities in future calls to
+	 * initialise_cap despite having strict PCC bounds.
+	 */
+	saved_global_pcc = __builtin_memcap_program_counter_get();
 }
 
 Elf_Addr
