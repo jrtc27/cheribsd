@@ -210,7 +210,7 @@ initialise_cap(void *where, caddr_t relocbase, bool can_print)
 	u = where;
 
 	/* Check whether the capability is NULL */
-	if (!u->base && !u->offset && !u->length && !u->perms)
+	if (!u->info.base && !u->info.offset && !u->info.length && !u->info.perms)
 		return 0;
 
 	/* Check this is not a duplicate call */
