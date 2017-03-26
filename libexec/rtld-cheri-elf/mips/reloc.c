@@ -221,7 +221,10 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 
 	__capability void *derive_from;
 	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__) {
-		derive_from = __builtin_memcap_program_counter_get();
+		if (early)
+			derive_from = __builtin_memcap_program_counter_get();
+		else
+			derive_from = saved_global_pcc;
 		// XXX: Code generation assumes PCC has a base of 0, using CGetOffset
 		//      to derive gp, and CGetPCCSetOffset for function calls, which
 		//      also means the length must cover the entire text segment.
@@ -231,10 +234,8 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 		u->info.length = __builtin_memcap_length_get(derive_from);
 		u->info.base = 0;
 		relocbase = 0;
-	} else if (early)
+	} else
 		derive_from = __builtin_memcap_global_data_get();
-	else
-		derive_from = saved_global_pcc;
 
 	cap = __builtin_memcap_offset_set(derive_from, u->info.base + (size_t)relocbase);
 	cap = __builtin_memcap_bounds_set(cap, u->info.length);
