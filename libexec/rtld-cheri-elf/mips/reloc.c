@@ -237,12 +237,19 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 	} else
 		derive_from = __builtin_memcap_global_data_get();
 
+	// Don't mask out user-defined bits, since some of them have a meaning in
+	// the kernel (currently SW0 is SYSCALL and SW1 is VMMAP).
+	// TODO: CHERI-128 has just 4, so a mask of 0x78000.
+	uint64_t keep_perms = 0x7fff8000;
+
 	cap = __builtin_memcap_offset_set(derive_from, u->info.base + (size_t)relocbase);
 	cap = __builtin_memcap_bounds_set(cap, u->info.length);
 	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
-	cap = __builtin_memcap_perms_and(cap, u->info.perms);
+	cap = __builtin_memcap_perms_and(cap, u->info.perms | keep_perms);
 
-	uint64_t derived_perms = __builtin_memcap_perms_get(cap);
+	// Mask out any user-defined permissions which were not explicitly
+	// requested by the relocation.
+	uint64_t derived_perms = __builtin_memcap_perms_get(cap) & (~keep_perms | u->info.perms);
 	if (derived_perms != u->info.perms) {
 		if (!early)
 			_rtld_error("capability at %p requested permissions 0x%llx but got 0x%llx",
