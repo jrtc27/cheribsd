@@ -1544,13 +1544,20 @@ log_frame_dump(struct trapframe *frame)
 	log(LOG_ERR, "\tstatus: %#jx mullo: %#jx; mulhi: %#jx; badvaddr: %#jx\n",
 	    (intmax_t)frame->sr, (intmax_t)frame->mullo, (intmax_t)frame->mulhi, (intmax_t)frame->badvaddr);
 
+	register_r pc = frame->pc;
+#ifdef CPU_CHERI
+	register_t pcc_base;
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &frame->pcc, 0);
+	CHERI_CGETBASE(pcc_base, CHERI_CR_CTEMP0);
+	pc += pcc_base;
+#endif
 #ifdef IC_REG
 	log(LOG_ERR, "\tcause: %#jx; pc: %#jx; ic: %#jx\n",
-	    (intmax_t)(uint32_t)frame->cause, (intmax_t)frame->pc,
+	    (intmax_t)(uint32_t)frame->cause, (intmax_t)pc,
 	    (intmax_t)frame->ic);
 #else
 	log(LOG_ERR, "\tcause: %#jx; pc: %#jx\n",
-	    (intmax_t)(uint32_t)frame->cause, (intmax_t)frame->pc);
+	    (intmax_t)(uint32_t)frame->cause, (intmax_t)pc);
 #endif
 }
 
@@ -1592,13 +1599,20 @@ trap_frame_dump(struct trapframe *frame)
 	printf("\tsr: %#jx\tmullo: %#jx\tmulhi: %#jx\tbadvaddr: %#jx\n",
 	    (intmax_t)frame->sr, (intmax_t)frame->mullo, (intmax_t)frame->mulhi, (intmax_t)frame->badvaddr);
 
+	register_r pc = frame->pc;
+#ifdef CPU_CHERI
+	register_t pcc_base;
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &frame->pcc, 0);
+	CHERI_CGETBASE(pcc_base, CHERI_CR_CTEMP0);
+	pc += pcc_base;
+#endif
 #ifdef IC_REG
 	printf("\tcause: %#jx\tpc: %#jx\tic: %#jx\n",
-	    (intmax_t)(uint32_t)frame->cause, (intmax_t)frame->pc,
+	    (intmax_t)(uint32_t)frame->cause, (intmax_t)pc,
 	    (intmax_t)frame->ic);
 #else
 	printf("\tcause: %#jx\tpc: %#jx\n",
-	    (intmax_t)(uint32_t)frame->cause, (intmax_t)frame->pc);
+	    (intmax_t)(uint32_t)frame->cause, (intmax_t)pc);
 #endif
 }
 
