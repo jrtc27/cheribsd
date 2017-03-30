@@ -127,7 +127,7 @@ crt_init_globals(void)
 	{
 		register void *cp __asm__("$c14");
 		cp = &_cp;
-		cp = __builtin_memcap_perms_and(cp, memcap_table_permissions);
+		cp = __builtin_cheri_perms_and(cp, memcap_table_permissions);
 	}
 }
 

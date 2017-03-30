@@ -100,11 +100,11 @@ init_cp(Obj_Entry *obj)
 	//uint64_t off = req.sym_out->st_value - base;
 	uint64_t off = 0x3ff0;
 
-	__capability void *global_data = __builtin_memcap_global_data_get();
-	cap = __builtin_memcap_offset_increment(global_data, base);
-	cap = __builtin_memcap_bounds_set(cap, len);
-	cap = __builtin_memcap_offset_increment(cap, off);
-	cap = __builtin_memcap_perms_and(cap, perm);
+	__capability void *global_data = __builtin_cheri_global_data_get();
+	cap = __builtin_cheri_offset_increment(global_data, base);
+	cap = __builtin_cheri_bounds_set(cap, len);
+	cap = __builtin_cheri_offset_increment(cap, off);
+	cap = __builtin_cheri_perms_and(cap, perm);
 	obj->cp = (uintcap_t) cap;
 	dbg("%s: saving cp as %p", obj->path, cap);
 	return 0;
@@ -216,13 +216,13 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 		return 0;
 
 	/* Check this is not a duplicate call */
-	if (__builtin_memcap_tag_get(u->cap))
+	if (__builtin_cheri_tag_get(u->cap))
 		return 0;
 
 	__capability void *derive_from;
 	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__) {
 		if (early)
-			derive_from = __builtin_memcap_program_counter_get();
+			derive_from = __builtin_cheri_program_counter_get();
 		else
 			derive_from = saved_global_pcc;
 		// XXX: Code generation assumes PCC has a base of 0, using CGetOffset
@@ -231,25 +231,25 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 		//      Therefore, for now, keep function capabilities as base 0 with
 		//      the right offset and a length equal to that of derive_from.
 		u->info.offset += u->info.base + (size_t)relocbase;
-		u->info.length = __builtin_memcap_length_get(derive_from);
+		u->info.length = __builtin_cheri_length_get(derive_from);
 		u->info.base = 0;
 		relocbase = 0;
 	} else
-		derive_from = __builtin_memcap_global_data_get();
+		derive_from = __builtin_cheri_global_data_get();
 
 	// Don't mask out user-defined bits, since some of them have a meaning in
 	// the kernel (currently SW0 is SYSCALL and SW1 is VMMAP).
 	// TODO: CHERI-128 has just 4, so a mask of 0x78000.
 	uint64_t keep_perms = 0x7fff8000;
 
-	cap = __builtin_memcap_offset_set(derive_from, u->info.base + (size_t)relocbase);
-	cap = __builtin_memcap_bounds_set(cap, u->info.length);
-	cap = __builtin_memcap_offset_increment(cap, u->info.offset);
-	cap = __builtin_memcap_perms_and(cap, u->info.perms | keep_perms);
+	cap = __builtin_cheri_offset_set(derive_from, u->info.base + (size_t)relocbase);
+	cap = __builtin_cheri_bounds_set(cap, u->info.length);
+	cap = __builtin_cheri_offset_increment(cap, u->info.offset);
+	cap = __builtin_cheri_perms_and(cap, u->info.perms | keep_perms);
 
 	// Mask out any user-defined permissions which were not explicitly
 	// requested by the relocation.
-	uint64_t derived_perms = __builtin_memcap_perms_get(cap) & (~keep_perms | u->info.perms);
+	uint64_t derived_perms = __builtin_cheri_perms_get(cap) & (~keep_perms | u->info.perms);
 	if (derived_perms != u->info.perms) {
 		if (!early)
 			_rtld_error("capability at %p requested permissions 0x%llx but got 0x%llx",
@@ -401,7 +401,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 	 * we can construct new executable capabilities in future calls to
 	 * initialise_cap despite having strict PCC bounds.
 	 */
-	saved_global_pcc = __builtin_memcap_program_counter_get();
+	saved_global_pcc = __builtin_cheri_program_counter_get();
 }
 
 Elf_Addr
