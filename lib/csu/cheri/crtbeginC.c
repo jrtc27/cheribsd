@@ -103,9 +103,9 @@ crt_call_constructors(void)
 	//      with $c0.
 
 	size_t ctorptr = (size_t)&__CTOR_LIST__[0];
-	void *gdc = __builtin_memcap_global_data_get();
-	func = __builtin_memcap_offset_set(gdc, ctorptr);
-	func = __builtin_memcap_bounds_set(func, ((size_t)&__CTOR_END__)-ctorptr);
+	void *gdc = __builtin_cheri_global_data_get();
+	func = __builtin_cheri_offset_set(gdc, ctorptr);
+	func = __builtin_cheri_bounds_set(func, ((size_t)&__CTOR_END__)-ctorptr);
 
 	for (;
 	    func != &__CTOR_END__;
