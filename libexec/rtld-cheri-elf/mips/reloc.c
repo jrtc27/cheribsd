@@ -80,7 +80,7 @@ init_cp(Obj_Entry *obj)
 	//      Seems to be giving ESRCH currently (maybe because not absolute?)
 	//SymLook req;
 	//int res;
-	__capability void *cap;
+	void * __capability cap;
 
 	//symlook_init(&req, "_cp");
 	//req.ventry = NULL;
@@ -100,7 +100,7 @@ init_cp(Obj_Entry *obj)
 	//uint64_t off = req.sym_out->st_value - base;
 	uint64_t off = 0x3ff0;
 
-	__capability void *global_data = __builtin_cheri_global_data_get();
+	void * __capability global_data = __builtin_cheri_global_data_get();
 	cap = __builtin_cheri_offset_increment(global_data, base);
 	cap = __builtin_cheri_bounds_set(cap, len);
 	cap = __builtin_cheri_offset_increment(cap, off);
@@ -193,13 +193,13 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 #endif
 }
 
-static __capability void *saved_global_pcc;
+static void * __capability saved_global_pcc;
 
 static __inline __always_inline int
 initialise_cap(void *where, caddr_t relocbase, bool early)
 {
 	union {
-		__capability void *cap;
+		void * __capability cap;
 		struct rtld_capinfo {
 			uint64_t base;
 			uint64_t offset;
@@ -207,7 +207,7 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 			uint64_t perms;
 		} info;
 	} *u;
-	__capability void *cap;
+	void * __capability cap;
 
 	u = where;
 
@@ -219,7 +219,7 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 	if (__builtin_cheri_tag_get(u->cap))
 		return 0;
 
-	__capability void *derive_from;
+	void * __capability derive_from;
 	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__) {
 		if (early)
 			derive_from = __builtin_cheri_program_counter_get();
