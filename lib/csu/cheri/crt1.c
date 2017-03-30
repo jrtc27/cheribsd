@@ -89,15 +89,11 @@ static const uint64_t function_pointer_permissions =
 	~__CHERI_CAP_PERMISSION_PERMIT_STORE__;
 static const uint64_t global_pointer_permissions =
 	~0 & ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__;
-static const uint64_t memcap_table_permissions =
-	__CHERI_CAP_PERMISSION_GLOBAL__ | __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__;
 
 __attribute__((weak))
 extern struct capreloc __start___cap_relocs;
 __attribute__((weak))
 extern struct capreloc __stop___cap_relocs;
-__attribute__((weak))
-extern char _cp;
 
 static void
 crt_init_globals(void)
@@ -121,13 +117,6 @@ crt_init_globals(void)
 		}
 		src = __builtin_cheri_offset_increment(src, reloc->offset);
 		*dest = src;
-	}
-
-	if (&_cp)
-	{
-		register void *cp __asm__("$c14");
-		cp = &_cp;
-		cp = __builtin_cheri_perms_and(cp, memcap_table_permissions);
 	}
 }
 
