@@ -196,7 +196,7 @@ store_ptr(void *where, Elf_Sxword val, size_t len)
 static void * __capability saved_global_pcc;
 
 static __inline __always_inline int
-initialise_cap(void *where, caddr_t relocbase, bool early)
+initialise_cap(void *where, bool early)
 {
 	union {
 		void * __capability cap;
@@ -230,10 +230,9 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 		//      also means the length must cover the entire text segment.
 		//      Therefore, for now, keep function capabilities as base 0 with
 		//      the right offset and a length equal to that of derive_from.
-		u->info.offset += u->info.base + (size_t)relocbase;
+		u->info.offset += u->info.base;
 		u->info.length = __builtin_cheri_length_get(derive_from);
 		u->info.base = 0;
-		relocbase = 0;
 	} else
 		derive_from = __builtin_cheri_global_data_get();
 
@@ -242,7 +241,7 @@ initialise_cap(void *where, caddr_t relocbase, bool early)
 	// TODO: CHERI-128 has just 4, so a mask of 0x78000.
 	uint64_t keep_perms = 0x7fff8000;
 
-	cap = __builtin_cheri_offset_set(derive_from, u->info.base + (size_t)relocbase);
+	cap = __builtin_cheri_offset_set(derive_from, u->info.base);
 	cap = __builtin_cheri_bounds_set(cap, u->info.length);
 	cap = __builtin_cheri_offset_increment(cap, u->info.offset);
 	cap = __builtin_cheri_perms_and(cap, u->info.perms | keep_perms);
@@ -311,7 +310,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
-		if (initialise_cap(where, relocbase, true))
+		if (initialise_cap(where, true))
 			abort();
 		break;
 
@@ -614,7 +613,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	}
 
 	case R_CHERI_MEMCAP:
-		if (initialise_cap(where, 0, false))
+		if (initialise_cap(where, false))
 			return -1;
 
 #ifdef DEBUG_VERBOSE
