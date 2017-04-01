@@ -281,6 +281,54 @@ char *ld_env_prefix = LD_;
     (dlp)->num_alloc = obj_count,				\
     (dlp)->num_used = 0)
 
+struct capreloc
+{
+	uint64_t capability_location;
+	uint64_t object;
+	uint64_t offset;
+	uint64_t size;
+	uint64_t permissions;
+};
+static const uint64_t function_reloc_flag = 1ULL<<63;
+static const uint64_t function_pointer_permissions =
+	~0 &
+	~__CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ &
+	~__CHERI_CAP_PERMISSION_PERMIT_STORE__;
+static const uint64_t global_pointer_permissions =
+	~0 & ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__;
+
+__attribute__((weak))
+extern struct capreloc __start___cap_relocs;
+__attribute__((weak))
+extern struct capreloc __stop___cap_relocs;
+
+static void
+crt_init_globals(size_t relocbase)
+{
+	void *gdc = __builtin_cheri_global_data_get();
+	void *pcc = __builtin_cheri_program_counter_get();
+
+	gdc = __builtin_cheri_perms_and(gdc, global_pointer_permissions);
+	pcc = __builtin_cheri_perms_and(pcc, function_pointer_permissions);
+	for (struct capreloc *reloc = &__start___cap_relocs ;
+	     reloc < &__stop___cap_relocs ; reloc++)
+	{
+		_Bool isFunction = (reloc->permissions & function_reloc_flag) ==
+		    function_reloc_flag;
+		void **dest = __builtin_cheri_offset_set(gdc,
+		    reloc->capability_location | relocbase);
+		void *base = isFunction ? pcc : gdc;
+		void *src = __builtin_cheri_offset_set(base,
+		    reloc->object + relocbase);
+		if (!isFunction && (reloc->size != 0))
+		{
+			src = __builtin_cheri_bounds_set(src, reloc->size);
+		}
+		src = __builtin_cheri_offset_increment(src, reloc->offset);
+		*dest = src;
+	}
+}
+
 #define	LD_UTRACE(e, h, mb, ms, r, n) do {			\
 	if (ld_utrace != NULL)					\
 		ld_utrace_log(e, h, mb, ms, r, n);		\
@@ -1976,6 +2024,12 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
 
     /* Initialize the object list. */
     TAILQ_INIT(&obj_list);
+
+    /*
+     * relocbase is given as 0, since the capreloc fields have already been
+     * relocated relative to relocbase.
+     */
+    crt_init_globals((size_t)0);
 
     /* Now that non-local variables can be accesses, copy out obj_rtld. */
     memcpy(&obj_rtld, &objtmp, sizeof(obj_rtld));
