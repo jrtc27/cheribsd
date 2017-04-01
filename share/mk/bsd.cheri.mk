@@ -84,9 +84,6 @@ _LIB_OBJTOP=	${ROOTOBJDIR}
 .ifdef LIBCHERI
 LDFLAGS+=	-Wl,-init=crt_init_globals
 .endif
-.if ${WANT_CHERI} == "sandbox"
-CHERI_LLD_BROKEN=	yes
-.endif
 .ifdef CHERI_LLD_BROKEN
 LDFLAGS+=	-fuse-ld=bfd
 .else
