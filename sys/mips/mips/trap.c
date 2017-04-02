@@ -1544,7 +1544,7 @@ log_frame_dump(struct trapframe *frame)
 	log(LOG_ERR, "\tstatus: %#jx mullo: %#jx; mulhi: %#jx; badvaddr: %#jx\n",
 	    (intmax_t)frame->sr, (intmax_t)frame->mullo, (intmax_t)frame->mulhi, (intmax_t)frame->badvaddr);
 
-	register_r pc = frame->pc;
+	register_t pc = frame->pc;
 #ifdef CPU_CHERI
 	register_t pcc_base;
 	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &frame->pcc, 0);
@@ -1599,7 +1599,7 @@ trap_frame_dump(struct trapframe *frame)
 	printf("\tsr: %#jx\tmullo: %#jx\tmulhi: %#jx\tbadvaddr: %#jx\n",
 	    (intmax_t)frame->sr, (intmax_t)frame->mullo, (intmax_t)frame->mulhi, (intmax_t)frame->badvaddr);
 
-	register_r pc = frame->pc;
+	register_t pc = frame->pc;
 #ifdef CPU_CHERI
 	register_t pcc_base;
 	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &frame->pcc, 0);
