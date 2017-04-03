@@ -28,12 +28,16 @@
  * SUCH DAMAGE.
  */
 
-typedef unsigned long long mips_function_ptr;
+#ifdef __CHERI_USE_MCT__
+typedef void (*ctor_function_ptr)(void);
+#else
+typedef unsigned long long ctor_function_ptr;
+#endif
 
-mips_function_ptr __attribute__((used))
+ctor_function_ptr __attribute__((used))
     __attribute__((section(".ctors")))
-    __CTOR_END__[1] = { (mips_function_ptr)(-1) };
+    __CTOR_END__[1] = { (ctor_function_ptr)(-1) };
 
-mips_function_ptr __attribute__((used))
+ctor_function_ptr __attribute__((used))
     __attribute__((section(".dtors")))
-    __DTOR_END__[1] = { (mips_function_ptr)(-1) };
+    __DTOR_END__[1] = { (ctor_function_ptr)(-1) };

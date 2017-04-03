@@ -36,14 +36,18 @@
 void	crt_init_globals(void);
 void	crt_call_constructors(void);
 
+typedef void (*cheri_function_ptr)(void);
+#ifdef __CHERI_USE_MCT__
+typedef cheri_function_ptr ctor_function_ptr;
+#else
 /*
  * In version 3 of the CHERI sandbox ABI, function pointers are capabilities.
  * The CTORs list is the single exception: CTORs are used to set up globals
  * that contain function pointers so (until we have proper linker support) we
  * are still generating them as a sequence of PCC-relative integers.
  */
-typedef unsigned long long mips_function_ptr;
-typedef void (*cheri_function_ptr)(void);
+typedef unsigned long long ctor_function_ptr;
+#endif
 
 struct capreloc
 {
@@ -54,13 +58,13 @@ struct capreloc
 	uint64_t permissions;
 };
 
-static mips_function_ptr __attribute__((used))
+static ctor_function_ptr __attribute__((used))
     __attribute__((section(".ctors")))
-    __CTOR_LIST__[1] = { (mips_function_ptr)(-1) };
+    __CTOR_LIST__[1] = { (ctor_function_ptr)(-1) };
 
-static mips_function_ptr __attribute__((used))
+static ctor_function_ptr __attribute__((used))
     __attribute__((section(".dtors")))
-    __DTOR_LIST__[1] = { (mips_function_ptr)(-1) };
+    __DTOR_LIST__[1] = { (ctor_function_ptr)(-1) };
 
 static const uint64_t function_reloc_flag = 1ULL<<63;
 static const uint64_t function_pointer_permissions =
@@ -82,8 +86,8 @@ void *__dso_handle;
  * Symbols provided by rtendC.c, which provide us with the tails for the
  * constructor and destructor arrays.
  */
-extern mips_function_ptr __CTOR_END__;
-extern mips_function_ptr __DTOR_END__;
+extern ctor_function_ptr __CTOR_END__;
+extern ctor_function_ptr __DTOR_END__;
 
 /*
  * Execute constructors; invoked by the crt_sb.S startup code.
@@ -95,12 +99,12 @@ extern mips_function_ptr __DTOR_END__;
 void
 crt_call_constructors(void)
 {
-	mips_function_ptr *func;
+	ctor_function_ptr *func;
 
-	// XXX: __CTOR_LIST__ symbol is (rightly) given a size of 8 bytes, so
-	//      getting the second entry in the array gives a length violation.
-	//      Work around this by explicitly constructing the right capability
-	//      with $c0.
+	// XXX: __CTOR_LIST__ symbol is (rightly) given a size of 1 entry (8 or 32
+	//      bytes depending on whether MCT is in use), so getting the second
+	//      entry in the array gives a length violation. Work around this by
+	//      explicitly constructing the right capability with $c0.
 
 	size_t ctorptr = (size_t)&__CTOR_LIST__[0];
 	void *gdc = __builtin_cheri_global_data_get();
@@ -110,10 +114,15 @@ crt_call_constructors(void)
 	for (;
 	    func != &__CTOR_END__;
 	    func++) {
-		if (*func != (mips_function_ptr)-1) {
+		if (*func != (ctor_function_ptr)-1) {
+			cheri_function_ptr cheri_func;
+#ifdef __CHERI_USE_MCT__
+			cheri_func = *func;
+#else
 			cheri_function_ptr cheri_func =
 				(cheri_function_ptr)__builtin_cheri_offset_set(
 						__builtin_cheri_program_counter_get(), *func);
+#endif
 			cheri_func();
 		}
 	}

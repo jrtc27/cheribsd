@@ -32,6 +32,14 @@
 #ifndef _SANDBOX_H_
 #define	_SANDBOX_H_
 
+#ifdef __CHERI_USE_MCT__
+typedef void *sandbox_vtable_entry;
+typedef void *sandbox_method_var;
+#else
+typedef vm_offset_t sandbox_vtable_entry;
+typedef vm_offset_t sandbox_method_var;
+#endif
+
 /*
  * This section defines the interface between 'inside' and 'outside' the
  * sandbox model.
@@ -54,7 +62,7 @@ struct sandbox_metadata {
 	uint64_t	_sbm_reserved1;			/* Offset: 24 */
 	struct cheri_object	sbm_system_object;	/* Offset: 32 */
 #if __has_feature(capabilities)
-	__capability vm_offset_t	*sbm_vtable;		/* Cap-offset: 2 */
+	sandbox_vtable_entry * __capability sbm_vtable;	/* Cap-offset: 2 */
 	__capability void	*sbm_stackcap;		/* Cap-offset: 3 */
 #else
 	struct chericap	sbm_vtable;

@@ -132,8 +132,22 @@
 #define	GLOBAL(sym)						\
 	.globl sym; sym:
 
+#ifdef __CHERI_USE_MCT__
+#define	ENTRY(x)		\
+	.section ".opd", "aw", @progbits;	\
+	.globl	x;	\
+	.type	x,@function;	\
+x: ;			\
+	.memcap	.x;	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	.ent	.x;	\
+.x:
+#else
 #define	ENTRY(sym)						\
 	.text; .globl sym; .ent sym; sym:
+#endif
 
 #define	ASM_ENTRY(sym)						\
 	.text; .globl sym; .type sym,@function; sym:
@@ -145,6 +159,21 @@
  *	- never use any register that callee-saved (S0-S8), and
  *	- not use any local stack storage.
  */
+#ifdef __CHERI_USE_MCT__
+#define	LEAF(x)			\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	.ent	._C_LABEL(x);	\
+._C_LABEL(x): ;			\
+	.frame sp, 0, ra;	\
+	MCOUNT
+#else
 #define	LEAF(x)			\
 	.globl	_C_LABEL(x);	\
 	.ent	_C_LABEL(x);	\
@@ -152,33 +181,78 @@
 _C_LABEL(x): ;			\
 	.frame sp, 0, ra;	\
 	MCOUNT
+#endif
 
 /*
  * LEAF_NOPROFILE
  *	No profilable leaf routine.
  */
+#ifdef __CHERI_USE_MCT__
+#define	LEAF_NOPROFILE(x)	\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	.ent	._C_LABEL(x);	\
+._C_LABEL(x): ;			\
+	.frame	sp, 0, ra
+#else
 #define	LEAF_NOPROFILE(x)	\
 	.globl	_C_LABEL(x);	\
 	.ent	_C_LABEL(x);	\
 	.type	_C_LABEL(x),@function;	\
 _C_LABEL(x): ;			\
 	.frame	sp, 0, ra
+#endif
 
 /*
  * XLEAF
  *	declare alternate entry to leaf routine
  */
+#ifdef __CHERI_USE_MCT__
+#define	XLEAF(x)		\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	AENT (._C_LABEL(x));	\
+._C_LABEL(x):
+#else
 #define	XLEAF(x)		\
 	.globl	_C_LABEL(x);	\
 	AENT (_C_LABEL(x));	\
 	.type	_C_LABEL(x),@function;	\
 _C_LABEL(x):
+#endif
 
 /*
  * NESTED
  *	A function calls other functions and needs
  *	therefore stack space to save/restore registers.
  */
+#ifdef __CHERI_USE_MCT__
+#define	NESTED(x, fsize, retpc)		\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	.ent	._C_LABEL(x);	\
+._C_LABEL(x): ;			\
+	.frame	sp, fsize, retpc;	\
+	MCOUNT
+#else
 #define	NESTED(x, fsize, retpc)		\
 	.globl	_C_LABEL(x);		\
 	.ent	_C_LABEL(x);		\
@@ -186,34 +260,69 @@ _C_LABEL(x):
 _C_LABEL(x): ;				\
 	.frame	sp, fsize, retpc;	\
 	MCOUNT
+#endif
 
 /*
  * NESTED_NOPROFILE(x)
  *	No profilable nested routine.
  */
+#ifdef __CHERI_USE_MCT__
+#define	NESTED_NOPROFILE(x, fsize, retpc)	\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	.ent	._C_LABEL(x);	\
+._C_LABEL(x): ;			\
+	.frame	sp, fsize, retpc
+#else
 #define	NESTED_NOPROFILE(x, fsize, retpc)	\
 	.globl	_C_LABEL(x);			\
 	.ent	_C_LABEL(x);			\
 	.type	_C_LABEL(x),@function;	\
 _C_LABEL(x): ;					\
 	.frame	sp, fsize, retpc
+#endif
 
 /*
  * XNESTED
  *	declare alternate entry point to nested routine.
  */
+#ifdef __CHERI_USE_MCT__
+#define	XNESTED(x)		\
+	.section ".opd", "aw", @progbits;	\
+	.globl	_C_LABEL(x);	\
+	.type	_C_LABEL(x),@function;	\
+_C_LABEL(x): ;			\
+	.memcap	._C_LABEL(x);	\
+	.memcap	_cp;		\
+	.size	_C_LABEL(x), .-_C_LABEL(x);	\
+	.text;			\
+	AENT (._C_LABEL(x));	\
+._C_LABEL(x):
+#else
 #define	XNESTED(x)		\
 	.globl	_C_LABEL(x);	\
 	AENT (_C_LABEL(x));	\
 	.type	_C_LABEL(x),@function;	\
 _C_LABEL(x):
+#endif
 
 /*
  * END
  *	Mark end of a procedure.
  */
+#ifdef __CHERI_USE_MCT__
+#define	END(x)			\
+	.end ._C_LABEL(x)
+#else
 #define	END(x)			\
 	.end _C_LABEL(x)
+#endif
 
 /*
  * IMPORT -- import external symbol

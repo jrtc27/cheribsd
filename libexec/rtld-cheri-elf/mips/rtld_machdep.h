@@ -33,7 +33,7 @@
 #include <machine/atomic.h>
 #include <machine/tls.h>
 
-#include <memcap.h>
+#include <cheri.h>
 
 struct Struct_Obj_Entry;
 

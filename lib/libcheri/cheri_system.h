@@ -36,6 +36,8 @@
 
 #include <stdarg.h>
 
+#include "sandbox.h"
+
 /*
  * For now, expose the symbol for the system-object reference in each sandbox
  * as a public symbol.  At some point we will want to find a better way to do
@@ -101,7 +103,7 @@ extern syscall_check_t syscall_checks[SYS_MAXSYSCALL];
 /*
  * Vtable for cheri_system methods.
  */
-extern __capability vm_offset_t	*cheri_system_vtable;
+extern sandbox_vtable_entry * __capability cheri_system_vtable;
 
 #define SYS_STUB(_num, _ret, _sys,					\
     _protoargs, _protoargs_chk, _protoargs_err,				\

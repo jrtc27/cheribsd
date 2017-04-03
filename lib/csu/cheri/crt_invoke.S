@@ -78,10 +78,23 @@
 #     run only native MIPS64 code, or hand-crafted CHERI assembler.  Thus
 #     must change before we can run Clang-compiled CHERI code.
 #
-	.text
-	.global __invoke_vector
-	.ent __invoke_vector
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	__invoke_vector
+	.type	__invoke_vector,@function
 __invoke_vector:
+	.memcap .__invoke_vector
+	.memcap _cp
+	.size __invoke_vector, .-__invoke_vector
+	.text
+	.ent	.__invoke_vector
+.__invoke_vector:
+#else
+	.text
+	.global	__invoke_vector
+	.ent	__invoke_vector
+__invoke_vector:
+#endif
 
 	#
 	# Load $idc-relative offset of the Sandbox Metadata (SBM) area.
@@ -152,11 +165,29 @@ creturn_target:
 	# Return to caller.
 	#
 	creturn
-	.end __invoke_vector
+#ifdef __CHERI_USE_MCT__
+	.end	.__invoke_vector
+#else
+	.end	__invoke_vector
+#endif
 
-	.global abort
-	.ent abort
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	abort
+	.type	abort,@function
 abort:
+	.memcap .abort
+	.memcap _cp
+	.size abort, .-abort
+	.text
+	.ent	.abort
+.abort:
+#else
+	.text
+	.global	abort
+	.ent	abort
+abort:
+#endif
 	#
 	# In general, the compiler should be scrubbing unused return values,
 	# as  only it has the information to do so.  However, in the case of
@@ -167,15 +198,38 @@ abort:
 	dli	$v0, -2
 	b	creturn_target
 	dli	$v1, 0		# Branch-delay slot
-	.end abort
+#ifdef __CHERI_USE_MCT__
+	.end	.abort
+#else
+	.end	abort
+#endif
 
-	.global _exit
-	.ent _exit
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	_exit
+	.type	_exit,@function
 _exit:
+	.memcap ._exit
+	.memcap _cp
+	.size _exit, .-_exit
+	.text
+	.ent	._exit
+._exit:
+#else
+	.text
+	.global	_exit
+	.ent	_exit
+_exit:
+#endif
 	cfromptr	$c3, $c3, $zero
 	move	$v0, $a0
 	b	creturn_target
 	dli	$v1, 0		# Branch-delay slot
-	.end _exit
+#ifdef __CHERI_USE_MCT__
+	.end	._exit
+#else
+	.end	_exit
+#endif
+
 
 	.data

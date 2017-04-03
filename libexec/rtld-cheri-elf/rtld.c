@@ -281,6 +281,7 @@ char *ld_env_prefix = LD_;
     (dlp)->num_alloc = obj_count,				\
     (dlp)->num_used = 0)
 
+#ifdef __CHERI_OLD_CAP_RELOCS__
 struct capreloc
 {
 	uint64_t capability_location;
@@ -328,6 +329,7 @@ crt_init_globals(size_t relocbase)
 		*dest = src;
 	}
 }
+#endif /* defined(__CHERI_USE_MCT__) */
 
 #define	LD_UTRACE(e, h, mb, ms, r, n) do {			\
 	if (ld_utrace != NULL)					\
@@ -2025,11 +2027,13 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
     /* Initialize the object list. */
     TAILQ_INIT(&obj_list);
 
+#ifdef __CHERI_OLD_CAP_RELOCS__
     /*
      * relocbase is given as 0, since the capreloc fields have already been
      * relocated relative to relocbase.
      */
     crt_init_globals((size_t)0);
+#endif
 
     /* Now that non-local variables can be accesses, copy out obj_rtld. */
     memcpy(&obj_rtld, &objtmp, sizeof(obj_rtld));

@@ -56,10 +56,23 @@
 # src: $c4
 # len: $4
 # Copies len bytes from src to dst.  Returns dst.
-		.text
-		.global memcpy_c
-		.ent memcpy_c
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	memcpy_c
+	.type	memcpy_c,@function
 memcpy_c:
+	.memcap .memcpy_c
+	.memcap _cp
+	.size memcpy_c, .-memcpy_c
+	.text
+	.ent	.memcpy_c
+.memcpy_c:
+#else
+	.text
+	.global	memcpy_c
+	.ent	memcpy_c
+memcpy_c:
+#endif
 	beq      $4, $zero, memcpy_c_return  # Only bother if len != 0.  Unlikely to
 	                               # be taken, so we make it a forward branch
 	                               # to give the predictor a hint.
@@ -161,17 +174,43 @@ slow_memcpy_loop:                # byte-by-byte copy
 	csb      $a2, $a1, -1($c3)
 	ret                          # Return value remains in c1
 	nop
-.end memcpy_c
+#ifdef __CHERI_USE_MCT__
+	.end	.memcpy_c
+#else
+	.end	memcpy_c
+#endif
 
 # Use the capability memcpy for normal memcopies. (Not enabled yet)
 #if 0
-		.text
-		.global memcpy
-		.ent memcpy
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	memcpy
+	.type	memcpy,@function
 memcpy:
+	.memcap .memcpy
+	.memcap _cp
+	.size memcpy, .-memcpy
+	.text
+	.ent	.memcpy
+.memcpy:
+#else
+	.text
+	.global	memcpy
+	.ent	memcpy
+memcpy:
+#endif
 	CFromPtr $c3, $c0, $a0       # dst ptr -> dst capability
 	CFromPtr $c4, $c0, $a1       # src ptr -> src capability
-          b        memcpy_c
-          move     $a0, $a3            # len -> first integer arg register (in delay slot)
-.end memcpy
+#ifdef __CHERI_USE_MCT__
+	clc $c12, $zero, %mctcall(memcpy_c)($c14)
+	cjr $c12
+#else
+	b        memcpy_c
+#endif
+	move     $a0, $a3            # len -> first integer arg register (in delay slot)
+#ifdef __CHERI_USE_MCT__
+	.end	.memcpy
+#else
+	.end	memcpy
+#endif
 #endif

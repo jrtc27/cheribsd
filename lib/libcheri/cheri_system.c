@@ -54,7 +54,7 @@
  * minimalist.
  */
 __capability void		*cheri_system_type;
-__capability vm_offset_t	*cheri_system_vtable;
+sandbox_vtable_entry * __capability cheri_system_vtable;
 
 static struct cheri_object null_object;
 
