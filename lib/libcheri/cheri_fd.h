@@ -31,7 +31,9 @@
 #ifndef _CHERI_FD_H_
 #define	_CHERI_FD_H_
 
-extern __capability vm_offset_t *cheri_fd_vtable;
+#include "sandbox.h"
+
+extern sandbox_vtable_entry * __capability cheri_fd_vtable;
 
 extern struct cheri_object	cheri_fd;
 #ifdef CHERI_FD_INTERNAL

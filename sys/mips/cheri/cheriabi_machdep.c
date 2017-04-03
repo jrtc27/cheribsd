@@ -612,6 +612,10 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 	int cheri_is_sandboxed;
 	int sig;
 	int oonstack;
+	register_t tag;
+	register_t perms;
+	struct chericap *desc;
+	int error;
 
 	td = curthread;
 	p = td->td_proc;
@@ -846,10 +850,32 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 	 * Note that $sp must be installed relative to $stc, so re-subtract
 	 * the stack base here.
 	 */
-	regs->pc = (register_t)(intptr_t)catcher;
+	/* regs->pc = (register_t)(intptr_t)catcher; */
 	regs->sp = (register_t)((intptr_t)sfp - stackbase);
 
-	cheri_capability_copy(&regs->c12, &psp->ps_sigcap[_SIG_IDX(sig)]);
+	/* XXX-JC: Allows both descriptors and entry point capabilities. Should
+	 *         only allow one based on ABI used by executable. */
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &psp->ps_sigcap[_SIG_IDX(sig)], 0);
+	CHERI_CGETTAG(tag, CHERI_CR_CTEMP0);
+	CHERI_CGETPERM(perms, CHERI_CR_CTEMP0);
+	if (tag && (perms & CHERI_PERM_EXECUTE) == 0)
+		error = cheriabi_cap_to_ptr((caddr_t *)&desc, &psp->ps_sigcap[_SIG_IDX(sig)],
+		    CHERICAP_SIZE * 2,
+		    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP,
+		    0);
+	else
+		error = 1;
+	if (!error) {
+		/* Valid descriptor - load real PCC and C14 */
+		copyincap(desc, &regs->pcc, sizeof(regs->pcc));
+		copyincap(desc+1, &regs->c14, sizeof(regs->c14));
+	} else {
+		/* Fall back on normal function entry point */
+		cheri_capability_copy(&regs->pcc, &psp->ps_sigcap[_SIG_IDX(sig)]);
+	}
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &regs->pcc, 0);
+	CHERI_CGETOFFSET(regs->pc, CHERI_CR_CTEMP0);
+	cheri_capability_copy(&regs->c12, &regs->pcc);
 	cheri_capability_copy(&regs->c17,
 	    &td->td_pcb->pcb_cherisignal.csig_sigcode);
 }
@@ -923,6 +949,10 @@ void
 cheriabi_set_threadregs(struct thread *td, struct thr_param_c *param)
 {
 	struct trapframe *frame;
+	register_t tag;
+	register_t perms;
+	struct chericap *desc;
+	int error;
 
 	frame = td->td_frame;
 	bzero(frame, sizeof(*frame));
@@ -946,11 +976,30 @@ cheriabi_set_threadregs(struct thread *td, struct thr_param_c *param)
 	 * XXX-BD: cpu_set_upcall() copies the cheri_signal struct.  Do we
 	 * want to point it at our stack instead?
 	 */
-	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &param->start_func, 0);
-	CHERI_CGETOFFSET(frame->pc, CHERI_CR_CTEMP0);
 	cheri_capability_copy(&frame->ddc, &param->ddc);
-	cheri_capability_copy(&frame->pcc, &param->start_func);
-	cheri_capability_copy(&frame->c12, &param->start_func);
+	/* XXX-JC: Allows both descriptors and entry point capabilities. Should
+	 *         only allow one based on ABI used by executable. */
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &param->start_func, 0);
+	CHERI_CGETTAG(tag, CHERI_CR_CTEMP0);
+	CHERI_CGETPERM(perms, CHERI_CR_CTEMP0);
+	if (tag && (perms & CHERI_PERM_EXECUTE) == 0)
+		error = cheriabi_cap_to_ptr((caddr_t *)&desc, &param->start_func,
+		    CHERICAP_SIZE * 2,
+		    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP,
+		    0);
+	else
+		error = 1;
+	if (!error) {
+		/* Valid descriptor - load real PCC and C14 */
+		copyincap(desc, &frame->pcc, sizeof(frame->pcc));
+		copyincap(desc+1, &frame->c14, sizeof(frame->c14));
+	} else {
+		/* Fall back on normal function entry point */
+		cheri_capability_copy(&frame->pcc, &param->start_func);
+	}
+	CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &frame->pcc, 0);
+	CHERI_CGETOFFSET(frame->pc, CHERI_CR_CTEMP0);
+	cheri_capability_copy(&frame->c12, &frame->pcc);
 	cheri_capability_copy(&frame->c3, &param->arg);
 }
 

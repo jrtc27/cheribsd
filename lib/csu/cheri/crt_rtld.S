@@ -45,11 +45,23 @@
 # are not global, and that there is no path to invoke().
 #
 
-	.text
-	.global __rtld_vector
-	.type __rtld_vector,@function
-	.ent __rtld_vector
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	__rtld_vector
+	.type	__rtld_vector,@function
 __rtld_vector:
+	.memcap .__rtld_vector
+	.memcap _cp
+	.size __rtld_vector, .-__rtld_vector
+	.text
+	.ent	.__rtld_vector
+.__rtld_vector:
+#else
+	.text
+	.global	__rtld_vector
+	.ent	__rtld_vector
+__rtld_vector:
+#endif
 
 	#
 	# Load $idc-relative offset of the Sandbox Metadata (SBM) area
@@ -162,6 +174,10 @@ constructors:
 	dli	$v0, 0
 	b	creturn_target
 	dli	$v1, 0		# Branch-delay slot
-	.end __rtld_vector
+#ifdef __CHERI_USE_MCT__
+	.end	.__rtld_vector
+#else
+	.end	__rtld_vector
+#endif
 
 	.data
