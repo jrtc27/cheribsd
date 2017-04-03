@@ -68,10 +68,23 @@
 # - The compiler needs to handle unused argument/return registers.
 #
 
+#ifdef __CHERI_USE_MCT__
+	.section ".opd", "aw", @progbits
+	.globl	cheri_invoke
+	.type	cheri_invoke,@function
+cheri_invoke:
+	.memcap .cheri_invoke
+	.memcap _cp
+	.size cheri_invoke, .-cheri_invoke
 	.text
-	.global cheri_invoke
+	.ent	.cheri_invoke
+.cheri_invoke:
+#else
+	.text
+	.global	cheri_invoke
 	.ent	cheri_invoke
 cheri_invoke:
+#endif
 
 	#
 	# Wrap up all caller-save state suitable to be preseved by CCall and
@@ -245,9 +258,6 @@ set_cheri_errno:
 	daddu	$at, $t0, $at
 	b	cheri_invoke_restore_regs
 	sw	$a0, 0($at)
-
-	.end	cheri_invoke
-
 #else
 	#
 	# We currently don't have working TLS inside sandboxes, so set a global.
@@ -255,6 +265,10 @@ set_cheri_errno:
 	dla	$a2, cherierrno
 	b	cheri_invoke_restore_regs
 	csw	$a0, $a2, 0($c0)
+#endif
+#ifdef __CHERI_USE_MCT__
+	.end	.cheri_invoke
+#else
 	.end	cheri_invoke
 #endif
 

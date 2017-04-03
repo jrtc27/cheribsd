@@ -1021,6 +1021,8 @@ cheriabi_sigaction(struct thread *td, struct cheriabi_sigaction_args *uap)
 	struct sigaction_c sa_c;
 	struct sigaction sa, osa, *sap;
 	struct chericap cap;
+	struct chericap desc[2];
+	register_t perms;
 
 	int error, tag;
 
@@ -1035,12 +1037,54 @@ cheriabi_sigaction(struct thread *td, struct cheriabi_sigaction_args *uap)
 			if (sa.sa_handler != SIG_DFL && sa.sa_handler != SIG_IGN)
 				return (EPROT);
 		} else {
-			error = cheriabi_cap_to_ptr((caddr_t *)&sa.sa_handler,
-			    &sa_c.sa_u,
-			    8 /* XXX-BD: at least two instructions */,
-		            CHERI_PERM_LOAD | CHERI_PERM_EXECUTE, 0);
-			if (error)
-				return (error);
+			/*
+			 * XXX-JC: Allow both function descriptor and function entry point
+			 *         capabilities. Either disallow entry points once
+			 *         everything uses descriptors, or include a flag in the
+			 *         ELF header to determine which gets checked here.
+			 */
+			CHERI_CGETPERM(perms, CHERI_CR_CTEMP0);
+			if (perms & CHERI_PERM_EXECUTE) {
+				error = cheriabi_cap_to_ptr((caddr_t *)&sa.sa_handler,
+				    &sa_c.sa_u,
+				    8 /* XXX-BD: at least two instructions */,
+				        CHERI_PERM_LOAD | CHERI_PERM_EXECUTE, 0);
+				if (error)
+					return (error);
+			} else if (perms & CHERI_PERM_LOAD_CAP) {
+				/* Function descriptor */
+				/* XXX-JC: More checks needed? Length for entry point or $cp? */
+				error = cheriabi_cap_to_ptr((caddr_t *)&sa.sa_handler,
+				    &sa_c.sa_u,
+				    CHERICAP_SIZE * 2 /* at least two capabilities */,
+				        CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP, 0);
+				if (error)
+					return (error);
+
+				copyincap((struct chericap *)sa.sa_handler, &desc[0], sizeof(desc[0]));
+				copyincap(((struct chericap *)sa.sa_handler)+1, &desc[1], sizeof(desc[1]));
+
+				/* Check entry point */
+				CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &desc[0], 0);
+				CHERI_CGETTAG(tag, CHERI_CR_CTEMP0);
+				if (!tag)
+					return (EPROT);
+				CHERI_CGETPERM(perms, CHERI_CR_CTEMP0);
+				if (perms != (perms | CHERI_PERM_LOAD | CHERI_PERM_EXECUTE))
+					return (EPROT);
+
+				/* Check capability pointer */
+				CHERI_CLC(CHERI_CR_CTEMP0, CHERI_CR_KDC, &desc[1], 0);
+				CHERI_CGETTAG(tag, CHERI_CR_CTEMP0);
+				if (!tag)
+					return (EPROT);
+				CHERI_CGETPERM(perms, CHERI_CR_CTEMP0);
+				if (perms != (perms | CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP))
+					return (EPROT);
+
+			} else {
+				return (EPROT);
+			}
 		}
 		CP(sa_c, sa, sa_flags);
 		CP(sa_c, sa, sa_mask);

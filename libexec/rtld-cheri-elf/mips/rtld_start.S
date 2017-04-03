@@ -83,6 +83,13 @@ LEAF(rtld_start)
 	/* XXX: Assume PCC and DDC share an offset. */
 	csetoffset	$c12, $c12, a1
 	dla		t0, _C_LABEL(_rtld_relocate_nonplt_self)
+#ifdef __CHERI_USE_MCT__
+	/* Peek into unprocessed function descriptor */
+	cincoffset	$c15, $c4, t0
+	cld		t0, zero, 0($c15) /* base */
+	cld		t1, zero, 8($c15) /* offset */
+	daddu		t0, t0, t1
+#endif
 	cincoffset	$c12, $c12, t0
 	cjalr		$c12, $c17
 	nop
@@ -96,11 +103,17 @@ LEAF(rtld_start)
 	daddi		t0, sp, 1*CHERICAP_SIZE
 	csetoffset	$c5, $c11, t0			/* &objp */
 	csetbounds	$c5, $c5, t1
+#ifdef __CHERI_USE_MCT__
+	lui		t0, %mctcall_hi(_C_LABEL(_rtld))
+	daddiu		t0, t0, %mctcall_lo(_C_LABEL(_rtld))
+	clc		$c12, t0, 0($c14)
+#else
 	cld		t0, sp, 24($c11)	/* relocbase */
 	dla		t9, _C_LABEL(_rtld)
 	daddu		t0, t0, t9
 	cgetpcc		$c12
 	csetoffset	$c12, $c12, t0
+#endif
 	cjalr		$c12, $c17	/* v0 = _rtld(execdata, cleanup, objp) */
 	nop
 
@@ -140,10 +153,7 @@ END(rtld_start)
 #define	XCALLFRAME_C10		(1*CHERICAP_SIZE)
 #define	XCALLFRAME_C17		(0*CHERICAP_SIZE)
 
-	.globl	_rtld_bind_start
-	.ent	_rtld_bind_start
-_rtld_bind_start:
-	.frame	sp, XCALLFRAME_SIZ, $15
+NESTED_NOPROFILE(_rtld_bind_start, XCALLFRAME_SIZ, $15)
 	move	v1, gp			/* save old GP */
 	PTR_SUBU sp, XCALLFRAME_SIZ	/* save arguments and sp value in stack */
 	//SETUP_GP64(XCALLFRAME_GP, _rtld_bind_start)

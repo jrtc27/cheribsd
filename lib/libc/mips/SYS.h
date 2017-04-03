@@ -94,7 +94,21 @@
 # define PIC_TAILCALL(l)	j  _C_LABEL(l)
 # define PIC_RETURN()		j ra
 #endif /* __ABICALLS__ */
-#else /* defined(__CHERI_PURE_CAPABILITY__) */
+#elif defined(__CHERI_USE_MCT__) /* defined(__CHERI_PURE_CAPABILITY__) && defined(__CHERI_USE_MCT__) */
+# define PIC_PROLOGUE(x)
+# define PIC_LOAD_CODE_PTR(capreg, gpr, l)		\
+	lui	gpr, %mctcall_hi(l);			\
+	daddiu	gpr, gpr, %mctcall_lo(l);		\
+	clc	capreg, gpr, 0($c14);
+# define PIC_TAILCALL(l)				\
+	PIC_LOAD_CODE_PTR($c12, t9, _C_LABEL(l))	\
+	cjr $c12;
+# define PIC_CALL(l)					\
+	PIC_LOAD_CODE_PTR($c12, t9, _C_LABEL(l))	\
+	cjalr $c12, $c17;				\
+	nop;
+# define PIC_RETURN()		cjr $c17
+#else /* defined(__CHERI_PURE_CAPABILITY__) && !defined(__CHERI_USE_MCT__) */
 #ifdef __PIC__
 # define PIC_PROLOGUE(x)
 /*
