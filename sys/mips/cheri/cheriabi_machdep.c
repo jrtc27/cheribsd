@@ -612,6 +612,7 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 	int cheri_is_sandboxed;
 	int sig;
 	int oonstack;
+	int change_stc;
 	register_t tag;
 	register_t perms;
 	struct chericap *desc;
@@ -742,6 +743,7 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 	    SIGISMEMBER(psp->ps_sigonstack, sig)) {
 		stackbase = (vm_offset_t)td->td_sigstk.ss_sp;
 		sp = (vm_offset_t)(stackbase + td->td_sigstk.ss_size);
+		change_stc = 1;
 	} else {
 		/*
 		 * Signals delivered when a CHERI sandbox is present must be
@@ -759,6 +761,7 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 			/* NOTREACHED */
 		}
 		sp = (vm_offset_t)(stackbase + regs->sp);
+		change_stc = 0;
 	}
 	sp -= sizeof(struct sigframe_c);
 	/* For CHERI, keep the stack pointer capability aligned. */
@@ -840,7 +843,7 @@ cheriabi_sendsig(sig_t catcher, ksiginfo_t *ksi, sigset_t *mask)
 	 * it will be (generally) be removed automatically on sigreturn().
 	 */
 	/* XXX-BD: this isn't quite right */
-	cheri_sendsig(td);
+	cheri_sendsig(td, change_stc);
 
 	/*
 	 * Note that $sp must be installed relative to $stc, so re-subtract
