@@ -40,9 +40,6 @@
 extern void debug_printf(const char *, ...) __printflike(1, 2);
 extern int debug;
 
-// XXX: Debug CHERI please :)
-#define DEBUG 1
-
 #ifdef DEBUG
 #define dbg(...)	debug_printf(__VA_ARGS__)
 #else
