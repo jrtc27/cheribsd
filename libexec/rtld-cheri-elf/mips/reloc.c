@@ -225,14 +225,6 @@ initialise_cap(void *where, bool early)
 			derive_from = __builtin_cheri_program_counter_get();
 		else
 			derive_from = saved_global_pcc;
-		// XXX: Code generation assumes PCC has a base of 0, using CGetOffset
-		//      to derive gp, and CGetPCCSetOffset for function calls, which
-		//      also means the length must cover the entire text segment.
-		//      Therefore, for now, keep function capabilities as base 0 with
-		//      the right offset and a length equal to that of derive_from.
-		u->info.offset += u->info.base;
-		u->info.length = __builtin_cheri_length_get(derive_from);
-		u->info.base = 0;
 	} else
 		derive_from = __builtin_cheri_global_data_get();
 
