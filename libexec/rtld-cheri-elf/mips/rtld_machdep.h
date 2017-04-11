@@ -82,29 +82,21 @@ struct fdesc {
 	fdesc_to_ptr(fdesc_out);					\
 })
 
-//#define call_initfini_pointer(obj, target)				\
-//	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))())
-//
-//#define call_init_pointer(obj, target)					\
-//	(((InitArrFunc)(cheri_setoffset(cheri_getpcc(), (target))))	\
-//	    (main_argc, main_argv, environ))
+#ifdef __CHERI_USE_MCT__
+# define call_initfini_pointer(obj, target)				\
+	(((InitFunc)(cheri_setoffset(cheri_getdefault(), (target))))())
 
-#define call_initfini_pointer(obj, target)				\
-({									\
-	uintcap_t old0;							\
-	old0 = set_cp(obj);						\
-	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))());	\
-	__asm__ __volatile__ ("cmove	$c14, %0" :: "C"(old0));	\
-})
+# define call_init_pointer(obj, target)					\
+	(((InitArrFunc)(cheri_setoffset(cheri_getdefault(), (target))))	\
+	    (main_argc, main_argv, environ))
+#else
+# define call_initfini_pointer(obj, target)				\
+	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))())
 
-#define call_init_pointer(obj, target)					\
-({									\
-	uintcap_t old1;							\
-	old1 = set_cp(obj);						\
+# define call_init_pointer(obj, target)					\
 	(((InitArrFunc)(cheri_setoffset(cheri_getpcc(), (target))))	\
-	    (main_argc, main_argv, environ));				\
-	__asm__ __volatile__ ("cmove	$c14, %0" :: "C"(old1));	\
-})
+	    (main_argc, main_argv, environ))
+#endif /* __CHERI_USE_MCT__ */
 
 #define	call_ifunc_resolver(ptr) \
 	(((Elf_Addr (*)(void))ptr)())
