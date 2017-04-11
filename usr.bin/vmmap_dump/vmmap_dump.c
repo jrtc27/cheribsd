@@ -66,7 +66,6 @@ extract_vmap(pid_t pid)
 {
 	/* struct ptrace_vm_entry pve; */
 	char file_name[32];
-	char path[1024];
 	int count, i;
 	FILE *csv;
 	struct procstat *ps;
@@ -194,7 +193,7 @@ main(int argc, char **argv)
 		waitpid(pid, &status, 0);
 		if (WSTOPSIG(status) == SIGTRAP) {
 			struct ptrace_lwpinfo lwpi;
-			if (ptrace(PT_LWPINFO, pid, &lwpi, sizeof(lwpi)))
+			if (ptrace(PT_LWPINFO, pid, (caddr_t)&lwpi, sizeof(lwpi)))
 				err(EX_OSERR, "ptrace lwpinfo");
 			if (lwpi.pl_flags & PL_FLAG_SCE &&
 			    lwpi.pl_syscall_code == SYS_exit) {
