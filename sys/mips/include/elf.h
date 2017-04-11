@@ -235,6 +235,10 @@ __ElfType(Auxinfo);
 #define	R_CHERI_MCTCALL_HI16	70
 #define	R_CHERI_MCTCALL_LO16	71
 #define	R_CHERI_MEMCAP		72
+#define	R_CHERI_BASE64		73
+#define	R_CHERI_OFFSET64	74
+#define	R_CHERI_SIZE64		75
+#define	R_CHERI_PERMS64		76
 
 #define	R_MIPS16_min		100
 #define	R_MIPS16_26		100

@@ -604,6 +604,161 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		break;
 	}
 
+	case R_CHERI_BASE64:
+	case R_CHERI_OFFSET64:
+	case R_CHERI_SIZE64:
+	{
+		const size_t rlen = 8;
+		Elf_Sxword val;
+		Elf_Sxword base, offset, size;
+		const char *reloc_name;
+		const Elf_Phdr *ph;
+		const Elf_Phdr *phlimit;
+
+		if ((r_type & 0xff) == R_CHERI_OFFSET64) {
+			Elf_Sxword old = load_ptr(where, rlen);
+			if (rela)
+				val = r_addend;
+			else
+				val = old;
+		} else
+			val = 0;
+
+		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+			lockstate);
+
+		if (def == NULL)
+			return -1;
+
+		if (def == &sym_zero)
+			base = offset = size = 0;
+		else if (def->st_size == 0) {
+			phlimit = (const Elf_Phdr *)((const char *)defobj->phdr + defobj->phsize);
+			// TODO: This falls back on the segment bounds rather than the
+			//       section bounds, since the section header is not available.
+			//       For rtld's own object and any object it loads it can
+			//       easily get the section header, but if the kernel loads the
+			//       main program on our behalf there is no AT_PHDR equivalent.
+			//       This is unlikely to be hit for many symbols, so it may not
+			//       be worth tightening these bounds.
+			for (ph = defobj->phdr; ph < phlimit; ph++) {
+				if (ph->p_type != PT_LOAD)
+					continue;
+				if (ph->p_vaddr <= def->st_value && def->st_value < ph->p_vaddr + ph->p_memsz)
+					break;
+			}
+
+			if (ph == phlimit) {
+				_rtld_error("%s: Could not find segment for symbol %s",
+						obj->path, obj->strtab + obj->symtab[r_symndx].st_name);
+				return -1;
+			}
+
+			base = (Elf_Sxword)defobj->relocbase + ph->p_vaddr;
+			offset = def->st_value - ph->p_vaddr;
+			size = ph->p_memsz;
+		} else {
+			base = (Elf_Sxword)defobj->relocbase + def->st_value;
+			offset = 0;
+			size = def->st_size;
+		}
+
+		switch (r_type & 0xff) {
+		case R_CHERI_BASE64:
+			val += base;
+			reloc_name = "BASE";
+			break;
+		case R_CHERI_OFFSET64:
+			val += offset;
+			reloc_name = "OFFSET";
+			break;
+		case R_CHERI_SIZE64:
+			val += size;
+			reloc_name = "SIZE";
+			break;
+		default:
+			_rtld_error("%s: Unexpected relocation type %ld "
+				"in non-PLT BASE/OFFSET/SIZE relocation handling",
+				obj->path, (u_long) r_type);
+			return -1;
+		}
+
+		store_ptr(where, val, rlen);
+
+#ifdef DEBUG_VERBOSE
+		dbg("%s %s in %s %p --> %p in %s", reloc_name,
+			obj->strtab + obj->symtab[r_symndx].st_name,
+			obj->path, (void*)(uintptr_t)old, (void *)(uintptr_t)val, defobj->path);
+#endif
+		break;
+	}
+
+	case R_CHERI_PERMS64:
+	{
+		const size_t rlen = 8;
+		uint64_t perms = 0;
+		int relro;
+		const Elf_Phdr *phlimit;
+		const Elf_Phdr *ph;
+
+		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+			lockstate);
+
+		if (def == NULL)
+			return -1;
+
+		if (def != &sym_zero) {
+			phlimit = (const Elf_Phdr *)((const char *)defobj->phdr + defobj->phsize);
+			for (ph = defobj->phdr; ph < phlimit; ph++) {
+				if (ph->p_type != PT_LOAD)
+					continue;
+				if (ph->p_vaddr <= def->st_value && def->st_value < ph->p_vaddr + ph->p_memsz)
+					break;
+			}
+
+			if (ph == phlimit) {
+				_rtld_error("%s: Could not find segment for symbol %s",
+						obj->path, obj->strtab + obj->symtab[r_symndx].st_name);
+				return -1;
+			}
+
+			perms |= __CHERI_CAP_PERMISSION_GLOBAL__;
+			perms |= __CHERI_CAP_PERMISSION_PERMIT_LOAD__;
+
+			relro = defobj->relro_page <= defobj->relocbase + def->st_value &&
+				defobj->relocbase + def->st_value < defobj->relro_page + defobj->relro_size;
+			if (ph->p_flags & PF_W && !relro) {
+				if (ph->p_flags & PF_X) {
+					_rtld_error("%s: Invalid permissions relocation for symbol %s: "
+							"in writable and executable segment",
+							obj->path, obj->strtab + obj->symtab[r_symndx].st_name);
+					return -1;
+				}
+
+				perms |= __CHERI_CAP_PERMISSION_PERMIT_STORE__;
+				perms |= __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__;
+				// TODO: Needed in some places, but can this be restricted in others?
+				perms |= __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__;
+			}
+
+			// TODO: Do we need to support segments containing .text and read-only
+			//       data, which would require LOAD_CAP?
+			if (ph->p_flags & PF_X)
+				perms |= __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__;
+			else
+				perms |= __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__;
+		}
+
+		store_ptr(where, perms, rlen);
+
+#ifdef DEBUG_VERBOSE
+		dbg("PERMS %s in %s --> 0x%llx in %s",
+			obj->strtab + obj->symtab[r_symndx].st_name,
+			obj->path, (unsigned long long)perms, defobj->path);
+#endif
+		break;
+	}
+
 	case R_CHERI_MEMCAP:
 		if (initialise_cap(where, false))
 			return -1;
@@ -823,36 +978,6 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 		if (err != 0)
 			return err;
 	}
-
-	/* MemCap Table */
-	/*if (obj->mctrel) {
-		rellim = (const Elf_Rel *)((caddr_t)obj->mctrel + obj->mctrelsize);
-		for (rel = obj->mctrel; rel < rellim; rel++) {
-			Elf_Word	r_symndx, r_type;
-			void		*where;
-
-			where = obj->relocbase + rel->r_offset;
-			r_symndx = ELF_R_SYM(rel->r_info);
-			r_type = ELF_R_TYPE(rel->r_info);
-
-			switch (r_type & 0xff) {
-			case R_CHERI_MEMCAP:
-				initialise_cap(where);
-				break;
-			default:
-				dbg("sym = %lu, type = %lu, offset = %p, "
-					"contents = %p, symbol = %s",
-					(u_long)r_symndx, (u_long)ELF_R_TYPE(rel->r_info),
-					(void *)(uintptr_t)rel->r_offset,
-					(void *)(uintptr_t)load_ptr(where, sizeof(Elf_Sword)),
-					obj->strtab + obj->symtab[r_symndx].st_name);
-				_rtld_error("%s: Unsupported relocation type %ld "
-					"in non-PLT relocations",
-					obj->path, (u_long) ELF_R_TYPE(rel->r_info));
-				return -1;
-			}
-		}
-	}*/
 
 	return 0;
 }
