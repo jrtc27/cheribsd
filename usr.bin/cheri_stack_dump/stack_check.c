@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 int
-main(int argc, char *argv[])
+main(int argc __unused, char *argv[] __unused)
 {
 
   /* get stack pointer */
@@ -17,12 +17,12 @@ main(int argc, char *argv[])
 
   asm("move %0, $sp"
       : "=r" (stack));
-  asm("ctoptr $at, $c11, $c0\n\t"
-      "move %0, $at"
+  asm("cgetdefault $c15\n\t"
+      "ctoptr %0, $c11, $c15"
       : "=r" (cap_stack)
-      :: "at");
+      :: "$c15");
 
-  printf("Current pid %lu\n", getpid());
+  printf("Current pid %lu\n", (unsigned long)getpid());
   printf("Stack pointer: 0x%0.16" PRIx64 "\n", stack);
   printf("Capability stack pointer: 0x%0.16" PRIx64 "\n", cap_stack);
 
