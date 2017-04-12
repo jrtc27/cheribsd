@@ -2460,7 +2460,11 @@ obj_from_addr(const void *addr)
 static void
 preinit_main(void)
 {
+#ifdef __CHERI_USE_MCT__
+    InitArrFunc *preinit_addr;
+#else
     Elf_Addr *preinit_addr;
+#endif
     int index;
 
     preinit_addr = cheri_setoffset(cheri_getdefault(), obj_main->preinit_array);
@@ -2468,7 +2472,11 @@ preinit_main(void)
 	return;
 
     for (index = 0; index < obj_main->preinit_array_num; index++) {
+#ifdef __CHERI_USE_MCT__
+	if (preinit_addr[index] != 0 && preinit_addr[index] != (InitArrFunc)1) {
+#else
 	if (preinit_addr[index] != 0 && preinit_addr[index] != 1) {
+#endif
 	    dbg("calling preinit function for %s at %lx", obj_main->path,
 	      preinit_addr[index]);
 	    LD_UTRACE(UTRACE_INIT_CALL, obj_main,
@@ -2567,7 +2575,11 @@ objlist_call_init(Objlist *list, RtldLockState *lockstate)
     Objlist_Entry *elm;
     Obj_Entry *obj;
     char *saved_msg;
+#ifdef __CHERI_USE_MCT__
+    InitArrFunc *init_addr;
+#else
     Elf_Addr *init_addr;
+#endif
     int index;
 
     /*
@@ -2612,7 +2624,11 @@ objlist_call_init(Objlist *list, RtldLockState *lockstate)
 	init_addr = cheri_setoffset(cheri_getdefault(), elm->obj->init_array);
 	if (init_addr != NULL) {
 	    for (index = 0; index < elm->obj->init_array_num; index++) {
+#ifdef __CHERI_USE_MCT__
+		if (init_addr[index] != 0 && init_addr[index] != (InitArrFunc)1) {
+#else
 		if (init_addr[index] != 0 && init_addr[index] != 1) {
+#endif
 		    dbg("calling init function for %s at %p", elm->obj->path,
 			(void *)(uintptr_t)init_addr[index]);
 		    LD_UTRACE(UTRACE_INIT_CALL, elm->obj,

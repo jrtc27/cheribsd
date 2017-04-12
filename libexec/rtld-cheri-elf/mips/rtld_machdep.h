@@ -87,8 +87,7 @@ struct fdesc {
 	(((InitFunc)(cheri_setoffset(cheri_getdefault(), (target))))())
 
 # define call_init_pointer(obj, target)					\
-	(((InitArrFunc)(cheri_setoffset(cheri_getdefault(), (target))))	\
-	    (main_argc, main_argv, environ))
+	(((InitArrFunc)(target))(main_argc, main_argv, environ))
 #else
 # define call_initfini_pointer(obj, target)				\
 	(((InitFunc)(cheri_setoffset(cheri_getpcc(), (target))))())
