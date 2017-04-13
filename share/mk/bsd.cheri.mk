@@ -66,7 +66,8 @@ MIPS_ABI=	purecap
 _CHERI_CC+=	-mxgot -fpic
 LIBDIR:=	/usr/libcheri
 ROOTOBJDIR=	${.OBJDIR:S,${.CURDIR},,}${SRCTOP}/worldcheri${SRCTOP}
-CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2} -ftls-model=local-exec
+CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2}
+STATIC_CFLAGS+=	-ftls-model=initial-exec
 .ifdef NO_WERROR
 # Implicit function declarations should always be an error in purecap mode as
 # we will probably generate wrong code for calling them
