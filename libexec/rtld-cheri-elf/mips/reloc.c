@@ -1093,10 +1093,18 @@ _mips_get_tls(void)
 	return cheri_setoffset(cheri_getdefault(), _rv);
 }
 
-void *
-__tls_get_addr(tls_index* ti)
+size_t
+__tls_get_addr(size_t ti)
 {
-	intptr_t** tls;
+	tls_index *ti_c = cheri_setoffset(cheri_getdefault(), ti);
+
+	return (size_t)__tls_get_addr_c(ti_c);
+}
+
+void *
+__tls_get_addr_c(tls_index *ti)
+{
+	Elf_Addr **tls;
 	char *p;
 
 #ifdef TLS_USE_SYSARCH

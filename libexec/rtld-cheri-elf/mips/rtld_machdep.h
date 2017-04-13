@@ -118,7 +118,8 @@ typedef struct {
  */
 void _rtld_bind_start(void);
 
-extern void *__tls_get_addr(tls_index *ti);
+extern size_t __tls_get_addr(size_t ti);
+extern void *__tls_get_addr_c(tls_index *ti);
 
 #define	RTLD_DEFAULT_STACK_PF_EXEC	PF_X
 #define	RTLD_DEFAULT_STACK_EXEC		PROT_EXEC
