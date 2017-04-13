@@ -3471,7 +3471,7 @@ do_dlsym(void *handle, const char *name, void *retaddr, const Ver_Entry *ve,
 	else if (ELF_ST_TYPE(def->st_info) == STT_TLS) {
 	    ti.ti_module = defobj->tlsindex;
 	    ti.ti_offset = def->st_value;
-	    sym = __tls_get_addr(&ti);
+	    sym = __tls_get_addr_c(&ti);
 	} else
 	    sym = defobj->relocbase + def->st_value;
 	LD_UTRACE(UTRACE_DLSYM_STOP, handle, sym, 0, 0, name);
@@ -4597,11 +4597,11 @@ unref_dag(Obj_Entry *root)
 /*
  * Common code for MD __tls_get_addr().
  */
-static void *tls_get_addr_slow(intptr_t **, int, size_t) __noinline;
+static void *tls_get_addr_slow(Elf_Addr **, int, size_t) __noinline;
 static void *
-tls_get_addr_slow(intptr_t **dtvp, int index, size_t offset)
+tls_get_addr_slow(Elf_Addr **dtvp, int index, size_t offset)
 {
-    intptr_t *newdtv, *dtv;
+    Elf_Addr *newdtv, *dtv;
     RtldLockState lockstate;
     int to_copy;
 
@@ -4629,19 +4629,29 @@ tls_get_addr_slow(intptr_t **dtvp, int index, size_t offset)
 	    dtv[index + 1] = (Elf_Addr)allocate_module_tls(index);
 	lock_release(rtld_bind_lock, &lockstate);
     }
+
+#ifndef __CHERI_PURE_CAPABILITY__
     return ((void *)(dtv[index + 1] + offset));
+#else
+    return (cheri_setoffset(cheri_getdefault(), dtv[index + 1] + offset));
+#endif
 }
 
 void *
-tls_get_addr_common(intptr_t **dtvp, int index, size_t offset)
+tls_get_addr_common(Elf_Addr **dtvp, int index, size_t offset)
 {
-	intptr_t *dtv;
+	Elf_Addr *dtv;
 
 	dtv = *dtvp;
 	/* Check dtv generation in case new modules have arrived */
 	if (__predict_true(dtv[0] == tls_dtv_generation &&
 	    dtv[index + 1] != 0))
+#ifndef __CHERI_PURE_CAPABILITY__
 		return ((void *)(dtv[index + 1] + offset));
+#else
+		return (cheri_setoffset(cheri_getdefault(), dtv[index + 1] + offset));
+#endif
+
 	return (tls_get_addr_slow(dtvp, index, offset));
 }
 
@@ -4656,9 +4666,9 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 {
     Obj_Entry *obj;
     char *tcb;
-    intptr_t **tls;
-    intptr_t *dtv;
-    char *addr;
+    Elf_Addr **tls;
+    Elf_Addr *dtv;
+    Elf_Addr addr;
     int i;
 
     if (oldtcb != NULL && tcbsize == TLS_TCB_SIZE)
@@ -4666,7 +4676,7 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 
     assert(tcbsize >= TLS_TCB_SIZE);
     tcb = xcalloc(1, tls_static_space - TLS_TCB_SIZE + tcbsize);
-    tls = (intptr_t **)(tcb + tcbsize - TLS_TCB_SIZE);
+    tls = (Elf_Addr **)(tcb + tcbsize - TLS_TCB_SIZE);
 
     if (oldtcb != NULL) {
 	memcpy(tls, oldtcb, tls_static_space);
@@ -4681,21 +4691,33 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 	    }
 	}
     } else {
-	dtv = xcalloc(tls_max_index + 2, sizeof(void *));
+	dtv = xcalloc(tls_max_index + 2, sizeof(Elf_Addr));
 	tls[0] = dtv;
-	dtv[0] = (intptr_t)tls_dtv_generation;
-	dtv[1] = (intptr_t)tls_max_index;
+	dtv[0] = tls_dtv_generation;
+	dtv[1] = tls_max_index;
 
 	for (obj = globallist_curr(objs); obj != NULL;
 	  obj = globallist_next(obj)) {
 	    if (obj->tlsoffset > 0) {
-		addr = (char *)tls + obj->tlsoffset;
+		addr = (Elf_Addr)tls + obj->tlsoffset;
+
+#ifndef __CHERI_PURE_CAPABILITY__
 		if (obj->tlsinitsize > 0)
 		    memcpy(addr, obj->tlsinit, obj->tlsinitsize);
 		if (obj->tlssize > obj->tlsinitsize)
 		    memset((void*) (addr + obj->tlsinitsize), 0,
 			   obj->tlssize - obj->tlsinitsize);
-		dtv[obj->tlsindex + 1] = (intptr_t)addr;
+#else
+		if (obj->tlsinitsize > 0)
+		    memcpy(cheri_setoffset(cheri_getdefault(), addr),
+			    obj->tlsinit, obj->tlsinitsize);
+		if (obj->tlssize > obj->tlsinitsize)
+		    memset(cheri_setoffset(cheri_getdefault(),
+					   addr + obj->tlsinitsize),
+			   0, obj->tlssize - obj->tlsinitsize);
+#endif
+
+		dtv[obj->tlsindex + 1] = addr;
 	    }
 	}
     }
@@ -4706,20 +4728,25 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 void
 free_tls(void *tcb, size_t tcbsize, size_t tcbalign)
 {
-    char **dtv;
-    char *tlsstart, *tlsend;
+    Elf_Addr *dtv;
+    Elf_Addr **tlsstart, **tlsend;
     size_t dtvsize, i;
 
     assert(tcbsize >= TLS_TCB_SIZE);
 
-    tlsstart = (char *)tcb + tcbsize - TLS_TCB_SIZE;
-    tlsend = tlsstart + tls_static_space;
+    tlsstart = (Elf_Addr **)((char *)tcb + tcbsize - TLS_TCB_SIZE);
+    tlsend = (Elf_Addr **)((char *)tlsstart + tls_static_space);
 
-    dtv = *(void **)tlsstart;
+    dtv = *tlsstart;
     dtvsize = (size_t)dtv[1];
     for (i = 0; i < dtvsize; i++) {
-	if (dtv[i+2] && (dtv[i+2] < tlsstart || dtv[i+2] >= tlsend)) {
+	if (dtv[i+2] && (dtv[i+2] < (Elf_Addr)tlsstart ||
+	    dtv[i+2] >= (Elf_Addr)tlsend)) {
+#ifndef __CHERI_PURE_CAPABILITY__
 	    free((void*)dtv[i+2]);
+#else
+	    free(cheri_setoffset(cheri_getdefault(), dtv[i+2]));
+#endif
 	}
     }
     free(dtv);

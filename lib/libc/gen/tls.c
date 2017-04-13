@@ -60,7 +60,11 @@ __attribute__((__regparm__(1))) void * ___libc_tls_get_addr(void *);
 
 #endif
 
+#ifndef __CHERI_PURE_CAPABILITY__
 void * __libc_tls_get_addr(void *);
+#else
+size_t __libc_tls_get_addr(size_t);
+#endif
 __weak_reference(__libc_tls_get_addr, __tls_get_addr);
 
 void *_rtld_allocate_tls(void *oldtls, size_t tcbsize, size_t tcbalign);
@@ -106,8 +110,13 @@ ___libc_tls_get_addr(void *ti __unused)
 
 #endif
 
+#ifndef __CHERI_PURE_CAPABILITY__
 void *
 __libc_tls_get_addr(void *ti __unused)
+#else
+size_t
+__libc_tls_get_addr(size_t ti __unused)
+#endif
 {
 	return (0);
 }
