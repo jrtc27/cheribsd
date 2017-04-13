@@ -65,7 +65,8 @@ OBJCOPY:=	objcopy
 _CHERI_CC+=	-mabi=purecap -mxgot -fpic
 LIBDIR:=	/usr/libcheri
 ROOTOBJDIR=	${.OBJDIR:S,${.CURDIR},,}${SRCTOP}/worldcheri${SRCTOP}
-CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2} -ftls-model=local-exec
+CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2}
+STATIC_CFLAGS+=	-ftls-model=initial-exec
 # Clang no longer defines __LP64__ for Cheri purecap ABI but there are a
 # lot of files that use it to check for not 32-bit
 # XXXAR: Remove this once we have checked all the #ifdef __LP64__ uses
