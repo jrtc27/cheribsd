@@ -74,8 +74,10 @@ LEAF(rtld_start)
 	cgetdefault	$c4
 	csetoffset	$c4, $c4, a1	/* relocbase */
 
+#ifdef __CHERI_USE_MCT__
 	dla		a0, _cp
 	cincoffset	$c14, $c4, a0	/* $cp */
+#endif
 
 	dla		a0, _DYNAMIC
 	cincoffset	$c3, $c4, a0	/* dynp */
@@ -93,6 +95,17 @@ LEAF(rtld_start)
 	cincoffset	$c12, $c12, t0
 	cjalr		$c12, $c17
 	nop
+
+#ifdef __CHERI_USE_MCT__
+	/*
+	 * Re-load $c14 with a properly-initialised _cp capability with strict
+	 * bounds and permissions, rather than the one we fabricated from $c0
+	 * earlier.
+	 */
+	lui		t0, %mctdata_hi(_cp)
+	daddiu		t0, t0, %mctdata_lo(_cp)
+	clc		$c14, t0, 0($c14)
+#endif
 
 	clc		$c3, sp, 2*CHERICAP_SIZE($c11)	/* execdata */
 	/* XXX-BD: Should allocate cleanup and objp outside stack. */
