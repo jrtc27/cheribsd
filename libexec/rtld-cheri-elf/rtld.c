@@ -1345,10 +1345,17 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 
     obj = obj_new();
     for (ph = phdr;  ph < phlimit;  ph++) {
-	if (ph->p_vaddr < image_vaddr_start)
-	    image_vaddr_start = ph->p_vaddr;
-	if (ph->p_vaddr + ph->p_memsz > image_vaddr_end)
-	    image_vaddr_end = ph->p_vaddr + ph->p_memsz;
+	/*
+	 * Some segments, like PT_GNU_STACK, have a zero memsz (and vaddr,
+	 * though zero size can be skipped regardless of its address), so
+	 * ignore them for calculating bounds.
+	 */
+	if (ph->p_memsz != 0) {
+	    if (ph->p_vaddr < image_vaddr_start)
+		image_vaddr_start = ph->p_vaddr;
+	    if (ph->p_vaddr + ph->p_memsz > image_vaddr_end)
+		image_vaddr_end = ph->p_vaddr + ph->p_memsz;
+	}
 
 	if (ph->p_type != PT_PHDR)
 	    continue;
