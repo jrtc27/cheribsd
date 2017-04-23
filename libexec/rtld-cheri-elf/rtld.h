@@ -189,7 +189,7 @@ typedef struct Struct_Obj_Entry {
     Elf_Word gotsym;		/* First dynamic symbol in GOT */
 #endif
 #ifdef __CHERI__
-    uintptr_t mct;		/* MemCap table */
+    caddr_t mct;		/* MemCap table */
     unsigned long mctsize;	/* Size in bytes of MemCap Table */
     uintcap_t cp;		/* Capability Pointer */
 #endif
