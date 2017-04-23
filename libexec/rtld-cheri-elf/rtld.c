@@ -1339,17 +1339,36 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
     const Elf_Phdr *ph;
     caddr_t note_start, note_end;
     int nsegs = 0;
+    Elf_Addr relocbase;
+    Elf_Addr image_vaddr_start = ~((Elf_Addr)0);
+    Elf_Addr image_vaddr_end = 0;
 
     obj = obj_new();
     for (ph = phdr;  ph < phlimit;  ph++) {
+	if (ph->p_vaddr < image_vaddr_start)
+	    image_vaddr_start = ph->p_vaddr;
+	if (ph->p_vaddr + ph->p_memsz > image_vaddr_end)
+	    image_vaddr_end = ph->p_vaddr + ph->p_memsz;
+
 	if (ph->p_type != PT_PHDR)
 	    continue;
 
-	obj->phdr = phdr;
+	obj->phdr = cheri_csetbounds(phdr, ph->p_memsz);
 	obj->phsize = ph->p_memsz;
-	obj->relocbase = (caddr_t)phdr - ph->p_vaddr;
-	break;
+	relocbase = (Elf_Addr)phdr - ph->p_vaddr;
     }
+
+    /*
+     * We only want
+     * [obj->relocbase + image_vaddr_start, obj->relocbase + image_vaddr_end)
+     * to be the valid range of the obj->relocbase capability. Therefore we
+     * give it a *negative* offset of -image_vaddr_start.
+     */
+    obj->relocbase = cheri_csetbounds(
+                         cheri_setoffset(cheri_getdefault(),
+                                         relocbase + image_vaddr_start),
+                         image_vaddr_end - image_vaddr_start) -
+                     image_vaddr_start;
 
     obj->stack_flags = PF_X | PF_R | PF_W;
 
