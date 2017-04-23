@@ -1217,7 +1217,7 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 
 #ifdef __CHERI__
 	case DT_CHERI_MCT:
-	    obj->mct = (uintptr_t)(obj->relocbase + dynp->d_un.d_ptr);
+	    obj->mct = (caddr_t)(obj->relocbase + dynp->d_un.d_ptr);
 	    break;
 	case DT_CHERI_MCTSZ:
 	    obj->mctsize = dynp->d_un.d_val;

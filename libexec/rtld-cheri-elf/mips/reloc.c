@@ -94,7 +94,7 @@ init_cp(Obj_Entry *obj)
 
 	//dbg("%s: _cp is at %p", obj->path, (void *)(uintptr_t)req.sym_out->st_value);
 
-	uint64_t base = obj->mct;
+	uint64_t base = (uint64_t)obj->mct;
 	uint64_t len = obj->mctsize;
 	uint64_t perm = __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ | __CHERI_CAP_PERMISSION_GLOBAL__;
 	//uint64_t off = req.sym_out->st_value - base;
