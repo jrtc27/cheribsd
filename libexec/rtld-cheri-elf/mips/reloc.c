@@ -216,8 +216,14 @@ initialise_cap(void *where, bool early)
 		return 0;
 
 	/* Check this is not a duplicate call */
-	if (__builtin_cheri_tag_get(u->cap))
-		return 0;
+	// XXX: Disable for now; there should be no duplicate relocations anyway
+	//      For some reason, when running postgres-benchmark.sh, pgbench
+	//      crashes early after relocating because some of its
+	//      capabilities-to-be-initialised already had their tag bits set.
+	//      Is this because QEMU isn't clearing tags for certain operations
+	//      when it should?
+	//if (__builtin_cheri_tag_get(u->cap))
+	//	return 0;
 
 	void * __capability derive_from;
 	if (u->info.perms & __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__) {
