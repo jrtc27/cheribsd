@@ -3,6 +3,12 @@
 
 .include <src.opts.mk>
 
+.if ${MK_CHERI_SHARED_PROG} == "no"
+# need to be able to dlopen for PAM, which isn't available when linking
+# statically
+WANT_CHERI=none
+.endif
+
 PROG=	su
 
 WARNS?=	5
