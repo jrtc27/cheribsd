@@ -3,8 +3,10 @@
 
 .include <src.opts.mk>
 
-.if ${MK_CHERI_USE_LLD} == "no"
+.if ${MK_CHERI_USE_LLD} == "no" || ${MK_CHERI_SHARED_PROG} == "no"
 # linker error
+# need to be able to dlopen for PAM, which isn't available when linking
+# statically
 WANT_CHERI=none
 .endif
 
