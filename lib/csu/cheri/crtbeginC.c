@@ -119,7 +119,7 @@ crt_call_constructors(void)
 #ifdef __CHERI_USE_MCT__
 			cheri_func = *func;
 #else
-			cheri_function_ptr cheri_func =
+			cheri_func =
 				(cheri_function_ptr)__builtin_cheri_offset_set(
 						__builtin_cheri_program_counter_get(), *func);
 #endif
