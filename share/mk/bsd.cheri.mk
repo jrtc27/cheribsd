@@ -64,6 +64,9 @@ _CHERI_CC+= -Wno-deprecated-declarations
 OBJCOPY:=	objcopy
 MIPS_ABI=	purecap
 _CHERI_CC+=	-mxgot -fpic
+.if ${MK_CHERI_USE_MCT} == "no"
+_CHERI_CC+=	-mno-mct
+.endif
 LIBDIR:=	/usr/libcheri
 ROOTOBJDIR=	${.OBJDIR:S,${.CURDIR},,}${SRCTOP}/worldcheri${SRCTOP}
 CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2}
