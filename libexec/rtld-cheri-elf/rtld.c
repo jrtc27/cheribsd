@@ -1365,6 +1365,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 	relocbase = (Elf_Addr)phdr - ph->p_vaddr;
     }
 
+#ifdef __CHERI_USE_MCT__
     /*
      * We only want
      * [obj->relocbase + image_vaddr_start, obj->relocbase + image_vaddr_end)
@@ -1376,6 +1377,9 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
                                          relocbase + image_vaddr_start),
                          image_vaddr_end - image_vaddr_start) -
                      image_vaddr_start;
+#else
+    obj->relocbase = cheri_setoffset(cheri_getdefault(), relocbase);
+#endif
 
     obj->stack_flags = PF_X | PF_R | PF_W;
 
