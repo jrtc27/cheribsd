@@ -85,7 +85,7 @@ struct fdesc {
 # define make_function_pointer(def, defobj)				\
 	cheri_setoffset(cheri_getpcc(),					\
 	                cheri_getbase((defobj)->relocbase) +		\
-	                cheri_getbase((defobj)->relocbase) +		\
+	                cheri_getoffset((defobj)->relocbase) +		\
 	                (def)->st_value)
 #endif
 
