@@ -70,7 +70,26 @@ _CHERI_CC+=	-mno-mct
 LIBDIR:=	/usr/libcheri
 ROOTOBJDIR=	${.OBJDIR:S,${.CURDIR},,}${SRCTOP}/worldcheri${SRCTOP}
 CFLAGS+=	${CHERI_OPTIMIZATION_FLAGS:U-O2}
+.if ${MK_CHERI_USE_MCT} == "yes"
 STATIC_CFLAGS+=	-ftls-model=initial-exec
+.else
+# Not quite right (could statically link a library with the main executable
+# which itself is dynamically linked against a library providing the definition
+# of a TLS symbol referenced by the static library) since this requires the
+# referenced symbol to live in the main executable.
+#
+# However, without multi-GOT support in LLD, statically-linked binaries can end
+# up with a lot of GOT entries, forcing the TLS entries (located at the end)
+# out of the first 64K. Initial Exec (and Global Dynamic, though that's only
+# relevant if the dynamic libraries get too big as well) uses a 16-bit
+# GP-relative relocation to these TLS entries, so they have to be in the first
+# 64K, but Local Exec (and Local Dynamic) uses a 32-bit sequence, and since we
+# can get away with this model for our use case, let's work around the issue.
+#
+# Who decided it was a good idea to put the 16-bit entries after some of the
+# 32-bit entries?...
+STATIC_CFLAGS+=	-ftls-model=local-exec
+.endif
 .ifdef NO_WERROR
 # Implicit function declarations should always be an error in purecap mode as
 # we will probably generate wrong code for calling them
