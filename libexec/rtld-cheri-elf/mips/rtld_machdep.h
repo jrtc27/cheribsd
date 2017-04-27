@@ -72,8 +72,22 @@ struct fdesc {
 	u.ptr;								\
 })
 
-#define make_function_pointer(def, defobj)				\
+#ifdef __CHERI_USE_MCT
+# define make_function_pointer(def, defobj)				\
 	((defobj)->relocbase + (def)->st_value)
+#else
+/*
+ * relocbase will have a non-zero base (either from mmap or from explicitly
+ * setting it when reading the main object's program headers, with the
+ * exception of obj_rtld. Non-MCT code has function capabilities pointing to
+ * the entry point, and relies on PCC's base being 0 when deriving gp.
+ */
+# define make_function_pointer(def, defobj)				\
+	cheri_setoffset(cheri_getpcc(),					\
+	                cheri_getbase((defobj)->relocbase) +		\
+	                cheri_getbase((defobj)->relocbase) +		\
+	                (def)->st_value)
+#endif
 
 #define make_entry_function_pointer(entry, obj_main, fdesc_out)		\
 ({									\
