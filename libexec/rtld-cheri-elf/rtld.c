@@ -1049,8 +1049,10 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		    dynp->d_un.d_ptr);
 		obj->nbuckets = hashtab[0];
 		obj->nchains = hashtab[1];
-		obj->buckets = hashtab + 2;
-		obj->chains = obj->buckets + obj->nbuckets;
+		obj->buckets = cheri_csetbounds(hashtab + 2,
+		                                obj->nbuckets * sizeof(obj->buckets[0]));
+		obj->chains = cheri_csetbounds(hashtab + 2 + obj->nbuckets,
+		                               obj->nchains * sizeof(obj->chains[0]));
 		obj->valid_hash_sysv = obj->nbuckets > 0 && obj->nchains > 0 &&
 		  obj->buckets != NULL;
 	    }
@@ -1066,9 +1068,12 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		bloom_size32 = (__ELF_WORD_SIZE / 32) * nmaskwords;
 		obj->maskwords_bm_gnu = nmaskwords - 1;
 		obj->shift2_gnu = hashtab[3];
-		obj->bloom_gnu = (Elf_Addr *) (hashtab + 4);
-		obj->buckets_gnu = hashtab + 4 + bloom_size32;
-		obj->chain_zero_gnu = obj->buckets_gnu + obj->nbuckets_gnu -
+		obj->bloom_gnu = cheri_csetbounds((Elf_Addr *) (hashtab + 4),
+		                                  bloom_size32);
+		obj->buckets_gnu = cheri_csetbounds(hashtab + 4 + bloom_size32,
+		                                    obj->nbuckets_gnu * sizeof(obj->buckets_gnu[0]));
+		/* Bounds are set later once dynsymcount is determined */
+		obj->chain_zero_gnu = hashtab + 4 + bloom_size32 + obj->nbuckets_gnu -
 		  obj->symndx_gnu;
 		/* Number of bitmask words is required to be power of 2 */
 		obj->valid_hash_gnu = powerof2(nmaskwords) &&
@@ -1258,6 +1263,28 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 	}
     }
 
+    if (obj->rel)
+	obj->rel = cheri_csetbounds(obj->rel, obj->relsize);
+    if (obj->pltrel)
+	obj->pltrel = cheri_csetbounds(obj->pltrel, obj->pltrelsize);
+    if (obj->rela)
+	obj->rela = cheri_csetbounds(obj->rela, obj->relasize);
+    if (obj->strtab)
+	obj->strtab = cheri_csetbounds(obj->strtab, obj->strsize);
+#ifdef __mips__
+    if (obj->pltgot)
+	/* Careful; excludes the TLS entries at the end, but they should never
+	 * be accessed using this capability anyway. */
+	obj->pltgot = cheri_csetbounds(obj->pltgot,
+	                               (obj->local_gotno +
+	                                (obj->symtabno - obj->gotsym)) *
+	                               sizeof(obj->pltgot[0]));
+#endif
+#ifdef __CHERI__
+    if (obj->mct)
+	obj->mct = cheri_csetbounds(obj->mct, obj->mctsize);
+#endif
+
     obj->traced = false;
 
     if (plttype == DT_RELA) {
@@ -1280,8 +1307,19 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		obj->dynsymcount++;
 	    while ((*hashval++ & 1u) == 0);
 	}
+	/* Index zero should never be accessed, therefore use a negative offset
+	 * with base pointing at the first element */
+	obj->chain_zero_gnu = cheri_csetbounds(obj->chain_zero_gnu + 1,
+	                                       obj->dynsymcount * sizeof(obj->chain_zero_gnu[0])) - 1;
 	obj->dynsymcount += obj->symndx_gnu;
     }
+
+    if (obj->symtab)
+	obj->symtab = cheri_csetbounds(obj->symtab,
+	                               obj->dynsymcount * sizeof(obj->symtab[0]));
+    if (obj->versyms)
+	obj->versyms = cheri_csetbounds(obj->versyms,
+	                                obj->dynsymcount * sizeof(obj->versyms[0]));
 }
 
 static bool
@@ -1383,7 +1421,8 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 	switch (ph->p_type) {
 
 	case PT_INTERP:
-	    obj->interp = (const char *)(ph->p_vaddr + obj->relocbase);
+	    obj->interp = cheri_csetbounds((const char *)(ph->p_vaddr + obj->relocbase),
+	                                   ph->p_filesz);
 	    break;
 
 	case PT_LOAD:
@@ -1400,7 +1439,8 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 	    break;
 
 	case PT_DYNAMIC:
-	    obj->dynamic = (const Elf_Dyn *)(ph->p_vaddr + obj->relocbase);
+	    obj->dynamic = cheri_csetbounds((const Elf_Dyn *)(ph->p_vaddr + obj->relocbase),
+	                                    ph->p_filesz);
 	    break;
 
 	case PT_TLS:
@@ -1408,7 +1448,8 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 	    obj->tlssize = ph->p_memsz;
 	    obj->tlsalign = ph->p_align;
 	    obj->tlsinitsize = ph->p_filesz;
-	    obj->tlsinit = (void*)(ph->p_vaddr + obj->relocbase);
+	    obj->tlsinit = cheri_csetbounds((void*)(ph->p_vaddr + obj->relocbase),
+	                                    ph->p_filesz);
 	    break;
 
 	case PT_GNU_STACK:
@@ -1416,12 +1457,14 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 	    break;
 
 	case PT_GNU_RELRO:
-	    obj->relro_page = obj->relocbase + trunc_page(ph->p_vaddr);
 	    obj->relro_size = round_page(ph->p_memsz);
+	    obj->relro_page = cheri_csetbounds(obj->relocbase + trunc_page(ph->p_vaddr),
+	                                       obj->relro_size);
 	    break;
 
 	case PT_NOTE:
-	    note_start = (caddr_t)obj->relocbase + ph->p_vaddr;
+	    note_start = cheri_csetbounds((caddr_t)obj->relocbase + ph->p_vaddr,
+	                                  ph->p_filesz);
 	    note_end = note_start + ph->p_filesz;
 	    digest_notes(obj, note_start, note_end);
 	    break;
@@ -2047,8 +2090,9 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
     relocate_objects(&objtmp, true, &objtmp, 0, NULL);
 
     ehdr = (Elf_Ehdr *)mapbase;
-    objtmp.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
     objtmp.phsize = ehdr->e_phnum * sizeof(objtmp.phdr[0]);
+    objtmp.phdr = cheri_csetbounds((Elf_Phdr *)((char *)mapbase + ehdr->e_phoff),
+                                   objtmp.phsize);
 
     /* Initialize the object list. */
     TAILQ_INIT(&obj_list);
@@ -5095,6 +5139,7 @@ rtld_verify_object_versions(Obj_Entry *obj)
     const Elf_Vernaux *vna;
     const Obj_Entry *depobj;
     int maxvernum, vernum;
+    const char *vnend, *vdend;
 
     if (obj->ver_checked)
 	return (0);
@@ -5107,7 +5152,10 @@ rtld_verify_object_versions(Obj_Entry *obj)
      * while there.
      */
     vn = obj->verneed;
+    vnend = (char *)vn;
     while (vn != NULL) {
+	if (vn + 1 > vnend)
+	    vnend = (char *)(vn + 1);
 	if (vn->vn_version != VER_NEED_CURRENT) {
 	    _rtld_error("%s: Unsupported version %d of Elf_Verneed entry",
 		obj->path, vn->vn_version);
@@ -5115,6 +5163,8 @@ rtld_verify_object_versions(Obj_Entry *obj)
 	}
 	vna = (const Elf_Vernaux *) ((char *)vn + vn->vn_aux);
 	for (;;) {
+	    if (vna + 1 > vnend)
+		vnend = (char *)(vna + 1);
 	    vernum = VER_NEED_IDX(vna->vna_other);
 	    if (vernum > maxvernum)
 		maxvernum = vernum;
@@ -5126,21 +5176,38 @@ rtld_verify_object_versions(Obj_Entry *obj)
 	    break;
 	vn = (const Elf_Verneed *) ((char *)vn + vn->vn_next);
     }
+    if (obj->verneed)
+	obj->verneed = cheri_csetbounds(obj->verneed,
+	                                vnend - (char *)obj->verneed);
 
     vd = obj->verdef;
+    vdend = (char *)vd;
     while (vd != NULL) {
+	if (vd + 1 > vdend)
+	    vdend = (char *)(vd + 1);
 	if (vd->vd_version != VER_DEF_CURRENT) {
 	    _rtld_error("%s: Unsupported version %d of Elf_Verdef entry",
 		obj->path, vd->vd_version);
 	    return (-1);
 	}
 	vernum = VER_DEF_IDX(vd->vd_ndx);
+	vda = (const Elf_Verdaux *)((char *)vd + vd->vd_aux);
+	for (;;) {
+	    if (vda + 1 > vdend)
+		vdend = (char *)(vda + 1);
+	    if (vda->vda_next == 0)
+		 break;
+	    vda = (const Elf_Verdaux *) ((char *)vda + vda->vda_next);
+	}
 	if (vernum > maxvernum)
 		maxvernum = vernum;
 	if (vd->vd_next == 0)
 	    break;
 	vd = (const Elf_Verdef *) ((char *)vd + vd->vd_next);
     }
+    if (obj->verdef)
+	obj->verdef = cheri_csetbounds(obj->verdef,
+	                               vdend - (char *)obj->verdef);
 
     if (maxvernum == 0)
 	return (0);

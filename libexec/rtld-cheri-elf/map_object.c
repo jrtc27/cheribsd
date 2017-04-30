@@ -101,8 +101,9 @@ map_object(int fd, const char *path, const struct stat *sb)
      *
      * We expect that the loadable segments are ordered by load address.
      */
-    phdr = (Elf_Phdr *) ((char *)hdr + hdr->e_phoff);
     phsize  = hdr->e_phnum * sizeof (phdr[0]);
+    phdr = cheri_csetbounds((Elf_Phdr *) ((char *)hdr + hdr->e_phoff),
+                            phsize);
     phlimit = phdr + hdr->e_phnum;
     nsegs = -1;
     phdyn = phinterp = phtls = NULL;
@@ -168,6 +169,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 	    } else {
 		note_start = (char *)hdr + phdr->p_offset;
 	    }
+	    note_start = cheri_csetbounds(note_start, phdr->p_filesz);
 	    note_end = note_start + phdr->p_filesz;
 	    break;
 	}
@@ -286,11 +288,13 @@ map_object(int fd, const char *path, const struct stat *sb)
       base_vaddr;
     obj->vaddrbase = base_vaddr;
     obj->relocbase = mapbase - base_vaddr;
-    obj->dynamic = (const Elf_Dyn *) (obj->relocbase + phdyn->p_vaddr);
+    obj->dynamic = cheri_csetbounds((const Elf_Dyn *) (obj->relocbase + phdyn->p_vaddr),
+                                    phdyn->p_filesz);
     if (hdr->e_entry != 0)
 	obj->entry = (caddr_t) (obj->relocbase + hdr->e_entry);
     if (phdr_vaddr != 0) {
-	obj->phdr = (const Elf_Phdr *) (obj->relocbase + phdr_vaddr);
+	obj->phdr = cheri_csetbounds((const Elf_Phdr *) (obj->relocbase + phdr_vaddr),
+	                             phsize);
     } else {
 	obj->phdr = malloc(phsize);
 	if (obj->phdr == NULL) {
@@ -303,18 +307,21 @@ map_object(int fd, const char *path, const struct stat *sb)
     }
     obj->phsize = phsize;
     if (phinterp != NULL)
-	obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
+	obj->interp = cheri_csetbounds((const char *) (obj->relocbase + phinterp->p_vaddr),
+	                               phinterp->p_filesz);
     if (phtls != NULL) {
 	tls_dtv_generation++;
 	obj->tlsindex = ++tls_max_index;
 	obj->tlssize = phtls->p_memsz;
 	obj->tlsalign = phtls->p_align;
 	obj->tlsinitsize = phtls->p_filesz;
-	obj->tlsinit = mapbase + phtls->p_vaddr;
+	obj->tlsinit = cheri_csetbounds(mapbase + phtls->p_vaddr,
+	                                obj->tlsinitsize);
     }
     obj->stack_flags = stack_flags;
-    obj->relro_page = obj->relocbase + trunc_page(relro_page);
     obj->relro_size = round_page(relro_size);
+    obj->relro_page = cheri_csetbounds(obj->relocbase + trunc_page(relro_page),
+                                       obj->relro_size);
     if (note_start < note_end)
 	digest_notes(obj, note_start, note_end);
     if (note_map != NULL)

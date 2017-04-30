@@ -76,34 +76,12 @@ set_cp(Obj_Entry *obj)
 int
 init_cp(Obj_Entry *obj)
 {
-	// XXX: Hard-coded _cp offset, should use symlook instead
-	//      Seems to be giving ESRCH currently (maybe because not absolute?)
-	//SymLook req;
-	//int res;
 	void * __capability cap;
 
-	//symlook_init(&req, "_cp");
-	//req.ventry = NULL;
-	//req.flags = SYMLOOK_EARLY;
-	//res = symlook_obj(&req, obj);
-
-	//dbg("%s: _cp lookup gave %d", obj->path, res);
-
-	//if (res != 0)
-	//	return -1;
-
-	//dbg("%s: _cp is at %p", obj->path, (void *)(uintptr_t)req.sym_out->st_value);
-
-	uint64_t base = (uint64_t)obj->mct;
-	uint64_t len = obj->mctsize;
 	uint64_t perm = __CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ | __CHERI_CAP_PERMISSION_GLOBAL__;
-	//uint64_t off = req.sym_out->st_value - base;
 	uint64_t off = 0x3ff0;
 
-	void * __capability global_data = __builtin_cheri_global_data_get();
-	cap = __builtin_cheri_offset_increment(global_data, base);
-	cap = __builtin_cheri_bounds_set(cap, len);
-	cap = __builtin_cheri_offset_increment(cap, off);
+	cap = __builtin_cheri_offset_increment(obj->mct, off);
 	cap = __builtin_cheri_perms_and(cap, perm);
 	obj->cp = (uintcap_t) cap;
 	dbg("%s: saving cp as %p", obj->path, cap);
@@ -284,6 +262,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 			ELF_R_NXTTYPE_64_P(r_type)
 			? sizeof(Elf_Sxword)
 			: sizeof(Elf_Sword);
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -312,6 +291,7 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
+		where = cheri_csetbounds(where, sizeof(uintcap_t));
 		if (initialise_cap(where, true))
 			abort();
 		break;
@@ -368,6 +348,14 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 	}
 
 	i = GOT1_RESERVED_FOR_RTLD(got) ? 2 : 1;
+
+	if (rel)
+		rel = cheri_csetbounds(rel, relsz);
+	if (rela)
+		rela = cheri_csetbounds(rela, relasz);
+	symtab = cheri_csetbounds(symtab, symtabno * sizeof(symtab[0]));
+	got = cheri_csetbounds(got, (local_gotno + (symtabno - gotsym)) * sizeof(got[0]));
+
 	/* Relocate the local GOT entries */
 	got += i;
 	for (; i < local_gotno; i++) {
@@ -467,6 +455,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 			ELF_R_NXTTYPE_64_P(r_type)
 			? sizeof(Elf_Sxword)
 			: sizeof(Elf_Sword);
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -529,6 +518,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	{
 
 		const size_t rlen = sizeof(Elf_Addr);
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -557,6 +547,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 #endif
 	{
 		const size_t rlen = sizeof(Elf_Addr);
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -588,6 +579,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 #endif
 	{
 		const size_t rlen = sizeof(Elf_Addr);
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -619,6 +611,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	case R_CHERI_SIZE64:
 	{
 		const size_t rlen = 8;
+		where = cheri_csetbounds(where, rlen);
 		Elf_Sxword val;
 		Elf_Sxword base, offset, size;
 		const char *reloc_name;
@@ -706,6 +699,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	case R_CHERI_PERMS64:
 	{
 		const size_t rlen = 8;
+		where = cheri_csetbounds(where, rlen);
 		uint64_t perms = 0;
 		int relro;
 		const Elf_Phdr *phlimit;
@@ -770,6 +764,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	}
 
 	case R_CHERI_MEMCAP:
+		where = cheri_csetbounds(where, sizeof(uintcap_t));
 		if (initialise_cap(where, false))
 			return -1;
 
