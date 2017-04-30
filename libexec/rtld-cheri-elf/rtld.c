@@ -5270,12 +5270,14 @@ int
 obj_enforce_relro(Obj_Entry *obj)
 {
 
-	//if (obj->relro_size > 0 && mprotect(obj->relro_page, obj->relro_size,
-	//    PROT_READ) == -1) {
-	//	_rtld_error("%s: Cannot enforce relro protection: %s",
-	//	    obj->path, rtld_strerror(errno));
-	//	return (-1);
-	//}
+#ifndef __CHERI_OLD_CAP_RELOCS__
+	if (obj->relro_size > 0 && mprotect(obj->relro_page, obj->relro_size,
+	    PROT_READ) == -1) {
+		_rtld_error("%s: Cannot enforce relro protection: %s",
+		    obj->path, rtld_strerror(errno));
+		return (-1);
+	}
+#endif
 	return (0);
 }
 
