@@ -72,7 +72,7 @@ struct fdesc {
 	u.ptr;								\
 })
 
-#ifdef __CHERI_USE_MCT
+#ifdef __CHERI_USE_MCT__
 # define make_function_pointer(def, defobj)				\
 	((defobj)->relocbase + (def)->st_value)
 #else
