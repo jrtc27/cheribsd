@@ -79,6 +79,7 @@ __DEFAULT_NO_OPTIONS = \
 __DEFAULT_NO_OPTIONS+= \
     CHERI_PURE \
     CHERI_SHARED_PROG \
+    CHERI_OLD_CAP_RELOCS \
     CHERI128 \
     CHERI256 \
     DEMO_VULNERABILITIES
@@ -100,6 +101,10 @@ WITH_CHERI256:=	yes
 
 .if ${MK_CHERI128} == "yes" && ${MK_CHERI256} == "yes"
 .error WITH_CHERI128 and WITH_CHERI256 are incompatible.
+.endif
+
+.if ${MK_CHERI_USE_MCT} == "yes" && ${MK_CHERI_OLD_CAP_RELOCS} == "yes"
+.error WITH_CHERI_USE_MCT and WITH_CHERI_OLD_CAP_RELOCS are incompatible.
 .endif
 
 .if ${MK_CHERI128} == "yes" || ${MK_CHERI256} == "yes"

@@ -110,7 +110,11 @@ LDFLAGS+=	-Wl,-init=crt_init_globals
 .ifdef CHERI_LLD_BROKEN
 LDFLAGS+=	-fuse-ld=bfd
 .else
-LDFLAGS+=	-fuse-ld=lld -Wl,-z,norelro
+LDFLAGS+=	-fuse-ld=lld
+.if ${MK_CHERI_OLD_CAP_RELOCS} == "yes"
+_CHERI_CC+=	-mold-cap-relocs
+LDFLAGS+=	-Wl,-z,norelro
+.endif
 .endif
 .else
 STATIC_CFLAGS+= -ftls-model=local-exec # MIPS/hybrid case
