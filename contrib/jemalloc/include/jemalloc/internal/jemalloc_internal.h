@@ -321,11 +321,15 @@ typedef unsigned szind_t;
 #define	PTR_MASK		(SIZEOF_PTR - 1)
 
 #ifndef __CHERI_PURE_CAPABILITY__
+#define	BOUND_PTR(ptr, size)	(ptr)
 #define	UNBOUND_PTR(a)	(a)
 #else
 extern void *malloc_area;
+extern bool opt_cheri_setbounds;
 #define	UNBOUND_PTR(a)							\
 	 cheri_setoffset(malloc_area, (vaddr_t)(a) - (vaddr_t)malloc_area)
+#define	BOUND_PTR(ptr, size)						\
+	 (opt_cheri_setbounds ? cheri_csetbounds((ptr), (size)) : (ptr))
 #endif
 
 /* Return the smallest (void *) multiple that is >= a. */

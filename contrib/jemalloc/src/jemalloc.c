@@ -275,12 +275,8 @@ typedef struct {
 #  define UTRACE(a, b, c)
 #endif
 
-#ifndef __CHERI_PURE_CAPABILITY__
-#define	BOUND_PTR(ptr, size)	(ptr)
-#else
+#ifdef __CHERI_PURE_CAPABILITY__
 void *malloc_area;
-#define	BOUND_PTR(ptr, size)	\
-    (opt_cheri_setbounds ? cheri_csetbounds((ptr), (size)) : (ptr))
 #endif
 
 /******************************************************************************/

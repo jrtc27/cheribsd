@@ -135,7 +135,7 @@ base_alloc(tsdn_t *tsdn, size_t size)
 	JEMALLOC_VALGRIND_MAKE_MEM_DEFINED(ret, csize);
 label_return:
 	malloc_mutex_unlock(tsdn, &base_mtx);
-	return (ret);
+	return BOUND_PTR(ret, size);
 }
 
 void
