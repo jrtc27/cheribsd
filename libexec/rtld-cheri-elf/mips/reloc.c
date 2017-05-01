@@ -425,8 +425,8 @@ _mips_rtld_bind(Obj_Entry *obj, Elf_Size reloff)
 
 static int
 reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
-    Elf_Addr *got, Elf_Xword r_info, Elf_Addr r_offset, Elf_Sxword r_addend,
-    bool rela)
+    SymCache *cache, Elf_Addr *got, Elf_Xword r_info, Elf_Addr r_offset,
+    Elf_Sxword r_addend, bool rela)
 {
 	Elf_Word	r_symndx, r_type;
 	void		*where;
@@ -526,7 +526,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		else
 			val = old;
 
-		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+		def = find_symdef(r_symndx, obj, &defobj, flags, cache,
 			lockstate);
 		if (def == NULL)
 			return -1;
@@ -555,7 +555,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		else
 			val = old;
 
-		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+		def = find_symdef(r_symndx, obj, &defobj, flags, cache,
 			lockstate);
 		if (def == NULL)
 			return -1;
@@ -587,7 +587,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		else
 			val = old;
 
-		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+		def = find_symdef(r_symndx, obj, &defobj, flags, cache,
 			lockstate);
 
 		if (def == NULL)
@@ -627,7 +627,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		} else
 			val = 0;
 
-		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+		def = find_symdef(r_symndx, obj, &defobj, flags, cache,
 			lockstate);
 
 		if (def == NULL)
@@ -705,7 +705,7 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 		const Elf_Phdr *phlimit;
 		const Elf_Phdr *ph;
 
-		def = find_symdef(r_symndx, obj, &defobj, flags, NULL,
+		def = find_symdef(r_symndx, obj, &defobj, flags, cache,
 			lockstate);
 
 		if (def == NULL)
@@ -801,11 +801,13 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 	const Elf_Rela *rela;
 	const Elf_Rela *relalim;
 	Elf_Addr *got = obj->pltgot;
+	SymCache *cache;
 	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
 	Elf_Word i;
 	char symbuf[64];
 	SymLook req, defreq;
+	int err;
 #ifdef SUPPORT_OLD_BROKEN_LD
 	int broken;
 #endif
@@ -817,6 +819,14 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 	if ((flags & SYMLOOK_IFUNC) != 0)
 		/* XXX not implemented */
 		return (0);
+
+	err = -1;
+
+	/*
+	 * The dynamic loader may be called from a thread, we have
+	 * limited amounts of stack available so we cannot use alloca().
+	 */
+	cache = calloc(obj->dynsymcount, sizeof(SymCache));
 
 #ifdef SUPPORT_OLD_BROKEN_LD
 	broken = 0;
@@ -863,10 +873,10 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 			 * to 0 if there are non-PLT references, but older
 			 * versions of GNU ld do not do this.
 			 */
-			def = find_symdef(i, obj, &defobj, flags, NULL,
+			def = find_symdef(i, obj, &defobj, flags, cache,
 			    lockstate);
 			if (def == NULL)
-				return -1;
+				goto done;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
 		} else
 #endif
@@ -905,7 +915,7 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 			}
 		} else {
 			/* TODO: add cache here */
-			def = find_symdef(i, obj, &defobj, flags, NULL,
+			def = find_symdef(i, obj, &defobj, flags, cache,
 			    lockstate);
 
 			/*
@@ -945,7 +955,7 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 			}
 			if (def == NULL) {
 				dbg("Warning4, can't find symbole %d", i);
-				return -1;
+				goto done;
 			}
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
 			if ((Elf_Addr)(*got) == (Elf_Addr)obj->relocbase) {
@@ -969,22 +979,24 @@ reloc_non_plt(Obj_Entry *obj, Obj_Entry *obj_rtld, int flags,
 	rellim = (const Elf_Rel *)((caddr_t)obj->rel + obj->relsize);
 	dbg("rel:%p to %p", obj->rel, rellim);
 	for (rel = obj->rel; rel < rellim; rel++) {
-		int err = reloc_non_plt_single_reloc(obj, flags, lockstate, got,
-		    rel->r_info, rel->r_offset, 0, false);
+		err = reloc_non_plt_single_reloc(obj, flags, lockstate, cache,
+		    got, rel->r_info, rel->r_offset, 0, false);
 		if (err != 0)
-			return err;
+			goto done;
 	}
 
 	relalim = (const Elf_Rela *)((caddr_t)obj->rela + obj->relasize);
 	dbg("rela:%p to %p", obj->rela, relalim);
 	for (rela = obj->rela; rela < relalim; rela++) {
-		int err = reloc_non_plt_single_reloc(obj, flags, lockstate, got,
-		    rela->r_info, rela->r_offset, rela->r_addend, true);
+		err = reloc_non_plt_single_reloc(obj, flags, lockstate, cache,
+		    got, rela->r_info, rela->r_offset, rela->r_addend, true);
 		if (err != 0)
-			return err;
+			goto done;
 	}
-
-	return 0;
+	err = 0;
+done:
+	free(cache);
+	return err;
 }
 
 /*
