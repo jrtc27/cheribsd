@@ -4738,7 +4738,7 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
     char *tcb;
     Elf_Addr **tls;
     Elf_Addr *dtv;
-    Elf_Addr addr;
+    char *addr;
     int i;
 
     if (oldtcb != NULL && tcbsize == TLS_TCB_SIZE)
@@ -4769,25 +4769,15 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 	for (obj = globallist_curr(objs); obj != NULL;
 	  obj = globallist_next(obj)) {
 	    if (obj->tlsoffset > 0) {
-		addr = (Elf_Addr)tls + obj->tlsoffset;
+		addr = (char *)tls + obj->tlsoffset;
 
-#ifndef __CHERI_PURE_CAPABILITY__
 		if (obj->tlsinitsize > 0)
 		    memcpy(addr, obj->tlsinit, obj->tlsinitsize);
 		if (obj->tlssize > obj->tlsinitsize)
-		    memset((void*) (addr + obj->tlsinitsize), 0,
+		    memset(addr + obj->tlsinitsize, 0,
 			   obj->tlssize - obj->tlsinitsize);
-#else
-		if (obj->tlsinitsize > 0)
-		    memcpy(cheri_setoffset(cheri_getdefault(), addr),
-			    obj->tlsinit, obj->tlsinitsize);
-		if (obj->tlssize > obj->tlsinitsize)
-		    memset(cheri_setoffset(cheri_getdefault(),
-					   addr + obj->tlsinitsize),
-			   0, obj->tlssize - obj->tlsinitsize);
-#endif
 
-		dtv[obj->tlsindex + 1] = addr;
+		dtv[obj->tlsindex + 1] = (Elf_Addr)addr;
 	    }
 	}
     }
