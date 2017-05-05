@@ -42,6 +42,7 @@ __FBSDID("$FreeBSD$");
 #include "cheri_private.h"
 
 #ifdef __CHERI__
+# include <cheri.h>
 # define	wtype	uintcap_t
 # define	wbits	_MIPS_SZCAP
 #else
