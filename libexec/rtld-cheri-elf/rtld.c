@@ -1085,6 +1085,7 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		obj->bloom_gnu = (Elf_Addr *) (hashtab + 4);
 		obj->buckets_gnu = hashtab + 4 + bloom_size32;
 		obj->chain_zero_gnu = obj->buckets_gnu + obj->nbuckets_gnu -
+		  obj->symndx_gnu;
 #endif
 		/* Number of bitmask words is required to be power of 2 */
 		obj->valid_hash_gnu = powerof2(nmaskwords) &&
