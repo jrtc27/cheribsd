@@ -262,7 +262,9 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 			ELF_R_NXTTYPE_64_P(r_type)
 			? sizeof(Elf_Sxword)
 			: sizeof(Elf_Sword);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -291,7 +293,9 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 		break;
 
 	case R_CHERI_MEMCAP:
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, sizeof(uintcap_t));
+#endif
 		if (initialise_cap(where, true))
 			abort();
 		break;
@@ -349,12 +353,14 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 
 	i = GOT1_RESERVED_FOR_RTLD(got) ? 2 : 1;
 
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	if (rel)
 		rel = cheri_csetbounds(rel, relsz);
 	if (rela)
 		rela = cheri_csetbounds(rela, relasz);
 	symtab = cheri_csetbounds(symtab, symtabno * sizeof(symtab[0]));
 	got = cheri_csetbounds(got, (local_gotno + (symtabno - gotsym)) * sizeof(got[0]));
+#endif
 
 	/* Relocate the local GOT entries */
 	got += i;
@@ -455,7 +461,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 			ELF_R_NXTTYPE_64_P(r_type)
 			? sizeof(Elf_Sxword)
 			: sizeof(Elf_Sword);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -518,7 +526,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	{
 
 		const size_t rlen = sizeof(Elf_Addr);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -547,7 +557,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 #endif
 	{
 		const size_t rlen = sizeof(Elf_Addr);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -579,7 +591,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 #endif
 	{
 		const size_t rlen = sizeof(Elf_Addr);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword old = load_ptr(where, rlen);
 		Elf_Sxword val;
 		if (rela)
@@ -611,7 +625,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	case R_CHERI_SIZE64:
 	{
 		const size_t rlen = 8;
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		Elf_Sxword val;
 		Elf_Sxword base, offset, size;
 		const char *reloc_name;
@@ -699,7 +715,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	case R_CHERI_PERMS64:
 	{
 		const size_t rlen = 8;
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, rlen);
+#endif
 		uint64_t perms = 0;
 		int relro;
 		const Elf_Phdr *phlimit;
@@ -764,7 +782,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	}
 
 	case R_CHERI_MEMCAP:
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		where = cheri_csetbounds(where, sizeof(uintcap_t));
+#endif
 		if (initialise_cap(where, false))
 			return -1;
 
