@@ -167,7 +167,7 @@ calloc(size_t num, size_t size)
 	}
 
 	if ((ret = malloc(num * size)) != NULL)
-		memset(ret, 0, num * size);
+		bzero(ret, num * size);
 
 	return (ret);
 }
