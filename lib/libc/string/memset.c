@@ -41,19 +41,11 @@ __FBSDID("$FreeBSD$");
 #include <limits.h>
 #include "cheri_private.h"
 
-#ifdef __CHERI__
+#if defined(__CHERI__) && defined(BZERO)
 # include <cheri.h>
 # define	wtype	uintcap_t
-# define	wbits	_MIPS_SZCAP
 #else
 # define	wtype	u_int
-# if UINT_MAX > 0xffffffff
-#  define	wbits	64
-# elif UINT_MAX > 0xffff
-#  define	wbits	32
-# else
-#  define	wbits	16
-# endif
 #endif
 
 #define	wsize	sizeof(wtype)
@@ -110,17 +102,11 @@ __CAPSUFFIX(memset)(__CAPABILITY void *dst0, int c0, size_t length)
 #ifndef BZERO
 	if ((c = (u_char)c0) != 0) {	/* Fill the word. */
 		c = (c << 8) | c;	/* wtype is 16 bits. */
-#if wbits >= 32
+#if UINT_MAX > 0xffff
 		c = (c << 16) | c;	/* wtype is 32 bits. */
 #endif
-#if wbits >= 64
+#if UINT_MAX > 0xffffffff
 		c = (c << 32) | c;	/* wtype is 64 bits. */
-#endif
-#if wbits >= 128
-		c = (c << 64) | c;	/* wtype is 128 bits. */
-#endif
-#if wbits >= 256
-		c = (c << 128) | c;	/* wtype is 256 bits. */
 #endif
 	}
 #endif
