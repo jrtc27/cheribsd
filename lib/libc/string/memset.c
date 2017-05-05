@@ -41,7 +41,21 @@ __FBSDID("$FreeBSD$");
 #include <limits.h>
 #include "cheri_private.h"
 
-#define	wsize	sizeof(u_int)
+#ifdef __CHERI__
+# define	wtype	uintcap_t
+# define	wbits	_MIPS_SZCAP
+#else
+# define	wtype	u_int
+# if UINT_MAX > 0xffffffff
+#  define	wbits	64
+# elif UINT_MAX > 0xffff
+#  define	wbits	32
+# else
+#  define	wbits	16
+# endif
+#endif
+
+#define	wsize	sizeof(wtype)
 #define	wmask	(wsize - 1)
 
 #ifdef BZERO
@@ -66,7 +80,7 @@ __CAPSUFFIX(memset)(__CAPABILITY void *dst0, int c0, size_t length)
 {
 	size_t t;
 #ifndef BZERO
-	u_int c;
+	wtype c;
 #endif
 	__CAPABILITY u_char *dst;
 
@@ -94,12 +108,18 @@ __CAPSUFFIX(memset)(__CAPABILITY void *dst0, int c0, size_t length)
 
 #ifndef BZERO
 	if ((c = (u_char)c0) != 0) {	/* Fill the word. */
-		c = (c << 8) | c;	/* u_int is 16 bits. */
-#if UINT_MAX > 0xffff
-		c = (c << 16) | c;	/* u_int is 32 bits. */
+		c = (c << 8) | c;	/* wtype is 16 bits. */
+#if wbits >= 32
+		c = (c << 16) | c;	/* wtype is 32 bits. */
 #endif
-#if UINT_MAX > 0xffffffff
-		c = (c << 32) | c;	/* u_int is 64 bits. */
+#if wbits >= 64
+		c = (c << 32) | c;	/* wtype is 64 bits. */
+#endif
+#if wbits >= 128
+		c = (c << 64) | c;	/* wtype is 128 bits. */
+#endif
+#if wbits >= 256
+		c = (c << 128) | c;	/* wtype is 256 bits. */
 #endif
 	}
 #endif
@@ -115,7 +135,7 @@ __CAPSUFFIX(memset)(__CAPABILITY void *dst0, int c0, size_t length)
 	/* Fill words.  Length was >= 2*words so we know t >= 1 here. */
 	t = length / wsize;
 	do {
-		*(__CAPABILITY u_int *)(__CAPABILITY void *)dst = WIDEVAL;
+		*(__CAPABILITY wtype *)(__CAPABILITY void *)dst = WIDEVAL;
 		dst += wsize;
 	} while (--t != 0);
 
