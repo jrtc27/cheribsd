@@ -2111,7 +2111,7 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
      * The "path" member can't be initialized yet because string constants
      * cannot yet be accessed. Below we will set it correctly.
      */
-    memset(&objtmp, 0, sizeof(objtmp));
+    bzero(&objtmp, sizeof(objtmp));
     objtmp.path = NULL;
     objtmp.rtld = true;
     objtmp.mapbase = mapbase;
@@ -4821,8 +4821,8 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 		if (obj->tlsinitsize > 0)
 		    memcpy(addr, obj->tlsinit, obj->tlsinitsize);
 		if (obj->tlssize > obj->tlsinitsize)
-		    memset(addr + obj->tlsinitsize, 0,
-			   obj->tlssize - obj->tlsinitsize);
+		    bzero(addr + obj->tlsinitsize,
+			  obj->tlssize - obj->tlsinitsize);
 
 		dtv[obj->tlsindex + 1] = (Elf_Addr)addr;
 	    }
@@ -4924,8 +4924,8 @@ allocate_tls(Obj_Entry *objs, void *oldtls, size_t tcbsize, size_t tcbalign)
 		if (obj->marker || obj->tlsoffset == 0)
 			continue;
 		addr = segbase - obj->tlsoffset;
-		memset((void*) (addr + obj->tlsinitsize),
-		       0, obj->tlssize - obj->tlsinitsize);
+		bzero((void*) (addr + obj->tlsinitsize),
+		      obj->tlssize - obj->tlsinitsize);
 		if (obj->tlsinit)
 		    memcpy((void*) addr, obj->tlsinit, obj->tlsinitsize);
 		dtv[obj->tlsindex + 1] = addr;
@@ -4990,7 +4990,7 @@ allocate_module_tls(int index)
 
     p = malloc_aligned(obj->tlssize, obj->tlsalign);
     memcpy(p, obj->tlsinit, obj->tlsinitsize);
-    memset(p + obj->tlsinitsize, 0, obj->tlssize - obj->tlsinitsize);
+    bzero(p + obj->tlsinitsize, obj->tlssize - obj->tlsinitsize);
 
     return p;
 }

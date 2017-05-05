@@ -255,7 +255,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 			goto error1;
 		}
 
-		memset(clear_addr, 0, nclear);
+		bzero(clear_addr, nclear);
 
 		/* Reset the data protection back */
 		if ((data_prot & PROT_WRITE) == 0)
