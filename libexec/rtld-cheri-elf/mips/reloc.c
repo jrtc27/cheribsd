@@ -253,6 +253,9 @@ _rtld_relocate_nonplt_self_single_reloc(caddr_t relocbase, Elf_Word gotsym,
 	void *where;
 
 	where = (void *)(relocbase + r_offset);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
+	where = cheri_andperm(where, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+#endif
 	r_symndx = ELF_R_SYM(r_info);
 	r_type = ELF_R_TYPE(r_info);
 
@@ -354,12 +357,18 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, caddr_t relocbase)
 	i = GOT1_RESERVED_FOR_RTLD(got) ? 2 : 1;
 
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
-	if (rel)
+	if (rel) {
 		rel = cheri_csetbounds(rel, relsz);
-	if (rela)
+		rel = cheri_andperm(rel, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	}
+	if (rela) {
 		rela = cheri_csetbounds(rela, relasz);
+		rela = cheri_andperm(rela, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	}
 	symtab = cheri_csetbounds(symtab, symtabno * sizeof(symtab[0]));
+	symtab = cheri_andperm(symtab, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 	got = cheri_csetbounds(got, (local_gotno + (symtabno - gotsym)) * sizeof(got[0]));
+	got = cheri_andperm(got, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 #endif
 
 	/* Relocate the local GOT entries */
@@ -440,6 +449,9 @@ reloc_non_plt_single_reloc(Obj_Entry *obj, int flags, RtldLockState *lockstate,
 	const Obj_Entry *defobj;
 
 	where = obj->relocbase + r_offset;
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
+	where = cheri_andperm(where, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+#endif
 	r_symndx = ELF_R_SYM(r_info);
 	r_type = ELF_R_TYPE(r_info);
 
