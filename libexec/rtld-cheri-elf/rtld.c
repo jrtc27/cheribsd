@@ -1052,10 +1052,10 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		obj->buckets = cheri_csetbounds(hashtab + 2,
 		                                obj->nbuckets * sizeof(obj->buckets[0]));
-		obj->buckets = cheri_andperm(obj->buckets, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+		obj->buckets = make_ptr_r(obj->buckets);
 		obj->chains = cheri_csetbounds(hashtab + 2 + obj->nbuckets,
 		                               obj->nchains * sizeof(obj->chains[0]));
-		obj->chains = cheri_andperm(obj->chains, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+		obj->chains = make_ptr_r(obj->chains);
 #else
 		obj->buckets = hashtab + 2;
 		obj->chains = obj->buckets + obj->nbuckets;
@@ -1078,14 +1078,14 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 		obj->bloom_gnu = cheri_csetbounds((Elf_Addr *) (hashtab + 4),
 		                                  bloom_size32);
-		obj->bloom_gnu = cheri_andperm(obj->bloom_gnu, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+		obj->bloom_gnu = make_ptr_r(obj->bloom_gnu);
 		obj->buckets_gnu = cheri_csetbounds(hashtab + 4 + bloom_size32,
 		                                    obj->nbuckets_gnu * sizeof(obj->buckets_gnu[0]));
-		obj->buckets_gnu = cheri_andperm(obj->buckets_gnu, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+		obj->buckets_gnu = make_ptr_r(obj->buckets_gnu);
 		/* Bounds are set later once dynsymcount is determined */
 		obj->chain_zero_gnu = hashtab + 4 + bloom_size32 + obj->nbuckets_gnu -
 		  obj->symndx_gnu;
-		obj->chain_zero_gnu = cheri_andperm(obj->chain_zero_gnu, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+		obj->chain_zero_gnu = make_ptr_r(obj->chain_zero_gnu);
 #else
 		obj->bloom_gnu = (Elf_Addr *) (hashtab + 4);
 		obj->buckets_gnu = hashtab + 4 + bloom_size32;
@@ -1283,19 +1283,19 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
     if (obj->rel) {
 	obj->rel = cheri_csetbounds(obj->rel, obj->relsize);
-	obj->rel = cheri_andperm(obj->rel, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->rel = make_ptr_r(obj->rel);
     }
     if (obj->pltrel) {
 	obj->pltrel = cheri_csetbounds(obj->pltrel, obj->pltrelsize);
-	obj->pltrel = cheri_andperm(obj->pltrel, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->pltrel = make_ptr_r(obj->pltrel);
     }
     if (obj->rela) {
 	obj->rela = cheri_csetbounds(obj->rela, obj->relasize);
-	obj->rela = cheri_andperm(obj->rela, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->rela = make_ptr_r(obj->rela);
     }
     if (obj->strtab) {
 	obj->strtab = cheri_csetbounds(obj->strtab, obj->strsize);
-	obj->strtab = cheri_andperm(obj->strtab, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->strtab = make_ptr_r(obj->strtab);
     }
 #ifdef __mips__
     if (obj->pltgot) {
@@ -1305,7 +1305,7 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 	                               (obj->local_gotno +
 	                                (obj->symtabno - obj->gotsym)) *
 	                               sizeof(obj->pltgot[0]));
-	obj->pltgot = cheri_andperm(obj->pltgot, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->pltgot = make_ptr_rw(obj->pltgot);
     }
 #endif
 #endif
@@ -1313,7 +1313,7 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 #ifdef __CHERI__
     if (obj->mct) {
 	obj->mct = cheri_csetbounds(obj->mct, obj->mctsize);
-	obj->mct = cheri_andperm(obj->mct, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->mct = make_ptr_rw(obj->mct);
     }
 #endif
 
@@ -1352,12 +1352,12 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
     if (obj->symtab) {
 	obj->symtab = cheri_csetbounds(obj->symtab,
 	                               obj->dynsymcount * sizeof(obj->symtab[0]));
-	obj->symtab = cheri_andperm(obj->symtab, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->symtab = make_ptr_r(obj->symtab);
     }
     if (obj->versyms) {
 	obj->versyms = cheri_csetbounds(obj->versyms,
 	                                obj->dynsymcount * sizeof(obj->versyms[0]));
-	obj->versyms = cheri_andperm(obj->versyms, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->versyms = make_ptr_r(obj->versyms);
     }
 #endif
 }
@@ -1468,7 +1468,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    obj->interp = cheri_csetbounds((const char *)(ph->p_vaddr + obj->relocbase),
 	                                   ph->p_filesz);
-	    obj->interp = cheri_andperm(obj->interp, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    obj->interp = make_ptr_r(obj->interp);
 #else
 	    obj->interp = (const char *)(ph->p_vaddr + obj->relocbase);
 #endif
@@ -1491,7 +1491,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    obj->dynamic = cheri_csetbounds((const Elf_Dyn *)(ph->p_vaddr + obj->relocbase),
 	                                    ph->p_filesz);
-	    obj->dynamic = cheri_andperm(obj->dynamic, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    obj->dynamic = make_ptr_r(obj->dynamic);
 #else
 	    obj->dynamic = (const Elf_Dyn *)(ph->p_vaddr + obj->relocbase);
 #endif
@@ -1505,7 +1505,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    obj->tlsinit = cheri_csetbounds((void*)(ph->p_vaddr + obj->relocbase),
 	                                    ph->p_filesz);
-	    obj->tlsinit = cheri_andperm(obj->tlsinit, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    obj->tlsinit = make_ptr_r(obj->tlsinit);
 #else
 	    obj->tlsinit = (void*)(ph->p_vaddr + obj->relocbase);
 #endif
@@ -1520,7 +1520,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    obj->relro_page = cheri_csetbounds(obj->relocbase + trunc_page(ph->p_vaddr),
 	                                       obj->relro_size);
-	    obj->relro_page = cheri_andperm(obj->relro_page, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    obj->relro_page = make_ptr_r(obj->relro_page);
 #else
 	    obj->relro_page = obj->relocbase + trunc_page(ph->p_vaddr);
 #endif
@@ -1530,7 +1530,7 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry, caddr_t relocabase,
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    note_start = cheri_csetbounds((caddr_t)obj->relocbase + ph->p_vaddr,
 	                                  ph->p_filesz);
-	    note_start = cheri_andperm(note_start, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    note_start = make_ptr_r(note_start);
 #else
 	    note_start = (caddr_t)obj->relocbase + ph->p_vaddr;
 #endif
@@ -2163,7 +2163,7 @@ init_rtld(caddr_t mapbase, Elf_Auxinfo **aux_info)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
     objtmp.phdr = cheri_csetbounds((Elf_Phdr *)((char *)mapbase + ehdr->e_phoff),
                                    objtmp.phsize);
-    objtmp.phdr = cheri_andperm(objtmp.phdr, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    objtmp.phdr = make_ptr_r(objtmp.phdr);
 #else
     objtmp.phdr = (Elf_Phdr *)((char *)mapbase + ehdr->e_phoff);
 #endif
@@ -5244,7 +5244,7 @@ rtld_verify_object_versions(Obj_Entry *obj)
     if (obj->verneed) {
 	obj->verneed = cheri_csetbounds(obj->verneed,
 	                                vnend - (char *)obj->verneed);
-	obj->verneed = cheri_andperm(obj->verneed, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->verneed = make_ptr_r(obj->verneed);
     }
 #endif
 
@@ -5277,7 +5277,7 @@ rtld_verify_object_versions(Obj_Entry *obj)
     if (obj->verdef) {
 	obj->verdef = cheri_csetbounds(obj->verdef,
 	                               vdend - (char *)obj->verdef);
-	obj->verdef = cheri_andperm(obj->verdef, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->verdef = make_ptr_r(obj->verdef);
     }
 #endif
 
