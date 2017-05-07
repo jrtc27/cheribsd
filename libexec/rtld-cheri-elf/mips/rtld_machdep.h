@@ -140,4 +140,16 @@ extern void *__tls_get_addr_c(tls_index *ti);
 
 #define md_abi_variant_hook(x)
 
+#define make_ptr_rw(ptr) \
+    cheri_andperm(ptr, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__)
+#define make_ptr_rx(ptr) \
+    cheri_andperm(ptr, ~__CHERI_CAP_PERMISSION_PERMIT_STORE__ & \
+                       ~__CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ & \
+                       ~__CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__)
+#define make_ptr_r(ptr) \
+    cheri_andperm(ptr, ~__CHERI_CAP_PERMISSION_PERMIT_STORE__ & \
+                       ~__CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ & \
+                       ~__CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ & \
+                       ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__)
+
 #endif

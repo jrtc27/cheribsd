@@ -105,7 +105,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
     phdr = cheri_csetbounds((Elf_Phdr *) ((char *)hdr + hdr->e_phoff),
                             phsize);
-    phdr = cheri_andperm(phdr, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    phdr = make_ptr_r(phdr);
 #else
     phdr = (Elf_Phdr *) ((char *)hdr + hdr->e_phoff);
 #endif
@@ -176,7 +176,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 	    }
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	    note_start = cheri_csetbounds(note_start, phdr->p_filesz);
-	    note_start = cheri_andperm(note_start, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	    note_start = make_ptr_r(note_start);
 #endif
 	    note_end = note_start + phdr->p_filesz;
 	    break;
@@ -246,6 +246,9 @@ map_object(int fd, const char *path, const struct stat *sb)
 	    /* Clear any BSS in the last page of the segment. */
 	    clear_vaddr = segs[i]->p_vaddr + segs[i]->p_filesz;
 	    clear_addr = mapbase + (clear_vaddr - base_vaddr);
+#ifndef __CHERI_DISABLE_STRICT_BOUNDS__
+	    clear_addr = make_ptr_rw(clear_addr);
+#endif
 	    clear_page = mapbase + (trunc_page(clear_vaddr) - base_vaddr);
 
 	    if ((nclear = data_vlimit - clear_vaddr) > 0) {
@@ -299,7 +302,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
     obj->dynamic = cheri_csetbounds((const Elf_Dyn *) (obj->relocbase + phdyn->p_vaddr),
                                     phdyn->p_filesz);
-    obj->dynamic = cheri_andperm(obj->dynamic, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    obj->dynamic = make_ptr_r(obj->dynamic);
 #else
     obj->dynamic = (const Elf_Dyn *) (obj->relocbase + phdyn->p_vaddr);
 #endif
@@ -309,7 +312,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	obj->phdr = cheri_csetbounds((const Elf_Phdr *) (obj->relocbase + phdr_vaddr),
 	                             phsize);
-	obj->phdr = cheri_andperm(obj->phdr, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->phdr = make_ptr_r(obj->phdr);
 #else
 	obj->phdr = (const Elf_Phdr *) (obj->relocbase + phdr_vaddr);
 #endif
@@ -328,7 +331,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	obj->interp = cheri_csetbounds((const char *) (obj->relocbase + phinterp->p_vaddr),
 	                               phinterp->p_filesz);
-	obj->interp = cheri_andperm(obj->interp, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->interp = make_ptr_r(obj->interp);
 #else
 	obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
 #endif
@@ -341,7 +344,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
 	obj->tlsinit = cheri_csetbounds(mapbase + phtls->p_vaddr,
 	                                obj->tlsinitsize);
-	obj->tlsinit = cheri_andperm(obj->tlsinit, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+	obj->tlsinit = make_ptr_r(obj->tlsinit);
 #else
 	obj->tlsinit = mapbase + phtls->p_vaddr;
 #endif
@@ -351,7 +354,7 @@ map_object(int fd, const char *path, const struct stat *sb)
 #ifndef __CHERI_DISABLE_STRICT_BOUNDS__
     obj->relro_page = cheri_csetbounds(obj->relocbase + trunc_page(relro_page),
                                        obj->relro_size);
-    obj->relro_page = cheri_andperm(obj->relro_page, ~__CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    obj->relro_page = make_ptr_r(obj->relro_page);
 #else
     obj->relro_page = obj->relocbase + trunc_page(relro_page);
 #endif
