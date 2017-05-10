@@ -55,13 +55,13 @@
 #define POINTER void *
 
 /* Determine default alignment.  */
-struct fooalign {char x; double d;};
+union fooround {double d; long long l; void *p;};
+struct fooalign {char x; union fooround r;};
 #define DEFAULT_ALIGNMENT  \
-  ((PTR_INT_TYPE) ((char *) &((struct fooalign *) 0)->d - (char *) 0))
+  ((PTR_INT_TYPE) ((char *) &((struct fooalign *) 0)->r - (char *) 0))
 /* If malloc were really smart, it would round addresses to DEFAULT_ALIGNMENT.
    But in fact it might be less smart and round addresses to as much as
    DEFAULT_ROUNDING.  So we prepare for it to do that.  */
-union fooround {long x; double d;};
 #define DEFAULT_ROUNDING (sizeof (union fooround))
 
 /* When we copy a long block of data, this is the unit to do it with.
