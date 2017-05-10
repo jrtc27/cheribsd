@@ -114,32 +114,43 @@ Summary:
 extern "C" {
 #endif
 
+/* We need the type of the resulting object.  If __INTPTR_TYPE__ is
+   defined, as with GNU C, use that; that way we don't pollute the
+   namespace with <stddef.h>'s symbols.  Otherwise, if <stddef.h> is
+   available, include it and use intptr_t.  In traditional C, long is
+   the best that we can do.  */
+
+#ifdef __INTPTR_TYPE__
+# define PTR_INT_TYPE __INTPTR_TYPE__
+# define USING_INTPTR 1
+#else
+# ifdef HAVE_STDDEF_H
+#  include <stddef.h>
+#  define PTR_INT_TYPE intptr_t
+#  define USING_INTPTR 1
+# else
+#  define PTR_INT_TYPE long
+#  define USING_INTPTR 0
+# endif
+#endif
+
 /* We use subtraction of (char *) 0 instead of casting to int
    because on word-addressable machines a simple cast to int
    may ignore the byte-within-word field of the pointer.  */
 
 #ifndef __PTR_TO_INT
-# define __PTR_TO_INT(P) ((P) - (char *) 0)
+# if USING_INTPTR
+#  define __PTR_TO_INT(P) ((PTR_INT_TYPE) (P))
+# else
+#  define __PTR_TO_INT(P) ((P) - (char *) 0)
+# endif
 #endif
 
 #ifndef __INT_TO_PTR
-# define __INT_TO_PTR(P) ((P) + (char *) 0)
-#endif
-
-/* We need the type of the resulting object.  If __PTRDIFF_TYPE__ is
-   defined, as with GNU C, use that; that way we don't pollute the
-   namespace with <stddef.h>'s symbols.  Otherwise, if <stddef.h> is
-   available, include it and use ptrdiff_t.  In traditional C, long is
-   the best that we can do.  */
-
-#ifdef __PTRDIFF_TYPE__
-# define PTR_INT_TYPE __PTRDIFF_TYPE__
-#else
-# ifdef HAVE_STDDEF_H
-#  include <stddef.h>
-#  define PTR_INT_TYPE ptrdiff_t
+# if USING_INTPTR
+#  define __INT_TO_PTR(P) ((char *) (P))
 # else
-#  define PTR_INT_TYPE long
+#  define __INT_TO_PTR(P) ((P) + (char *) 0)
 # endif
 #endif
 
