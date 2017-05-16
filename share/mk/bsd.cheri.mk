@@ -104,7 +104,7 @@ LDFLAGS+=	-Wl,-melf64btsmip_cheri_fbsd
 .if defined(__BSD_PROG_MK)
 _LIB_OBJTOP=	${ROOTOBJDIR}
 .endif
-.ifdef LIBCHERI
+.if defined(LIBCHERI) && ${MK_CHERI_USE_MCT} == "no"
 LDFLAGS+=	-Wl,-init=crt_init_globals
 .endif
 .ifdef CHERI_LLD_BROKEN
