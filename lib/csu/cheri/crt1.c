@@ -95,14 +95,23 @@ extern struct capreloc __start___cap_relocs;
 __attribute__((weak))
 extern struct capreloc __stop___cap_relocs;
 
+static int initialised_globals;
+
 static void
 crt_init_globals(void)
 {
-	void *gdc = __builtin_cheri_global_data_get();
-	void *pcc = __builtin_cheri_program_counter_get();
+	void *gdc;
+	void *pcc;
 
+	if (initialised_globals)
+		return;
+
+	gdc = __builtin_cheri_global_data_get();
 	gdc = __builtin_cheri_perms_and(gdc, global_pointer_permissions);
+
+	pcc = __builtin_cheri_program_counter_get();
 	pcc = __builtin_cheri_perms_and(pcc, function_pointer_permissions);
+
 	for (struct capreloc *reloc = &__start___cap_relocs ;
 	     reloc < &__stop___cap_relocs ; reloc++)
 	{
@@ -118,6 +127,8 @@ crt_init_globals(void)
 		src = __builtin_cheri_offset_increment(src, reloc->offset);
 		*dest = src;
 	}
+
+	initialised_globals = 1;
 }
 
 /* The entry function, C part. This performs the bulk of program initialisation
