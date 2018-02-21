@@ -162,10 +162,15 @@ void *
 libcheri_async_alloc_ring(struct sandbox_object *sbop)
 {
 	struct libcheri_ring *ring = calloc(1, sizeof(*ring));
+	if (ring == NULL) {
+		warn("%s: calloc", __func__);
+		return (NULL);
+	}
 	ring->sbop = sbop;
 	ring->lock = PTHREAD_MUTEX_INITIALIZER;
 	ring->cond_enqueue = PTHREAD_COND_INITIALIZER;
 	ring->cond_dequeue = PTHREAD_COND_INITIALIZER;
+	return (ring);
 }
 
 int
