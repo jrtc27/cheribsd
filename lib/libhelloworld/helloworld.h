@@ -33,6 +33,7 @@
 #define	_CHERI_HELLOWORLD_H_
 
 extern struct cheri_object	 __helloworld;
+extern struct sandbox_object	*__helloworld_objectp;
 extern struct sandbox_class	*__helloworld_classp;
 
 #ifdef HELLOWORLD_COMPARTMENT

@@ -39,8 +39,8 @@
 #define	COMPARTMENT_PATH	"/usr/libcheri/helloworld.co.0"
 
 struct cheri_object	 __helloworld;
+struct sandbox_object	*__helloworld_objectp;
 struct sandbox_class	*__helloworld_classp;
-static struct sandbox_object	*__helloworld_objectp;
 
 __attribute__ ((constructor)) static void
 cheri_helloworld_init(void)
