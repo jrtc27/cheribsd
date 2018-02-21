@@ -196,8 +196,7 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 	pthread_t thread;
 	int ret;
 
-	/*ret = pthread_create(&thread, &worker_attr, libcheri_async_worker, ring);*/
-	ret = pthread_create(&thread, NULL, libcheri_async_worker, ring);
+	ret = pthread_create(&thread, &worker_attr, libcheri_async_worker, ring);
 	if (ret != 0)
 		warn("%s: pthread_create", __func__);
 
