@@ -63,13 +63,8 @@ struct libcheri_message {
 	__capability void *c9;
 	__capability void *c10;
 
-	struct libcheri_callback callback; /* sealed */
+	struct libcheri_callback *callback; /* sealed */
 	struct libcheri_ring *rcv_ring; /* sealed */
-};
-
-struct libcheri_message_response {
-	struct libcheri_callback callback;
-	int err;
 };
 
 void

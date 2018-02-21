@@ -64,7 +64,7 @@ helloworld_cb(void *arg, int err /*, retval */)
 	pthread_mutex_lock(&lock);
 	received_callback = 1;
 	received_arg = arg;
-	recevied_err = err;
+	received_err = err;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&lock);
 }
@@ -98,7 +98,7 @@ main(void)
 	cb.arg = &dummy_arg;
 	msg.method_num = 0; /* TODO */
 	msg.callback = &cb;
-	libcheri_message_send(&__helloworld_objectp, &msg);
+	libcheri_message_send(__helloworld_objectp, &msg);
 
 	pthread_mutex_lock(&lock);
 	while (!received_callback)
