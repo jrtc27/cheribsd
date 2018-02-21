@@ -38,6 +38,7 @@
 #include <pthread.h>
 
 #include "libcheri_async.h"
+#include "libcheri_init.h"
 #include "libcheri_invoke.h"
 #include "libcheri_sandbox_internal.h"
 
@@ -106,7 +107,7 @@ libcheri_async_enqueue_response(struct libcheri_ring *ring,
 	while (ring->head == ring->tail && ring->count != 0)
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
 
-	ring->buf[ring->tail].type = libcheri_message;
+	ring->buf[ring->tail].type = libcheri_message_response;
 	ring->buf[ring->tail].msg = *resp;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
@@ -181,7 +182,6 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 void
 libcheri_async_init(void)
 {
-	pthread_t thread;
 	int ret;
 
 	ret = pthread_attr_init(&worker_attr);
