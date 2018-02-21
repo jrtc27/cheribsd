@@ -70,7 +70,7 @@ struct libcheri_message {
 struct libcheri_message_response {
 	struct libcheri_callback callback;
 	int err;
-}
+};
 
 void
 libcheri_message_send(struct sandbox_object *sbop,
