@@ -107,7 +107,7 @@ libcheri_async_enqueue_response(struct libcheri_ring *ring,
 	while (ring->head == ring->tail && ring->count != 0)
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
 
-	ring->buf[ring->tail].type = libcheri_message_response;
+	ring->buf[ring->tail].type = libcheri_ring_message_response;
 	ring->buf[ring->tail].msg = *resp;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
