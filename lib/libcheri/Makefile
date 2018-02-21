@@ -5,7 +5,8 @@ LIB=	cheri
 WANT_DUMP=      yes
 NO_SHARED=	yes
 
-SRCS=	libcheri_ccall.c		\
+SRCS=	libcheri_async.c		\
+	libcheri_ccall.c		\
 	libcheri_ccall_trampoline.S	\
 	libcheri_enter.c		\
 	libcheri_fd.c			\
@@ -28,7 +29,8 @@ SRCS+=	libcheri_invoke_hybrid.S	\
 	libcheri_classes_hybrid.S
 .endif
 
-INCS=	libcheri_ccall.h		\
+INCS=	libcheri_async.h		\
+	libcheri_ccall.h		\
 	libcheri_class.h		\
 	libcheri_enter.h		\
 	libcheri_errno.h		\
