@@ -57,6 +57,7 @@ INCSDIR=	${INCLUDEDIR}/cheri
 
 CFLAGS+=	-I${.CURDIR}/../libc/include \
 		-I${.CURDIR}/../libc/locale
+LIBADD=	pthread
 
 SHLIB_MAJOR=	1
 
