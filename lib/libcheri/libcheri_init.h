@@ -34,7 +34,7 @@
 void	libcheri_ccall_init(void);
 void	libcheri_stack_init(void);
 void	libcheri_enter_init(void);
-void	sandbox_init(void);
 void	libcheri_async_init(void);
+void	sandbox_init(void);
 
 #endif /* _LIBCHERI_INIT_H_ */

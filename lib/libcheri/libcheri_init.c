@@ -55,6 +55,7 @@ libcheri_init(void)
 	libcheri_ccall_init();
 	libcheri_stack_init();
 	libcheri_enter_init();
+	libcheri_async_init();
 	sandbox_init();
 	libcheri_initialised = 1;
 }
