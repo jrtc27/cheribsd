@@ -183,7 +183,7 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 	if (ret != 0)
 		warn("%s: pthread_create", __func__);
 
-	return ret;
+	return (ret);
 }
 
 void
