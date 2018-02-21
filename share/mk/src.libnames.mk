@@ -374,7 +374,7 @@ _DP_osmvendor=	ibumad opensm osmcomp pthread
 _DP_rdmacm=	ibverbs
 .endif
 
-_DP_libcheri=	pthread
+_DP_cheri=	pthread
 _DP_helloworld=	cheri
 
 # Define special cases
