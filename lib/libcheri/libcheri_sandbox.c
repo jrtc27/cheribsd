@@ -441,7 +441,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 		return (-1);
 
 	sbop->sbo_ring = libcheri_async_alloc_ring(sbop);
-	if (sbop->sbo_ring = NULL) {
+	if (sbop->sbo_ring == NULL) {
 		saved_errno = errno;
 		free(sbop);
 		errno = saved_errno;
