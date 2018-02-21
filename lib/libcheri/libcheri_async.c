@@ -34,7 +34,7 @@
 
 #include <err.h>
 #include <stdlib.h>
-#include <stderr.h>
+#include <stdio.h>
 
 #include <pthread.h>
 
