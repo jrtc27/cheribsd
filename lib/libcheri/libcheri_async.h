@@ -68,7 +68,7 @@ struct libcheri_message {
 };
 
 struct libcheri_message_response {
-	libcheri_callback callback;
+	struct libcheri_callback callback;
 	int err;
 }
 
