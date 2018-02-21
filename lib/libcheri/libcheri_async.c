@@ -93,6 +93,8 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 
 	ring->buf[ring->tail].type = libcheri_ring_message_request;
 	ring->buf[ring->tail].msg = *req;
+	/* TODO: From elsewhere */
+	ring->buf[ring->tail].msg.rcv_ring = &program_ring;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
 	pthread_cond_signal(&ring->cond_dequeue);
