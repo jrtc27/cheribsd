@@ -48,12 +48,33 @@
 #include <sysexits.h>
 #include <unistd.h>
 
+#include <pthread.h>
+
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+static int received_callback;
+static void *received_arg;
+static int received_err;
+
+static void
+helloworld_cb(void *arg, int err /*, retval */)
+{
+	puts("hello world callback");
+	pthread_mutex_lock(&lock);
+	received_callback = 1;
+	pthread_cond_signal(&cond);
+	pthread_mutex_unlock(&lock);
+}
+
 int
 main(void)
 {
 	struct sandbox_object *sbop;
 	int ret;
 	struct cheri_object stdout_fd;
+	struct libcheri_message msg;
+	struct libcheri_callback cb;
+	int dummy_arg;
 
 	libcheri_init();
 
@@ -69,6 +90,20 @@ main(void)
 	stdout_fd = sandbox_object_getobject(sbop);
 	ret = call_libcheri_fd_write_c(stdout_fd);
 	assert(ret == 12);
+
+	cb.func = helloworld_cb;
+	cb.arg = &dummy_arg;
+	msg.method_num = 0; /* TODO */
+	msg.callback = &cb;
+	libcheri_message_send(&__helloworld_objectp, &msg);
+
+	pthread_mutex_lock(&lock);
+	while (!received_callback)
+		pthread_cond_wait(&cond, &lock);
+	pthread_mutex_unlock(&lock);
+
+	assert(received_arg == &dummy_arg);
+	assert(received_err == 0);
 
 	libcheri_fd_destroy(sbop);
 

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 Robert N. M. Watson
+ * Copyright (c) 2018 James Clarke
  * All rights reserved.
  *
  * This software was developed by SRI International and the University of
@@ -28,13 +28,66 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _LIBCHERI_INIT_H_
-#define	_LIBCHERI_INIT_H_
+#ifndef _LIBCHERI_ASYNC_H_
+#define _LIBCHERI_ASYNC_H_
 
-void	libcheri_ccall_init(void);
-void	libcheri_stack_init(void);
-void	libcheri_enter_init(void);
-void	sandbox_init(void);
-void	libcheri_async_init(void);
+#if !__has_feature(capabilities)
+#error "This code requires a CHERI-aware compiler"
+#endif
 
-#endif /* _LIBCHERI_INIT_H_ */
+struct libcheri_ring;
+struct sandbox_object;
+
+struct libcheri_callback {
+	void (*func)(void *, int /*, retval */);
+	void *arg;
+};
+
+struct libcheri_message {
+	register_t method_num;
+
+	register_t a1;
+	register_t a2;
+	register_t a3;
+	register_t a4;
+	register_t a5;
+	register_t a6;
+	register_t a7;
+
+	__capability void *c3;
+	__capability void *c4;
+	__capability void *c5;
+	__capability void *c6;
+	__capability void *c7;
+	__capability void *c8;
+	__capability void *c9;
+	__capability void *c10;
+
+	struct libcheri_callback callback; /* sealed */
+	struct libcheri_ring *rcv_ring; /* sealed */
+};
+
+struct libcheri_message_response {
+	libcheri_callback callback;
+	int err;
+}
+
+void
+libcheri_message_send(struct sandbox_object *sbop,
+    struct libcheri_message *req);
+
+void
+libcheri_async_enqueue_request(struct libcheri_ring *ring,
+    struct libcheri_message *req);
+
+void
+libcheri_async_enqueue_response(struct libcheri_ring *ring,
+    struct libcheri_message *resp);
+
+void *
+libcheri_async_alloc_ring(struct sandbox_object *sbop);
+
+int
+libcheri_async_start_worker(struct libcheri_ring *ring);
+
+#endif /* !_LIBCHERI_ASYNC_H_ */

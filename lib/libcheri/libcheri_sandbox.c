@@ -439,6 +439,15 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	sbop = calloc(1, sizeof(*sbop));
 	if (sbop == NULL)
 		return (-1);
+
+	sbop->sbo_ring = libcheri_async_alloc_ring(sbop);
+	if (sbop->sbo_ring = NULL) {
+		saved_errno = errno;
+		free(sbop);
+		errno = saved_errno;
+		return (-1);
+	}
+
 	sbop->sbo_sandbox_classp = sbcp;
 	sbop->sbo_flags = flags;
 	sbop->sbo_heaplen = heaplen;
@@ -452,6 +461,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
 	if (sbop->sbo_stackmem == NULL) {
 		saved_errno = errno;
+		free(sbop->sbo_ring);
 		free(sbop);
 		errno = saved_errno;
 		return (-1);
@@ -501,6 +511,12 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 		goto error;
 	}
 
+	error = libcheri_async_start_worker(sbop->sbo_ring);
+	if (error != 0) {
+		saved_errno = errno;
+		goto error;
+	}
+
 	/*
 	 * Now that constructors have completed, return object.
 	 */
@@ -508,6 +524,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	return (0);
 error:
 	(void)munmap(sbop->sbo_stackmem, sbop->sbo_stacklen);
+	free(sbop->sbo_ring);
 	free(sbop);
 	errno = saved_errno;
 	return (-1);
@@ -679,6 +696,8 @@ sandbox_object_destroy(struct sandbox_object *sbop)
 		assert(sbop->sbo_stackmem == NULL);
 		assert(sbop->sbo_sandbox_system_objectp == NULL);
 	}
+	/* TODO: Stop worker before free */
+	free(sbop->sbo_ring);
 	free_c(sbop->sbo_vtable);
 	bzero(sbop, sizeof(*sbop));		/* Clears tags. */
 	free(sbop);

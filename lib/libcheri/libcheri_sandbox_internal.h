@@ -34,6 +34,7 @@
 
 #include <sys/stat.h>
 
+#include "libcheri_async.h"
 #include "libcheri_class.h"
 
 #if !__has_feature(capabilities)
@@ -186,6 +187,11 @@ sandbox_object {
 	 * file-descriptor data.
 	 */
 	__capability void	*sbo_private_data;
+
+	/*
+	 * Sandbox receive ring.
+	 */
+	struct libcheri_ring	*sbo_ring;
 };
 
 /*
