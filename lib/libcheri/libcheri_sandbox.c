@@ -511,11 +511,11 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 		goto error;
 	}
 
-	error = libcheri_async_start_worker(sbop->sbo_ring);
+	/*error = libcheri_async_start_worker(sbop->sbo_ring);
 	if (error != 0) {
 		saved_errno = errno;
 		goto error;
-	}
+	}*/
 
 	/*
 	 * Now that constructors have completed, return object.
