@@ -33,23 +33,25 @@
 #include <cheri/cheri.h>
 
 #include <err.h>
+#include <stdlib.h>
 
 #include <pthread.h>
 
 #include "libcheri_async.h"
 #include "libcheri_invoke.h"
+#include "libcheri_sandbox_internal.h"
 
 enum libcheri_ring_message_type
 {
-	libcheri_ring_message_request;
-	libcheri_ring_message_response;
+	libcheri_ring_message_request,
+	libcheri_ring_message_response
 };
 
 struct libcheri_ring_message
 {
-	libcheri_ring_message_type type;
-	libcheri_message msg;
-}
+	enum libcheri_ring_message_type type;
+	struct libcheri_message msg;
+};
 
 #define RING_BUFSZ 1024
 
@@ -65,7 +67,7 @@ struct libcheri_ring
 
 static struct libcheri_ring program_ring = {
 	.lock = PTHREAD_MUTEX_INITIALIZER,
-	.cond_enqueue = PTHREAD_COND_INITIALIZER
+	.cond_enqueue = PTHREAD_COND_INITIALIZER,
 	.cond_dequeue = PTHREAD_COND_INITIALIZER
 };
 
@@ -89,10 +91,10 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
 
 	ring->buf[ring->tail].type = libcheri_ring_message_request;
-	ring->buf[ring->tail].req = *req;
+	ring->buf[ring->tail].msg = *req;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
-	pthread_cond_signal(&ring->cond_denqueue);
+	pthread_cond_signal(&ring->cond_dequeue);
 	pthread_mutex_unlock(&ring->lock);
 }
 
@@ -105,14 +107,14 @@ libcheri_async_enqueue_response(struct libcheri_ring *ring,
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
 
 	ring->buf[ring->tail].type = libcheri_message;
-	ring->buf[ring->tail].resp = *resp;
+	ring->buf[ring->tail].msg = *resp;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
-	pthread_cond_signal(&ring->cond_denqueue);
+	pthread_cond_signal(&ring->cond_dequeue);
 	pthread_mutex_unlock(&ring->lock);
 }
 
-void *
+static void *
 libcheri_async_worker(void *arg)
 {
 	struct libcheri_ring *ring = (struct libcheri_ring *)arg;
