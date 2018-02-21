@@ -38,6 +38,7 @@
 
 #include <cheri/cheri.h>
 #include <cheri/cheric.h>
+#include <cheri/libcheri_async.h>
 #include <cheri/libcheri_fd.h>
 #include <cheri/libcheri_sandbox.h>
 #include <cheri/helloworld.h>
@@ -62,6 +63,8 @@ helloworld_cb(void *arg, int err /*, retval */)
 	puts("hello world callback");
 	pthread_mutex_lock(&lock);
 	received_callback = 1;
+	received_arg = arg;
+	recevied_err = err;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&lock);
 }
