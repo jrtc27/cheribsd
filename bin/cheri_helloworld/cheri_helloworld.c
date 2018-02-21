@@ -96,7 +96,8 @@ main(void)
 
 	cb.func = helloworld_cb;
 	cb.arg = &dummy_arg;
-	msg.method_num = 0; /* TODO */
+	/* TODO: Hard-coded to what call_libcheri_system_puts seems to be */
+	msg.method_num = 2;
 	msg.callback = &cb;
 	libcheri_message_send(__helloworld_objectp, &msg);
 
