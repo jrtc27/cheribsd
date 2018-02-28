@@ -36,6 +36,9 @@ extern struct cheri_object	 __helloworld;
 extern struct sandbox_object	*__helloworld_objectp;
 extern struct sandbox_class	*__helloworld_classp;
 
+extern long system_puts_method_num
+    __asm__("__cheri_method.__helloworld.call_libcheri_system_puts");
+
 #ifdef HELLOWORLD_COMPARTMENT
 #define	CHERI_HELLOWORLD_CCALL					\
     __attribute__((cheri_ccallee))				\
