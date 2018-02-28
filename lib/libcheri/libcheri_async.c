@@ -34,7 +34,6 @@
 
 #include <err.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <pthread.h>
 
@@ -93,10 +92,8 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 	if (!ring->started)
 		libcheri_async_start_worker(ring);
 
-	while (ring->head == ring->tail && ring->count != 0) {
-		fprintf(stderr, "%s: waiting on %p\n", __func__, &ring->cond_enqueue);
+	while (ring->head == ring->tail && ring->count != 0)
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
-	}
 
 	ring->buf[ring->tail].type = libcheri_ring_message_request;
 	ring->buf[ring->tail].msg = *req;
@@ -104,7 +101,6 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 	ring->buf[ring->tail].msg.rcv_ring = &program_ring;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
-	fprintf(stderr, "%s: signaling %p\n", __func__, &ring->cond_dequeue);
 	pthread_cond_signal(&ring->cond_dequeue);
 	pthread_mutex_unlock(&ring->lock);
 }
@@ -117,16 +113,13 @@ libcheri_async_enqueue_response(struct libcheri_ring *ring,
 	if (!ring->started)
 		libcheri_async_start_worker(ring);
 
-	while (ring->head == ring->tail && ring->count != 0) {
-		fprintf(stderr, "%s: waiting on %p\n", __func__, &ring->cond_enqueue);
+	while (ring->head == ring->tail && ring->count != 0)
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
-	}
 
 	ring->buf[ring->tail].type = libcheri_ring_message_response;
 	ring->buf[ring->tail].msg = *resp;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
-	fprintf(stderr, "%s: signaling %p\n", __func__, &ring->cond_dequeue);
 	pthread_cond_signal(&ring->cond_dequeue);
 	pthread_mutex_unlock(&ring->lock);
 }
@@ -141,15 +134,12 @@ libcheri_async_worker(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&ring->lock);
-		while (ring->head == ring->tail && ring->count == 0) {
-			fprintf(stderr, "%s: waiting on %p\n", __func__, &ring->cond_dequeue);
+		while (ring->head == ring->tail && ring->count == 0)
 			pthread_cond_wait(&ring->cond_dequeue, &ring->lock);
-		}
 
 		--ring->count;
 		msg = ring->buf[ring->head];
 		ring->head = (ring->head + 1) % RING_BUFSZ;
-		fprintf(stderr, "%s: signaling %p\n", __func__, &ring->cond_enqueue);
 		pthread_cond_signal(&ring->cond_enqueue);
 		pthread_mutex_unlock(&ring->lock);
 
