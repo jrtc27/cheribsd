@@ -46,6 +46,7 @@ struct libcheri_callback {
 struct libcheri_message {
 	register_t method_num;
 
+	register_t a0;
 	register_t a1;
 	register_t a2;
 	register_t a3;
