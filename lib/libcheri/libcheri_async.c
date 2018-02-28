@@ -145,7 +145,7 @@ libcheri_async_worker(void *arg)
 
 		if (msg.type == libcheri_ring_message_request) {
 			ret = libcheri_invoke(ring->sbop->sbo_cheri_object_invoke,
-			    msg.msg.methodnum,
+			    msg.msg.method_num,
 			    msg.msg.a0, msg.msg.a1, msg.msg.a2,
 			    msg.msg.a3, msg.msg.a4, msg.msg.a5,
 			    msg.msg.a6, msg.msg.a7,
