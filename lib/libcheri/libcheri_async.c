@@ -205,8 +205,4 @@ libcheri_async_init(void)
 	ret = pthread_attr_setdetachstate(&worker_attr, PTHREAD_CREATE_DETACHED);
 	if (ret != 0)
 		err(1, "%s: pthread_attr_setdetachstate", __func__);
-
-	ret = libcheri_async_start_worker(&program_ring);
-	if (ret != 0)
-		err(1, "%s: libcheri_async_start_worker", __func__);
 }
