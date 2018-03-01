@@ -65,7 +65,6 @@ helloworld_cb(void *arg, int err /*, retval */)
 	received_callback = 1;
 	received_arg = arg;
 	received_err = err;
-	printf("Signaling %p\n", &cond);
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&lock);
 }
@@ -102,10 +101,8 @@ main(void)
 	libcheri_message_send(__helloworld_objectp, &msg);
 
 	pthread_mutex_lock(&lock);
-	while (!received_callback) {
-		printf("Waiting on %p\n", &cond);
+	while (!received_callback)
 		pthread_cond_wait(&cond, &lock);
-	}
 	pthread_mutex_unlock(&lock);
 
 	assert(received_arg == &dummy_arg);
