@@ -109,7 +109,7 @@ main(void)
 	pthread_mutex_unlock(&lock);
 
 	assert(received_arg == &dummy_arg);
-	assert(received_err == 0);
+	assert(received_err >= 0);
 
 	libcheri_fd_destroy(sbop);
 
