@@ -1,6 +1,5 @@
 /*-
- * Copyright (c) 2014-2017 Robert N. M. Watson
- * Copyright (c) 2014 SRI International
+ * Copyright (c) 2018 James Clarke
  * All rights reserved.
  *
  * This software was developed by SRI International and the University of
@@ -33,6 +32,13 @@
 
 #include <cheri/cheri.h>
 #include <cheri/cheric.h>
+#include <cheri/libcheri_async.h>
 #include <cheri/libcheri_system.h>
 
-struct cheri_object _libcheri_system_object;
+struct libcheri_ring * __capability
+libcheri_async_get_ring(void)
+{
+	struct libcheri_ring * __capability ring;
+	libcheri_system_get_ring(&ring);
+	return ring;
+}

@@ -103,6 +103,10 @@ register_t	libcheri_system_user_call_fn(register_t methodnum,
 		    __capability void *c3, __capability void *c4,
 		    __capability void *c5, __capability void *c6,
 		    __capability void *c7);
+struct libcheri_ring;
+/* TODO: Bind the symbol directly rather than use a method */
+LIBCHERI_SYSTEM_CCALL
+int	libcheri_system_get_ring(struct libcheri_ring * __capability * __capability ringp);
 
 /*
  * XXXRW: Probably should be library-private: the CHERI type of the system

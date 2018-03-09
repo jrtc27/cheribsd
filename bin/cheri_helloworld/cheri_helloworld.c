@@ -98,6 +98,7 @@ main(void)
 	cb.arg = &dummy_arg;
 	msg.method_num = system_puts_method_num;
 	msg.callback = &cb;
+	msg.rcv_ring = libcheri_async_get_ring();
 	libcheri_message_send(__helloworld_objectp, &msg);
 
 	pthread_mutex_lock(&lock);

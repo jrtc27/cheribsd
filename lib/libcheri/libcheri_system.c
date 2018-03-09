@@ -204,6 +204,13 @@ libcheri_system_user_call_fn(register_t methodnum,
 	return (-1);
 }
 
+int
+libcheri_system_get_ring(struct libcheri_ring * __capability * __capability ringp)
+{
+	*ringp = (struct libcheri_ring * __capability)sandbox_object_private_get_idc();
+	return (0);
+}
+
 static int
 libcheri_syscall_allow(void)
 {

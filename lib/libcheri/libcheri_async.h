@@ -86,4 +86,9 @@ libcheri_async_alloc_ring(struct sandbox_object *sbop);
 int
 libcheri_async_start_worker(struct libcheri_ring *ring);
 
+/* Provided by libcheri itself for the main application, and provided by
+ * libc_cheri as a wrapper around libcheri_system_get_ring for compartments. */
+struct libcheri_ring * __capability
+libcheri_async_get_ring(void);
+
 #endif /* !_LIBCHERI_ASYNC_H_ */

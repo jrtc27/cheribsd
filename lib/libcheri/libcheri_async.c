@@ -93,8 +93,6 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 
 	ring->buf[ring->tail].type = libcheri_ring_message_request;
 	ring->buf[ring->tail].msg = *req;
-	/* TODO: From elsewhere */
-	ring->buf[ring->tail].msg.rcv_ring = &program_ring;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
 	pthread_cond_signal(&ring->cond_dequeue);
@@ -202,4 +200,11 @@ libcheri_async_init(void)
 	ret = libcheri_async_start_worker(&program_ring);
 	if (ret != 0)
 		err(1, "%s: libcheri_async_start_worker", __func__);
+}
+
+struct libcheri_ring * __capability
+libcheri_async_get_ring(void)
+{
+	/* Called from the main application */
+	return &program_ring;
 }
