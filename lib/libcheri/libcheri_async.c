@@ -206,5 +206,5 @@ struct libcheri_ring * __capability
 libcheri_async_get_ring(void)
 {
 	/* Called from the main application */
-	return &program_ring;
+	return (__cheri_tocap struct libcheri_ring * __capability)&program_ring;
 }
