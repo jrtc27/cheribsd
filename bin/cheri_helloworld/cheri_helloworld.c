@@ -58,12 +58,12 @@ static void *received_arg;
 static int received_err;
 
 static void
-helloworld_cb(void *arg, int err /*, retval */)
+helloworld_cb(void * __capability arg, int err /*, retval */)
 {
 	puts("hello world callback");
 	pthread_mutex_lock(&lock);
 	received_callback = 1;
-	received_arg = arg;
+	received_arg = (__cheri_fromcap void *)arg;
 	received_err = err;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&lock);
@@ -94,12 +94,11 @@ main(void)
 	ret = call_libcheri_fd_write_c(stdout_fd);
 	assert(ret == 12);
 
-	cb.func = helloworld_cb;
-	cb.arg = &dummy_arg;
+	cb.func = (void (* __cheri_tocap)(void * __capability, int))helloworld_cb;
+	cb.arg = (__cheri_tocap void *)&dummy_arg;
 	msg.method_num = system_puts_method_num;
-	msg.callback = &cb;
-	/* XXX: should be a capability */
-	msg.rcv_ring = (__cheri_fromcap struct libcheri_ring *)libcheri_async_get_ring();
+	msg.callback = (__cheri_tocap struct libcheri_callback *)&cb;
+	msg.rcv_ring = libcheri_async_get_ring();
 	libcheri_message_send(__helloworld_objectp, &msg);
 
 	pthread_mutex_lock(&lock);

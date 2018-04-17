@@ -39,8 +39,8 @@ struct libcheri_ring;
 struct sandbox_object;
 
 struct libcheri_callback {
-	void (*func)(void *, int /*, retval */);
-	void *arg;
+	void (* __capability func)(void * __capability , int /*, retval */);
+	void * __capability arg;
 };
 
 struct libcheri_message {
@@ -64,8 +64,8 @@ struct libcheri_message {
 	__capability void *c9;
 	__capability void *c10;
 
-	struct libcheri_callback *callback; /* sealed */
-	struct libcheri_ring *rcv_ring; /* sealed */
+	struct libcheri_callback * __capability callback; /* sealed */
+	struct libcheri_ring * __capability rcv_ring; /* sealed */
 };
 
 void
