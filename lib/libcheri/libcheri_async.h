@@ -39,7 +39,7 @@ struct libcheri_ring;
 struct sandbox_object;
 
 struct libcheri_callback {
-	void (* __capability func)(void * __capability , int /*, retval */);
+	void (* __capability func)(void * __capability, int /*, retval */);
 	void * __capability arg;
 };
 
@@ -73,11 +73,11 @@ libcheri_message_send(struct sandbox_object *sbop,
     struct libcheri_message *req);
 
 void
-libcheri_async_enqueue_request(struct libcheri_ring *ring,
+libcheri_async_enqueue_request(struct libcheri_ring * __capability ring,
     struct libcheri_message *req);
 
 void
-libcheri_async_enqueue_response(struct libcheri_ring *ring,
+libcheri_async_enqueue_response(struct libcheri_ring * __capability ring,
     struct libcheri_message *resp);
 
 void *

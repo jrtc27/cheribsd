@@ -84,7 +84,7 @@ libcheri_message_send(struct sandbox_object *sbop,
 /* TODO: Avoid deadlock somehow */
 
 void
-libcheri_async_enqueue_request(struct libcheri_ring *ring,
+libcheri_async_enqueue_request(struct libcheri_ring * __capability ring,
     struct libcheri_message *req)
 {
 	pthread_mutex_lock(&ring->lock);
@@ -100,7 +100,7 @@ libcheri_async_enqueue_request(struct libcheri_ring *ring,
 }
 
 void
-libcheri_async_enqueue_response(struct libcheri_ring *ring,
+libcheri_async_enqueue_response(struct libcheri_ring * __capability ring,
     struct libcheri_message *resp)
 {
 	pthread_mutex_lock(&ring->lock);
