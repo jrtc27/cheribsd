@@ -93,6 +93,7 @@ static int	sandbox_program_init(void);
  * default but may be enabled using an environmental variable.
  */
 int sb_verbose;
+__capability void *libcheri_ring_type;
 
 void
 sandbox_init(void)
@@ -100,6 +101,8 @@ sandbox_init(void)
 
 	if (getenv("LIBCHERI_SB_VERBOSE"))
 		sb_verbose = 1;
+
+	libcheri_ring_type = libcheri_type_alloc();
 
 	if (sandbox_program_init() < -1) {
 		err(1, "%s: sandbox_program_init", __func__);

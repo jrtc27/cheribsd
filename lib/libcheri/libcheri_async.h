@@ -80,6 +80,14 @@ void
 libcheri_async_enqueue_response(struct libcheri_ring * __capability ring,
     struct libcheri_message *resp);
 
+void
+libcheri_async_enqueue_request_unsealed(struct libcheri_ring *ring,
+    struct libcheri_message *req);
+
+void
+libcheri_async_enqueue_response_unsealed(struct libcheri_ring *ring,
+    struct libcheri_message *resp);
+
 void *
 libcheri_async_alloc_ring(struct sandbox_object *sbop);
 

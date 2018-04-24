@@ -42,6 +42,7 @@
 #endif
 
 extern int	sb_verbose;
+extern __capability void	*libcheri_ring_type;
 
 /*
  * Description of a 'sandbox class': an instance of code that may be sandboxed
@@ -191,7 +192,7 @@ sandbox_object {
 	/*
 	 * Sandbox receive ring.
 	 */
-	struct libcheri_ring	*sbo_ring;
+	__capability struct libcheri_ring	*sbo_ring;
 };
 
 /*

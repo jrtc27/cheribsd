@@ -31,6 +31,7 @@
 #include <sys/types.h>
 
 #include <cheri/cheri.h>
+#include <cheri/cheric.h>
 
 #include <err.h>
 #include <stdlib.h>
@@ -78,13 +79,33 @@ void
 libcheri_message_send(struct sandbox_object *sbop,
     struct libcheri_message *req)
 {
-	libcheri_async_enqueue_request(sbop->sbo_ring, req);
+	struct libcheri_ring *ringp =
+		(__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring;
+	libcheri_async_enqueue_request_unsealed(ringp, req);
+}
+
+void
+libcheri_async_enqueue_request(struct libcheri_ring * __capability ring,
+    struct libcheri_message *req)
+{
+	struct libcheri_ring *ringp =
+		(__cheri_fromcap struct libcheri_ring *)cheri_unseal(ring, libcheri_ring_type);
+	libcheri_async_enqueue_request_unsealed(ringp, req);
+}
+
+void
+libcheri_async_enqueue_response(struct libcheri_ring * __capability ring,
+    struct libcheri_message *resp)
+{
+	struct libcheri_ring *ringp =
+		(__cheri_fromcap struct libcheri_ring *)cheri_unseal(ring, libcheri_ring_type);
+	libcheri_async_enqueue_response_unsealed(ringp, resp);
 }
 
 /* TODO: Avoid deadlock somehow */
 
 void
-libcheri_async_enqueue_request(struct libcheri_ring * __capability ring,
+libcheri_async_enqueue_request_unsealed(struct libcheri_ring *ring,
     struct libcheri_message *req)
 {
 	pthread_mutex_lock(&ring->lock);
@@ -100,7 +121,7 @@ libcheri_async_enqueue_request(struct libcheri_ring * __capability ring,
 }
 
 void
-libcheri_async_enqueue_response(struct libcheri_ring * __capability ring,
+libcheri_async_enqueue_response_unsealed(struct libcheri_ring *ring,
     struct libcheri_message *resp)
 {
 	pthread_mutex_lock(&ring->lock);
@@ -206,5 +227,5 @@ struct libcheri_ring * __capability
 libcheri_async_get_ring(void)
 {
 	/* Called from the main application */
-	return (__cheri_tocap struct libcheri_ring * __capability)&program_ring;
+	return cheri_seal((__cheri_tocap struct libcheri_ring * __capability)&program_ring, libcheri_ring_type);
 }

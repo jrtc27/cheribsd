@@ -207,7 +207,8 @@ libcheri_system_user_call_fn(register_t methodnum,
 int
 libcheri_system_get_ring(struct libcheri_ring * __capability * __capability ringp)
 {
-	*ringp = (struct libcheri_ring * __capability)sandbox_object_private_get_idc();
+	struct sandbox_object *sbop = (__cheri_fromcap struct sandbox_object *)sandbox_object_private_get_idc();
+	*ringp = cheri_seal(sbop->sbo_ring, libcheri_ring_type);
 	return (0);
 }
 
