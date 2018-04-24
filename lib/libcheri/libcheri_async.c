@@ -171,7 +171,7 @@ libcheri_async_worker(void *arg)
 		} else {
 			/* TODO: unseal */
 			/* TODO: sandboxed callback */
-			msg.msg.callback->func(msg.msg.callback->arg, msg.msg.a1);
+			((__cheri_fromcap void (*)(void * __capability, int))msg.msg.callback->func)(msg.msg.callback->arg, msg.msg.a1);
 		}
 	}
 	return (NULL);
