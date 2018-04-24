@@ -94,7 +94,7 @@ main(void)
 	ret = call_libcheri_fd_write_c(stdout_fd);
 	assert(ret == 12);
 
-	cb.func = (void (* __cheri_tocap)(void * __capability, int))helloworld_cb;
+	cb.func = (__cheri_tocap void (*)(void * __capability, int))helloworld_cb;
 	cb.arg = (__cheri_tocap void *)&dummy_arg;
 	msg.method_num = system_puts_method_num;
 	msg.callback = (__cheri_tocap struct libcheri_callback *)&cb;
