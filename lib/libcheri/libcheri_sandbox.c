@@ -65,6 +65,7 @@
 #include "libcheri_sandbox_methods.h"
 #include "libcheri_sandboxasm.h"
 #include "libcheri_system.h"
+#include "libcheri_type.h"
 
 #if !__has_feature(capabilities)
 #error "This code requires a CHERI-aware compiler"
@@ -443,7 +444,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	if (sbop == NULL)
 		return (-1);
 
-	sbop->sbo_ring = libcheri_async_alloc_ring(sbop);
+	sbop->sbo_ring = (__cheri_tocap struct libcheri_ring * __capability)libcheri_async_alloc_ring(sbop);
 	if (sbop->sbo_ring == NULL) {
 		saved_errno = errno;
 		free(sbop);
@@ -464,7 +465,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
 	if (sbop->sbo_stackmem == NULL) {
 		saved_errno = errno;
-		free(sbop->sbo_ring);
+		free((__cheri_fromcap void *)sbop->sbo_ring);
 		free(sbop);
 		errno = saved_errno;
 		return (-1);
@@ -514,7 +515,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 		goto error;
 	}
 
-	error = libcheri_async_start_worker(sbop->sbo_ring);
+	error = libcheri_async_start_worker((__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring);
 	if (error != 0) {
 		saved_errno = errno;
 		goto error;
@@ -527,7 +528,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	return (0);
 error:
 	(void)munmap(sbop->sbo_stackmem, sbop->sbo_stacklen);
-	free(sbop->sbo_ring);
+	free((__cheri_fromcap void *)sbop->sbo_ring);
 	free(sbop);
 	errno = saved_errno;
 	return (-1);
@@ -700,7 +701,7 @@ sandbox_object_destroy(struct sandbox_object *sbop)
 		assert(sbop->sbo_sandbox_system_objectp == NULL);
 	}
 	/* TODO: Stop worker before free */
-	free(sbop->sbo_ring);
+	free((__cheri_fromcap void *)sbop->sbo_ring);
 	free_c(sbop->sbo_vtable);
 	bzero(sbop, sizeof(*sbop));		/* Clears tags. */
 	free(sbop);
