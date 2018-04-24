@@ -94,10 +94,10 @@ main(void)
 	ret = call_libcheri_fd_write_c(stdout_fd);
 	assert(ret == 12);
 
-	cb.func = (__cheri_tocap void (*)(void * __capability, int))helloworld_cb;
-	cb.arg = (__cheri_tocap void *)&dummy_arg;
+	cb.func = (__cheri_tocap void (* __capability)(void * __capability, int))helloworld_cb;
+	cb.arg = (__cheri_tocap void * __capability)&dummy_arg;
 	msg.method_num = system_puts_method_num;
-	msg.callback = (__cheri_tocap struct libcheri_callback *)&cb;
+	msg.callback = (__cheri_tocap struct libcheri_callback * __capability)&cb;
 	msg.rcv_ring = libcheri_async_get_ring();
 	libcheri_message_send(__helloworld_objectp, &msg);
 
