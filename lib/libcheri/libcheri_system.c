@@ -220,8 +220,8 @@ libcheri_system_message_send(struct sandbox_object * __capability sbop,
 	struct libcheri_ring *ringp =
 		(__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring;
 	struct libcheri_message * __capability reqp =
-		(__cheri_fromcap struct libcheri_message * __capability req);
-	libcheri_async_enqueue_request_unsealed(ringp, req);
+		(__cheri_fromcap struct libcheri_message *)req;
+	libcheri_async_enqueue_request_unsealed(ringp, reqp);
 }
 
 static int

@@ -104,6 +104,7 @@ register_t	libcheri_system_user_call_fn(register_t methodnum,
 		    __capability void *c5, __capability void *c6,
 		    __capability void *c7);
 struct libcheri_ring;
+struct libcheri_message;
 /* TODO: Bind the symbol directly rather than use a method */
 LIBCHERI_SYSTEM_CCALL
 int	libcheri_system_get_ring(struct libcheri_ring * __capability * __capability ringp);
