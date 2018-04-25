@@ -95,7 +95,7 @@ call_libcheri_system_puts_async(void)
 	msg.rcv_ring = libcheri_async_get_ring();
 	msg.c3 = cheri_ptrperm(&hello_world_str,
 	    sizeof(hello_world_str), CHERI_PERM_LOAD); /* Nul-terminated. */
-	libcheri_message_send(_libcheri_system_objectp, &msg);
+	libcheri_system_message_send(_libcheri_system_objectp, &msg);
 
 	while (!atomic_load_explicit(ints, memory_order_acquire))
 		;
