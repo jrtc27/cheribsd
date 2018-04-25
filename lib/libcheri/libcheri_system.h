@@ -48,16 +48,24 @@
  * this.
  */
 extern struct cheri_object _libcheri_system_object;
+extern struct sandbox_object *_object _libcheri_system_objectp;
+
+#define CONCAT(_x, _y) _x ## _y
+#define STR(x) #x
 
 #ifdef LIBCHERI_SYSTEM_INTERNAL
 #define LIBCHERI_SYSTEM_CCALL					\
     __attribute__((cheri_ccallee))				\
     __attribute__((cheri_method_class(_libcheri_system_object)))
+#define LIBCHERI_SYSTEM_METHOD_NUM(name)
 #else
 #define LIBCHERI_SYSTEM_CCALL					\
     __attribute__((cheri_ccall))				\
     __attribute__((cheri_method_suffix("_cap")))		\
     __attribute__((cheri_method_class(_libcheri_system_object)))
+#define LIBCHERI_SYSTEM_METHOD_NUM(_name)			\
+    extern long CONCAT(_name, _method_num)			\
+        __asm__("__cheri_method._libcheri_system_object." STR(_name));
 #endif
 
 /*
@@ -83,6 +91,7 @@ int	libcheri_system_new(struct sandbox_object *sbop,
  */
 LIBCHERI_SYSTEM_CCALL
 int	libcheri_system_helloworld(void);
+LIBCHERI_SYSTEM_METHOD_NUM(libcheri_system_puts)
 LIBCHERI_SYSTEM_CCALL
 int	libcheri_system_puts(__capability const char *str);
 LIBCHERI_SYSTEM_CCALL
@@ -130,11 +139,13 @@ extern __capability vm_offset_t	*libcheri_system_vtable;
 #define SYS_STUB(_num, _ret, _sys,					\
     _protoargs, _protoargs_chk, _protoargs_err,				\
     _callargs, _callargs_chk, _callargs_err, _localcheck)		\
+    LIBCHERI_SYSTEM_METHOD_NUM(__libcheri_system_sys_##_sys)		\
     LIBCHERI_SYSTEM_CCALL _ret __libcheri_system_sys_##_sys _protoargs_err;
 #define SYS_STUB_ARGHASPTRS	SYS_STUB
 #define SYS_STUB_VA(_num, _ret, _sys, _lastarg,				\
     _protoargs, _vprotoargs, _protoargs_chk, _protoargs_err,		\
     _callargs, _callargs_chk, _callargs_err, _localcheck)		\
+    LIBCHERI_SYSTEM_METHOD_NUM(CONCAT(__libcheri_system_sys_, _sys))	\
     LIBCHERI_SYSTEM_CCALL _ret __libcheri_system_sys_##_sys _protoargs_err;
 
 #include <compat/cheriabi/cheriabi_sysstubs.h>

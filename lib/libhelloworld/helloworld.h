@@ -57,6 +57,9 @@ CHERI_HELLOWORLD_CCALL
 int call_libcheri_system_puts(void);
 
 CHERI_HELLOWORLD_CCALL
+int call_libcheri_system_puts_async(void);
+
+CHERI_HELLOWORLD_CCALL
 int call_libcheri_fd_write_c(struct cheri_object fd_object);
 
 #endif /* !_CHERI_HELLOWORLD_H_ */

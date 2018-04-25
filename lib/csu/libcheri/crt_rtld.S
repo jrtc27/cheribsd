@@ -139,6 +139,11 @@ constructors:
 	dla	$t2, _libcheri_system_object;
 	csc	$c12, $t2, CHERICAP_SIZE($c26)
 
+	# Sandbox object itself
+	clc	$c12, $t0, 32+6*CHERICAP_SIZE($c26)
+	dla	$t2, _libcheri_system_objectp;
+	csc	$c12, $t2, 0($c26)
+
 	#
 	# Perform global capability initialisation from C.
 	#

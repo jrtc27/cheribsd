@@ -418,6 +418,8 @@ sandbox_object_load(struct sandbox_class *sbcp, struct sandbox_object *sbop)
 	    libcheri_sandbox_make_sealed_invoke_object(
 	    (__cheri_tocap __capability struct sandbox_object *)
 	    sbop->sbo_sandbox_system_objectp);
+	/* TODO: seal */
+	sbmp->sbm_system_objectp = sbop->sbo_sandbox_system_objectp;
 
 	/*
 	 * Install CReturn capabilities in the class.

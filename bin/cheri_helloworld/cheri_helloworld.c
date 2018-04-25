@@ -109,6 +109,9 @@ main(void)
 	assert(received_arg == &dummy_arg);
 	assert(received_err >= 0);
 
+	ret = call_libcheri_system_puts_async();
+	assert(ret >= 0);
+
 	libcheri_fd_destroy(sbop);
 
 	return (0);

@@ -41,6 +41,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #define HELLOWORLD_COMPARTMENT
@@ -51,6 +52,14 @@ void	invoke(void) { abort(); }
 
 static char hello_world_str[] = "hello world";
 static char hello_world_str_nl[] = "hello world\n";
+
+static void
+puts_cb(void * __capability arg, int err)
+{
+	_Atomic(int) *ints = arg;
+	atomic_store_explicit(ints+1, err, memory_order_relaxed);
+	atomic_store_explicit(ints, 1, memory_order_release);
+}
 
 int
 call_libcheri_system_helloworld(void)
@@ -68,6 +77,29 @@ call_libcheri_system_puts(void)
 	    sizeof(hello_world_str), CHERI_PERM_LOAD); /* Nul-terminated. */
 
 	return (libcheri_system_puts(hello_world_str_c));
+}
+
+int
+call_libcheri_system_puts_async(void)
+{
+	struct libcheri_message msg;
+	struct libcheri_callback cb;
+	/* 0: flag, 1: err */
+	_Atomic(int) ints[2] = { 0, 0 };
+
+	cb.func = (__cheri_tocap void (* __capability)(void * __capability, int))puts_cb;
+	cb.arg = ints;
+	msg.method_num = libcheri_system_puts_method_num;
+	msg.callback = (__cheri_tocap struct libcheri_callback * __capability)&cb;
+	msg.rcv_ring = libcheri_async_get_ring();
+	msg.c3 = cheri_ptrperm(&hello_world_str,
+	    sizeof(hello_world_str), CHERI_PERM_LOAD); /* Nul-terminated. */
+	libcheri_message_send(_libcheri_system_objectp, &msg);
+
+	while (!atomic_load_explicit(ints, memory_order_acquire))
+		;
+
+	return (ints[1]);
 }
 
 int
