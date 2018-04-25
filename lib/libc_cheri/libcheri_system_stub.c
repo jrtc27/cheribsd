@@ -36,4 +36,4 @@
 #include <cheri/libcheri_system.h>
 
 struct cheri_object _libcheri_system_object;
-struct sandbox_object *_object _libcheri_system_objectp;
+struct sandbox_object *_libcheri_system_objectp;
