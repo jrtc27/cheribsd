@@ -40,7 +40,7 @@
 #include <errno.h>
 
 struct cheri_object _libcheri_system_object;
-struct sandbox_object *_libcheri_system_objectp
+struct sandbox_object *_libcheri_system_objectp;
 
 /* XXX-BD: should be in crt. */
 extern char **environ;
