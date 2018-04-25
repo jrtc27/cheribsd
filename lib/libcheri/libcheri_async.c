@@ -170,8 +170,15 @@ libcheri_async_worker(void *arg)
 			libcheri_async_enqueue_response(msg.msg.rcv_ring, &resp);
 		} else {
 			/* TODO: unseal */
-			/* TODO: sandboxed callback */
-			((__cheri_fromcap void (*)(void * __capability, int))msg.msg.callback->func)(msg.msg.callback->arg, msg.msg.a1);
+			if (ring == &program_ring)
+				libcheri_async_invoke_callback(msg.msg.callback->func
+				    msg.msg.callback->arg, msg.msg.a1);
+			else
+				libcheri_invoke(ring->sbop->sbo_cheri_object_invoke,
+				    CHERI_INVOKE_METHOD_CALLBACK_INVOKE,
+				    msg.msg.a1, 0, 0, 0, 0, 0, 0,
+				    msg.msg.callback->func, msg.msg.callback->arg,
+				    NULL, NULL, NULL, NULL, NULL, NULL);
 		}
 	}
 	return (NULL);
@@ -205,7 +212,12 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 	return (ret);
 }
 
-static __capability void	*libcheri_async_invoke_callback;
+void
+libcheri_async_invoke_callback(void (* __capability func)(void * __capability, int),
+    void * __capability arg, int retval)
+{
+	((__cheri_fromcap void (*)(void * __capability, int))func)(arg, retval);
+}
 
 void
 libcheri_async_init(void)

@@ -111,7 +111,13 @@ __invoke_vector:
 	# Skip vtable dispatch if $v0 is -1
 	daddi	$t1, $0, -1
 	beq	$v0, $t1, legacy_invoke
-	nop			# Branch-delay slot
+	# Branch-delay slot is daddi below
+
+	#
+	# -2 is invoking a callback
+	daddi	$t1, $0, -2
+	beq	$v0, $t1, callback_invoke
+	nop
 
 	#
 	# Load the vtable address from sandbox metadata.
