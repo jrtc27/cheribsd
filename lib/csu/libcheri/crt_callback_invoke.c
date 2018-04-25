@@ -30,6 +30,10 @@
 
 void
 callback_invoke(void (* __capability func)(void * __capability, int),
+    void * __capability arg, int retval);
+
+void
+callback_invoke(void (* __capability func)(void * __capability, int),
     void * __capability arg, int retval)
 {
 	((__cheri_fromcap void (*)(void * __capability, int))func)(arg, retval);
