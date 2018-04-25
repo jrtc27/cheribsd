@@ -48,7 +48,7 @@
  * this.
  */
 extern struct cheri_object _libcheri_system_object;
-extern struct sandbox_object *_object _libcheri_system_objectp;
+extern struct sandbox_object *_libcheri_system_objectp;
 
 #define CONCAT(_x, _y) _x ## _y
 #define STR(x) #x
