@@ -219,7 +219,7 @@ libcheri_system_message_send(struct sandbox_object * __capability sbop,
 	/* XXX-JC: Don't fault in libcheri_system */
 	struct libcheri_ring *ringp =
 		(__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring;
-	struct libcheri_message * __capability reqp =
+	struct libcheri_message * reqp =
 		(__cheri_fromcap struct libcheri_message *)req;
 	libcheri_async_enqueue_request_unsealed(ringp, reqp);
 }
