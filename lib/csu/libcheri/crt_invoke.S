@@ -116,7 +116,7 @@ __invoke_vector:
 	#
 	# -2 is invoking a callback
 	daddi	$t1, $0, -2
-	beq	$v0, $t1, callback_invoke
+	beq	$v0, $t1, do_callback_invoke
 	nop
 
 	#
@@ -135,6 +135,12 @@ legacy_invoke:
 	# Call the MIPS/CHERI-ABI C "invoke" function.
 	#
 	dla	$t9, invoke
+	abicall	$t9
+	b	creturn_target
+	nop
+
+do_callback_invoke:
+	dla	$t9, callback_invoke
 	abicall	$t9
 
 creturn_target:
