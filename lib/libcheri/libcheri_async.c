@@ -136,6 +136,13 @@ libcheri_async_enqueue_response_unsealed(struct libcheri_ring *ring,
 	pthread_mutex_unlock(&ring->lock);
 }
 
+static void
+libcheri_async_invoke_callback(void (* __capability func)(void * __capability, int),
+    void * __capability arg, int retval)
+{
+	((__cheri_fromcap void (*)(void * __capability, int))func)(arg, retval);
+}
+
 static void *
 libcheri_async_worker(void *arg)
 {
@@ -171,12 +178,12 @@ libcheri_async_worker(void *arg)
 		} else {
 			/* TODO: unseal */
 			if (ring == &program_ring)
-				libcheri_async_invoke_callback(msg.msg.callback->func
+				libcheri_async_invoke_callback(msg.msg.callback->func,
 				    msg.msg.callback->arg, msg.msg.a1);
 			else
 				libcheri_invoke(ring->sbop->sbo_cheri_object_invoke,
 				    CHERI_INVOKE_METHOD_CALLBACK_INVOKE,
-				    msg.msg.a1, 0, 0, 0, 0, 0, 0,
+				    msg.msg.a1, 0, 0, 0, 0, 0, 0, 0,
 				    msg.msg.callback->func, msg.msg.callback->arg,
 				    NULL, NULL, NULL, NULL, NULL, NULL);
 		}
@@ -210,13 +217,6 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 		warn("%s: pthread_create", __func__);
 
 	return (ret);
-}
-
-void
-libcheri_async_invoke_callback(void (* __capability func)(void * __capability, int),
-    void * __capability arg, int retval)
-{
-	((__cheri_fromcap void (*)(void * __capability, int))func)(arg, retval);
 }
 
 void
