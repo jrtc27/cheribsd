@@ -205,6 +205,8 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 	return (ret);
 }
 
+static __capability void	*libcheri_async_invoke_callback;
+
 void
 libcheri_async_init(void)
 {

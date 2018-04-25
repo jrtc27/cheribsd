@@ -107,6 +107,10 @@ struct libcheri_ring;
 /* TODO: Bind the symbol directly rather than use a method */
 LIBCHERI_SYSTEM_CCALL
 int	libcheri_system_get_ring(struct libcheri_ring * __capability * __capability ringp);
+LIBCHERI_SYSTEM_CCALL
+void	libcheri_system_message_send(struct sandbox_object * __capability sbop,
+    struct libcheri_message * __capability req);
+
 
 /*
  * XXXRW: Probably should be library-private: the CHERI type of the system
