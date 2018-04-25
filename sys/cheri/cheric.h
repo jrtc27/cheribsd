@@ -153,7 +153,7 @@ cheri_maketype(void * __capability root_type, register_t type)
 	c = root_type;
 	c = cheri_setoffset(c, type);	/* Set type as desired. */
 	c = cheri_csetbounds(c, 1);	/* ISA implies length of 1. */
-	c = cheri_andperm(c, CHERI_PERM_GLOBAL | CHERI_PERM_SEAL); /* Perms. */
+	c = cheri_andperm(c, CHERI_PERM_GLOBAL | CHERI_PERM_SEAL | CHERI_PERM_UNSEAL); /* Perms. */
 	return (c);
 }
 
