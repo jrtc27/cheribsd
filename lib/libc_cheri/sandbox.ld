@@ -61,7 +61,7 @@ PAGE_ALIGN = 0x1000;
  * are mentioned in the following output section descriptions. With LLD we need
  * to explicitly use INPUT()
  */
-INPUT(crt_rtld.o crt_invoke.o)
+INPUT(crt_rtld.o crt_invoke.o crt_callback_invoke.o)
 INPUT(crtbeginC.o crtendC.o)
 /* Currently needed to process __cap_relocs in sandboxes: */
 INPUT(crt_init_globals.o)
