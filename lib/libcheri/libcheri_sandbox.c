@@ -477,11 +477,13 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	 * capability is local (can't be shared) and can store local pointers
 	 * (i.e., further stack-derived capabilities such as return
 	 * addresses).
+	 * XXX-JC: Made global since foo(&stackvar) is far too common, and
+	 * libcheri_system_calloc is a pain.
 	 */
 	sbop->sbo_stackcap = cheri_local(cheri_ptrperm(sbop->sbo_stackmem,
 	    sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
 	    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
-	    CHERI_PERM_STORE_LOCAL_CAP));
+	    CHERI_PERM_STORE_LOCAL_CAP | CHERI_PERM_GLOBAL));
 	sbop->sbo_csp = ((char *__capability )sbop->sbo_stackcap +
 	    sbop->sbo_stacklen);
 
