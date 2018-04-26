@@ -567,7 +567,7 @@ sandbox_object_new_system_object(__capability void *private_data,
     struct sandbox_object **sbopp)
 {
 	struct sandbox_object *sbop;
-	int error;
+	int error, saved_errno;
 
 	/*
 	 * XXXRW: We skip the sanity check because system objects might be
