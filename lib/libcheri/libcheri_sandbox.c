@@ -618,7 +618,7 @@ sandbox_object_new_system_object(__capability void *private_data,
 		return (-1);
 	}
 
-	*sbopp = sbop
+	*sbopp = sbop;
 	return (0);
 }
 
