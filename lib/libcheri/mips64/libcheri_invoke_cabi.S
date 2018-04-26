@@ -246,6 +246,8 @@ libcheri_set_errno:
 	.type	libcheri_errno,@object      # @libcheri_errno
 #ifdef HAVE_WORKING_TLS
 	.section	.tbss,"awT",@nobits
+#else
+	.data
 #endif
 	.globl	libcheri_errno
 	.align	2
