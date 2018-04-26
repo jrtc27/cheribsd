@@ -61,7 +61,7 @@ struct sandbox_metadata {
 	__capability vm_offset_t	*sbm_vtable;	/* Cap-offset: 2 */
 	__capability void	*_sbm_reserved2;	/* Cap-offset: 3 */
 	struct cheri_object	 sbm_creturn_object;	/* Cap-offset: 4, 5 */
-	struct sandbox_object	*sbm_system_objectp;	/* Cap-offset: 6 */
+	__capability struct sandbox_object	*sbm_system_objectp;	/* Cap-offset: 6 */
 };
 
 #endif /* !_LIBCHERI_SANDBOX_METADATA_H_ */

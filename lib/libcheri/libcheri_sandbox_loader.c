@@ -419,7 +419,9 @@ sandbox_object_load(struct sandbox_class *sbcp, struct sandbox_object *sbop)
 	    (__cheri_tocap __capability struct sandbox_object *)
 	    sbop->sbo_sandbox_system_objectp);
 	/* TODO: seal */
-	sbmp->sbm_system_objectp = sbop->sbo_sandbox_system_objectp;
+	sbmp->sbm_system_objectp =
+	    (__cheri_tocap __capability struct sandbox_object *)
+	    sbop->sbo_sandbox_system_objectp;
 
 	/*
 	 * Install CReturn capabilities in the class.
