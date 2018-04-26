@@ -566,6 +566,8 @@ sandbox_object_new_system_object(__capability void *private_data,
     __capability void *invoke_pcc, __capability vm_offset_t *vtable,
     struct sandbox_object **sbopp)
 {
+	struct sandbox_object *sbop;
+	int error;
 
 	/*
 	 * XXXRW: We skip the sanity check because system objects might be
@@ -575,29 +577,48 @@ sandbox_object_new_system_object(__capability void *private_data,
 		errx(1, "%s: sandbox_program_sanity_check", __func__);
 	 */
 
-	*sbopp = calloc(1, sizeof(**sbopp));
-	if (*sbopp == NULL)
+	sbop = calloc(1, sizeof(*sbop));
+	if (sbop == NULL)
 		return (-1);
 
-	(*sbopp)->sbo_idc =
-	    (__cheri_tocap void * __capability)(void *)*sbopp;
-	(*sbopp)->sbo_rtld_pcc = NULL;
-	(*sbopp)->sbo_invoke_pcc = invoke_pcc;
-	(*sbopp)->sbo_vtable = vtable;
-	(*sbopp)->sbo_ddc = cheri_getdefault();
-	(*sbopp)->sbo_private_data = private_data;
+	sbop->sbo_ring = (__cheri_tocap struct libcheri_ring * __capability)libcheri_async_alloc_ring(sbop);
+	if (sbop->sbo_ring == NULL) {
+		saved_errno = errno;
+		free(sbop);
+		errno = saved_errno;
+		return (-1);
+	}
+
+	sbop->sbo_idc =
+	    (__cheri_tocap void * __capability)(void *)sbop;
+	sbop->sbo_rtld_pcc = NULL;
+	sbop->sbo_invoke_pcc = invoke_pcc;
+	sbop->sbo_vtable = vtable;
+	sbop->sbo_ddc = cheri_getdefault();
+	sbop->sbo_private_data = private_data;
 
 	/* XXXRW: Does this remain the right capability to use for TLS? */
-	(*sbopp)->sbo_libcheri_tls = cheri_getdefault();
+	sbop->sbo_libcheri_tls = cheri_getdefault();
 
 	/*
 	 * Construct sealed invocation capabilities for use with
 	 * libcheri_invoke(), which will transition to the libcheri CCall
 	 * trampoline.  Leave rtld calabilities as NULL.
 	 */
-        (*sbopp)->sbo_cheri_object_invoke =
+        sbop->sbo_cheri_object_invoke =
             libcheri_sandbox_make_sealed_invoke_object(
-	    (__cheri_tocap __capability struct sandbox_object *)*sbopp);
+	    (__cheri_tocap __capability struct sandbox_object *)sbop);
+
+	error = libcheri_async_start_worker((__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring);
+	if (error != 0) {
+		saved_errno = errno;
+		free((__cheri_fromcap void *)sbop->sbo_ring);
+		free(sbop);
+		errno = saved_errno;
+		return (-1);
+	}
+
+	*sbopp = sbop
 	return (0);
 }
 
