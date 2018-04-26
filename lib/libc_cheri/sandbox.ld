@@ -112,6 +112,9 @@ SECTIONS
 	.rodata ALIGN(CAP_ALIGN) : {
 		*(.rodata)
 	}
+	.global_sizes : {
+		*(.global_sizes)
+	}
 	/*
 	 * Memory to be mapped into the data segment.  For compiler-generated
 	 * content, it would be much preferable to map into the code segment
