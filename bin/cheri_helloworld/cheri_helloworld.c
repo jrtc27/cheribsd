@@ -96,6 +96,7 @@ main(void)
 
 	cb.func = (__cheri_tocap void (* __capability)(void * __capability, int))helloworld_cb;
 	cb.arg = (__cheri_tocap void * __capability)&dummy_arg;
+	memset(&msg, 0, sizeof(msg));
 	msg.method_num = system_puts_method_num;
 	msg.callback = (__cheri_tocap struct libcheri_callback * __capability)&cb;
 	msg.rcv_ring = libcheri_async_get_ring();
