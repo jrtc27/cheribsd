@@ -184,8 +184,9 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 
 	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->stacks[0]) {
 		if (need_realloc) {
-			while (!atomic_compare_exchange_weak(&stacksp->lock,
-					&unlocked, 1, memory_order_acquire,
+			while (!atomic_compare_exchange_weak_explicit(
+					&stacksp->lock, &unlocked, 1,
+					memory_order_acquire,
 					memory_order_relaxed)) {
 				while (atomic_load_explicit(&stacksp->lock,
 						memory_order_relaxed))
@@ -261,8 +262,9 @@ libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 	pthread_mutex_lock(&global_lock);
 
 	for (stacksp = stacks_list_head; stacksp && !err; stacksp = stacksp->stacks[0]) {
-		while (!atomic_compare_exchange_weak(&stacksp->lock,
-				&unlocked, 1, memory_order_acquire,
+		while (!atomic_compare_exchange_weak_explicit(
+				&stacksp->lock, &unlocked, 1,
+				memory_order_acquire,
 				memory_order_relaxed)) {
 			while (atomic_load_explicit(&stacksp->lock,
 					memory_order_relaxed))
