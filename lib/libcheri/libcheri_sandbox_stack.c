@@ -28,19 +28,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/mman.h>
+
+#include <cheri/cheri.h>
+#include <cheri/cheric.h>
+
 #include <assert.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <sys/mman.h>
+#include <pthread.h>
 
 #include "libcheri_sandbox.h"
 #include "libcheri_sandbox_internal.h"
+#include "libcheri_sandbox_stack.h"
 
 struct sandbox_object_list_node
 {
-	struct sanbox_object *sbop;
+	struct sandbox_object *sbop;
 	struct sandbox_object_list_node *next;
 };
 
@@ -48,7 +55,7 @@ struct thread_stacks_info
 {
 	void * __capability * __capability stacks;
 	_Atomic(int) lock;
-}
+};
 
 static struct sandbox_object_list_node *sbo_list_head;
 
@@ -105,7 +112,7 @@ void libcheri_sandbox_stack_thread_started(void)
 	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->stackoff / sizeof(void * __capability);
-		__libcheri_sandbox_stacks[stackidx] =
+		__libcheri_sandbox_stacks.stacks[stackidx] =
 			mmap(0, node->sbop->sbo_stacklen,
 				PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
 	}
@@ -122,7 +129,7 @@ void libcheri_sandbox_stack_thread_stopped(void)
 	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->stackoff / sizeof(void * __capability);
-		munmap(__libcheri_sandbox_stacks[stackidx],
+		munmap(__libcheri_sandbox_stacks.stacks[stackidx],
 			node->sbop->sbo_stacklen);
 	}
 	libcheri_sandbox_stack_register_stacks(&__libcheri_sandbox_stacks);
