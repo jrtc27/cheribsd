@@ -101,7 +101,7 @@ void libcheri_sandbox_stack_thread_started(void)
 		 * XXX-JC: Made global since foo(&stackvar) is far too common,
 		 * and libcheri_system_calloc is a pain.
 		 */
-		__libcheri_sandbox_stacks[stackidx] = cheri_ptrperm(stackmem,
+		__libcheri_sandbox_stacks.stacks[stackidx] = cheri_ptrperm(stackmem,
 		    node->sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
 		    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
 		    CHERI_PERM_STORE_LOCAL_CAP);
