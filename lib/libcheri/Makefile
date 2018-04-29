@@ -19,7 +19,8 @@ SRCS=	libcheri_async.c		\
 	libcheri_sandbox.c		\
 	libcheri_sandbox_elf.c		\
 	libcheri_sandbox_loader.c	\
-	libcheri_sandbox_methods.c
+	libcheri_sandbox_methods.c	\
+	libcheri_sandbox_stack.c
 
 .if defined(LIBCHERI)
 SRCS+=	libcheri_invoke_cabi.S		\
@@ -45,6 +46,7 @@ INCS=	libcheri_async.h		\
 	libcheri_sandbox.h		\
 	libcheri_sandbox_internal.h	\
 	libcheri_sandbox_metadata.h	\
+	libcheri_sandbox_stack.h	\
 	libcheri_sandboxasm.h
 
 CFLAGS+=	-I${.CURDIR}
