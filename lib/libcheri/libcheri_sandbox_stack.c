@@ -193,8 +193,8 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 				memory_order_release);
 		}
 
-			mmap(0, sbop->sbo_stacklen,
-				PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		stackmem = mmap(0, sbop->sbo_stacklen,
+			PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
 
 		/*
 		 * Note that the capability is local (can't be shared) and can
