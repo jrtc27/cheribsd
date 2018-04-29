@@ -303,7 +303,7 @@ libcheri_ccall_rtld_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_rtld_lock_stack:
+libcheri_ccall_rtld_do_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
@@ -704,7 +704,7 @@ libcheri_ccall_invoke_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_invoke_lock_stack:
+libcheri_ccall_invoke_do_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
