@@ -132,7 +132,7 @@ void libcheri_sandbox_stack_thread_stopped(void)
 
 void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 {
-	struct libcheri_thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info *stacksp;
 	struct sandbox_object_list_node *node, *curr, *prev;
 	int unlocked = 0;
 	unsigned int stackidx;
@@ -215,7 +215,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 
 void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 {
-	struct libcheri_thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info *stacksp;
 	struct sandbox_object_list_node *node;
 	struct sandbox_object_list_node **inptr;
 	unsigned int stackidx;
@@ -246,7 +246,7 @@ void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 int
 libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 {
-	struct libcheri_thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info *stacksp;
 	int unlocked = 0;
 	unsigned int stackidx;
 	void *stackmem;
