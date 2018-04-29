@@ -33,6 +33,7 @@
 struct libcheri_thread_stacks_info
 {
 	void * __capability * __capability stacks;
+	struct libcheri_thread_stacks_info *next;
 	_Atomic(int) lock;
 };
 

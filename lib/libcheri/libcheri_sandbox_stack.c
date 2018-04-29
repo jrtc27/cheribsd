@@ -52,11 +52,11 @@ struct sandbox_object_list_node
 
 static struct sandbox_object_list_node *sbo_list_head;
 
-/* Element 0: chain double pointer */
+/* TODO: Use index 0 for system sandboxes */
 __thread struct libcheri_thread_stacks_info __libcheri_sandbox_stacks;
 
-static struct libcheri_thread_stacks_info * __capability stacks_list_head;
-static struct libcheri_thread_stacks_info * __capability *stacks_list_tail = &stacks_list_head;
+static struct libcheri_thread_stacks_info *stacks_list_head;
+static struct libcheri_thread_stacks_info **stacks_list_tail = &stacks_list_head;
 
 static unsigned int allocated_stack_slots = 4;
 
@@ -64,28 +64,14 @@ static pthread_mutex_t global_lock;
 
 static void libcheri_sandbox_stack_register_stacks(struct libcheri_thread_stacks_info *stacksp)
 {
-	*stacks_list_tail =
-		(__cheri_tocap struct libcheri_thread_stacks_info * __capability)
-		stacksp;
-	stacks_list_tail =
-		(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
-		stacksp->stacks;
+	*stacks_list_tail = stacksp;
+	stacks_list_tail = &stacksp->next;
 }
 
 static void libcheri_sandbox_stack_realloc(struct libcheri_thread_stacks_info *stacksp)
 {
-	bool update_tail = stacks_list_tail ==
-		(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
-		stacksp->stacks;
-	stacksp->stacks =
-		(__cheri_tocap void * __capability * __capability)
-		realloc((__cheri_fromcap void *)stacksp->stacks,
-			allocated_stack_slots*sizeof(void * __capability));
-	if (update_tail) {
-		stacks_list_tail =
-			(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
-			stacksp->stacks;
-	}
+	stacksp->stacks = realloc_c(stacksp->stacks,
+		allocated_stack_slots*sizeof(void * __capability));
 }
 
 void libcheri_sandbox_stack_init(void)
@@ -98,15 +84,27 @@ void libcheri_sandbox_stack_thread_started(void)
 {
 	struct sandbox_object_list_node *node;
 	unsigned int stackidx;
+	void *stackmem;
 
 	pthread_mutex_lock(&global_lock);
 	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->sbo_stackoff / sizeof(void * __capability);
-		__libcheri_sandbox_stacks.stacks[stackidx] =
-			(__cheri_tocap void * __capability)
-			mmap(0, node->sbop->sbo_stacklen,
-				PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+
+		stackmem = mmap(0, sbop->sbo_stacklen,
+			PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+
+		/*
+		 * Note that the capability is local (can't be shared) and can
+		 * store local pointers (i.e., further stack-derived
+		 * capabilities such as return addresses).
+		 * XXX-JC: Made global since foo(&stackvar) is far too common,
+		 * and libcheri_system_calloc is a pain.
+		 */
+		stacksp->stacks[stackidx] = cheri_ptrperm(stackmem,
+		    sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
+		    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
+		    CHERI_PERM_STORE_LOCAL_CAP);
 	}
 	libcheri_sandbox_stack_register_stacks(&__libcheri_sandbox_stacks);
 	pthread_mutex_unlock(&global_lock);
@@ -125,7 +123,10 @@ void libcheri_sandbox_stack_thread_stopped(void)
 			__libcheri_sandbox_stacks.stacks[stackidx],
 			node->sbop->sbo_stacklen);
 	}
-	libcheri_sandbox_stack_register_stacks(&__libcheri_sandbox_stacks);
+	/*
+	 * TODO: Implement
+	 * libcheri_sandbox_stack_unregister_stacks(&__libcheri_sandbox_stacks);
+	 */
 	pthread_mutex_unlock(&global_lock);
 }
 
@@ -174,7 +175,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 		allocated_stack_slots *= 2;
 	}
 
-	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->stacks[0]) {
+	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->next) {
 		if (need_realloc) {
 			while (!atomic_compare_exchange_weak_explicit(
 					&stacksp->lock, &unlocked, 1,
@@ -231,7 +232,7 @@ void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 	*inptr = node->next;
 
 	stackidx = sbop->sbo_stackoff / sizeof(void * __capability);
-	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->stacks[0]) {
+	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->next) {
 		munmap((__cheri_fromcap void *)stacksp->stacks[stackidx],
 			sbop->sbo_stacklen);
 		stacksp->stacks[stackidx] = NULL;
@@ -255,7 +256,7 @@ libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 
 	pthread_mutex_lock(&global_lock);
 
-	for (stacksp = stacks_list_head; stacksp && !err; stacksp = stacksp->stacks[0]) {
+	for (stacksp = stacks_list_head; stacksp && !err; stacksp = stacksp->next) {
 		while (!atomic_compare_exchange_weak_explicit(
 				&stacksp->lock, &unlocked, 1,
 				memory_order_acquire,
