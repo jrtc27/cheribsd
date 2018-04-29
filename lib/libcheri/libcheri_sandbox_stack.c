@@ -186,9 +186,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 					;
 			}
 
-			libcheri_sandbox_stack_realloc(
-				(__cheri_fromcap struct libcheri_thread_stacks_info *)
-				stacksp);
+			libcheri_sandbox_stack_realloc(stacksp);
 
 			atomic_store_explicit(&stacksp->lock, 0,
 				memory_order_release);
