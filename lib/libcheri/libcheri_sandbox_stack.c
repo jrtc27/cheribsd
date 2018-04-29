@@ -37,7 +37,6 @@
 #include <assert.h>
 #include <err.h>
 #include <pthread.h>
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -51,38 +50,32 @@ struct sandbox_object_list_node
 	struct sandbox_object_list_node *next;
 };
 
-struct thread_stacks_info
-{
-	void * __capability * __capability stacks;
-	_Atomic(int) lock;
-};
-
 static struct sandbox_object_list_node *sbo_list_head;
 
 /* Element 0: chain double pointer */
-__thread struct thread_stacks_info __libcheri_sandbox_stacks;
+__thread struct libcheri_thread_stacks_info __libcheri_sandbox_stacks;
 
-static struct thread_stacks_info * __capability stacks_list_head;
-static struct thread_stacks_info * __capability *stacks_list_tail = &stacks_list_head;
+static struct libcheri_thread_stacks_info * __capability stacks_list_head;
+static struct libcheri_thread_stacks_info * __capability *stacks_list_tail = &stacks_list_head;
 
 static unsigned int allocated_stack_slots = 4;
 
 static pthread_mutex_t global_lock;
 
-static void libcheri_sandbox_stack_register_stacks(struct thread_stacks_info *stacksp)
+static void libcheri_sandbox_stack_register_stacks(struct libcheri_thread_stacks_info *stacksp)
 {
 	*stacks_list_tail =
-		(__cheri_tocap struct thread_stacks_info * __capability)
+		(__cheri_tocap struct libcheri_thread_stacks_info * __capability)
 		stacksp;
 	stacks_list_tail =
-		(__cheri_fromcap struct thread_stacks_info * __capability *)
+		(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
 		stacksp->stacks;
 }
 
-static void libcheri_sandbox_stack_realloc(struct thread_stacks_info *stacksp)
+static void libcheri_sandbox_stack_realloc(struct libcheri_thread_stacks_info *stacksp)
 {
 	bool update_tail = stacks_list_tail ==
-		(__cheri_fromcap struct thread_stacks_info * __capability *)
+		(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
 		stacksp->stacks;
 	stacksp->stacks =
 		(__cheri_tocap void * __capability * __capability)
@@ -90,7 +83,7 @@ static void libcheri_sandbox_stack_realloc(struct thread_stacks_info *stacksp)
 			allocated_stack_slots*sizeof(void * __capability));
 	if (update_tail) {
 		stacks_list_tail =
-			(__cheri_fromcap struct thread_stacks_info * __capability *)
+			(__cheri_fromcap struct libcheri_thread_stacks_info * __capability *)
 			stacksp->stacks;
 	}
 }
@@ -104,8 +97,6 @@ void libcheri_sandbox_stack_init(void)
 void libcheri_sandbox_stack_thread_started(void)
 {
 	struct sandbox_object_list_node *node;
-	_Atomic(int) *lockptr;
-	int unlocked = 0;
 	unsigned int stackidx;
 
 	pthread_mutex_lock(&global_lock);
@@ -140,7 +131,7 @@ void libcheri_sandbox_stack_thread_stopped(void)
 
 void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 {
-	struct thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info * __capability stacksp;
 	struct sandbox_object_list_node *node, *curr, *prev;
 	int unlocked = 0;
 	unsigned int stackidx;
@@ -195,7 +186,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 			}
 
 			libcheri_sandbox_stack_realloc(
-				(__cheri_fromcap struct thread_stacks_info *)
+				(__cheri_fromcap struct libcheri_thread_stacks_info *)
 				stacksp);
 
 			atomic_store_explicit(&stacksp->lock, 0,
@@ -223,7 +214,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 
 void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 {
-	struct thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info * __capability stacksp;
 	struct sandbox_object_list_node *node;
 	struct sandbox_object_list_node **inptr;
 	unsigned int stackidx;
@@ -254,11 +245,13 @@ void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 int
 libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 {
-	struct thread_stacks_info * __capability stacksp;
+	struct libcheri_thread_stacks_info * __capability stacksp;
 	int unlocked = 0;
 	unsigned int stackidx;
 	void *stackmem;
 	int err;
+
+	stackidx = sbop->sbo_stackoff / sizeof(void * __capability);
 
 	pthread_mutex_lock(&global_lock);
 
@@ -283,6 +276,8 @@ libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 		atomic_store_explicit(&stacksp->lock, 0,
 			memory_order_release);
 	}
+
+	pthread_mutex_unlock(&global_lock);
 
 	return (err);
 }

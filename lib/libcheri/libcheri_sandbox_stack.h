@@ -28,6 +28,16 @@
  * SUCH DAMAGE.
  */
 
+#include <stdatomic.h>
+
+struct libcheri_thread_stacks_info
+{
+	void * __capability * __capability stacks;
+	_Atomic(int) lock;
+};
+
+extern __thread struct libcheri_thread_stacks_info __libcheri_sandbox_stacks;
+
 void libcheri_sandbox_stack_init(void);
 void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop);
 void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop);
