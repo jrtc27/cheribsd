@@ -254,6 +254,13 @@ create_stack(struct pthread_attr *pattr)
 	return (ret);
 }
 
+#ifndef __CHERI_PURE_CAPABILITY__
+#define WEAK_SYMBOL_NONNULL(sym) ((sym) != NULL)
+#else
+/* Work around https://github.com/CTSRD-CHERI/llvm/issues/167 */
+#define WEAK_SYMBOL_NONNULL(sym) ((vaddr_t)(sym) != (vaddr_t)0)
+#endif
+
 void libcheri_sandbox_stack_thread_started(void);
 #pragma weak libcheri_sandbox_stack_thread_started
 
