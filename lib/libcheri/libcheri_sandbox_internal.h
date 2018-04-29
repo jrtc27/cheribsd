@@ -139,7 +139,7 @@ sandbox_object {
 	union {
 		unsigned int	 sbo_stackoff;	/* Capability offset 6. */
 		__capability void *_sbo_reserved0; /* Pad to capability size. */
-	}
+	};
 	__capability void *_sbo_reserved1;	/* Capability offset 7. */
 
 	/*
