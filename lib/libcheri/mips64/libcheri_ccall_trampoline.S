@@ -303,7 +303,7 @@ libcheri_ccall_rtld_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_rtld_lock_stack
+libcheri_ccall_rtld_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
@@ -314,7 +314,7 @@ libcheri_ccall_rtld_lock_stack
 	andi	$t2, $t1, 1
 	bnez	$t2, libcheri_ccall_rtld_sandbox_busy
 	ori	$t1, $t1, 1			# Branch-delay slot
-	csetoffset	$c16, $t1, $c12		# Tag stack
+	csetoffset	$c16, $c12, $t1		# Tag stack
 	csc	$c16, $at, 0($c13)
 	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 
@@ -704,7 +704,7 @@ libcheri_ccall_invoke_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_invoke_lock_stack
+libcheri_ccall_invoke_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
@@ -715,7 +715,7 @@ libcheri_ccall_invoke_lock_stack
 	andi	$t2, $t1, 1
 	bnez	$t2, libcheri_ccall_invoke_sandbox_busy
 	ori	$t1, $t1, 1			# Branch-delay slot
-	csetoffset	$c16, $t1, $c12		# Tag stack
+	csetoffset	$c16, $c12, $t1		# Tag stack
 	csc	$c16, $at, 0($c13)
 	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 
@@ -989,7 +989,7 @@ libcheri_creturn_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_creturn_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_creturn_unlock_stack
+libcheri_creturn_unlock_stack:
 	/*
 	 * Remove 1 from stack tag
 	 */
@@ -998,7 +998,7 @@ libcheri_creturn_unlock_stack
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12
 	andi	$t1, $t1, 1
-	csetoffset	$c12, $t1, $c12		# Untag stack
+	csetoffset	$c12, $c12, $t1		# Untag stack
 	csc	$c12, $at, 0($c13)
 	csw	$zero, $zero, 0($c17)		# Unlock thread lock
 
