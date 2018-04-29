@@ -35,6 +35,7 @@
 #include <cheri/cheric.h>
 
 #include <assert.h>
+#include <err.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdbool.h>
