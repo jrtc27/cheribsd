@@ -91,7 +91,7 @@ void libcheri_sandbox_stack_thread_started(void)
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->sbo_stackoff / sizeof(void * __capability);
 
-		stackmem = mmap(0, sbop->sbo_stacklen,
+		stackmem = mmap(0, node->sbop->sbo_stacklen,
 			PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
 
 		/*
@@ -101,8 +101,8 @@ void libcheri_sandbox_stack_thread_started(void)
 		 * XXX-JC: Made global since foo(&stackvar) is far too common,
 		 * and libcheri_system_calloc is a pain.
 		 */
-		stacksp->stacks[stackidx] = cheri_ptrperm(stackmem,
-		    sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
+		__libcheri_sandbox_stacks[stackidx] = cheri_ptrperm(stackmem,
+		    node->sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
 		    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
 		    CHERI_PERM_STORE_LOCAL_CAP);
 	}
