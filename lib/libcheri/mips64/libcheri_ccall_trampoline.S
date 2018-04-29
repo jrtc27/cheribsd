@@ -255,8 +255,13 @@ libcheri_ccall_rtld_fetch_stack:
 	.set	pop
 	daddiu	$at, $at, %tprel_lo(__libcheri_stack_tls_storage)
 	daddu	$at, $t0, $at
-	clc		$c14, $zero, (5*CHERICAP_SIZE)($c26)
-	csetoffset	$c14, $c14, $at
+	clc		$c13, $zero, (5*CHERICAP_SIZE)($c26)
+	csetoffset	$c14, $c13, $at
+	/* Also load this thread's sandbox stacks vector. */
+	lui	$at, %tprel_hi(__libcheri_sandbox_stacks)
+	daddiu	$at, $at, %tprel_lo(__libcheri_sandbox_stacks)
+	daddu	$at, $t0, $at
+	csetoffset	$c13, $c13, $at
 
 libcheri_ccall_rtld_check_stack:
 	/*
@@ -272,13 +277,13 @@ libcheri_ccall_rtld_check_stack:
 	beqz	$t0, libcheri_ccall_rtld_stack_overflow
 	nop					# Branch-delay slot
 
-libcheri_ccall_rtld_lock_sandbox:
+libcheri_ccall_rtld_lock_stack:
 	/*
 	 * After we've performed all checks, the only remaining things to
-	 * confirm is that the object isn't busy.  Attempt to lock the object,
-	 * and don't perturb $t0 as we will need that later.  Once we get past
-	 * this point, we are committed to the transition, so we shouldn't
-	 * need to undo the lock operation.
+	 * confirm is that the object isn't busy in this thread.  Attempt
+	 * to lock the object, and don't perturb $t0 as we will need that later.
+	 * Once we get past this point, we are committed to the transition, so we
+	 * shouldn't need to undo the lock operation.
 	 *
 	 * XXXRW: There is a race condition if a signal delivers between
 	 * setting the lock and updating the trusted-stack pointer, in which
@@ -289,14 +294,29 @@ libcheri_ccall_rtld_lock_sandbox:
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
-	cincoffset	$c15, $c26, (7*CHERICAP_SIZE) # XXXRW: Hard-coded offset
-libcheri_ccall_rtld_lock_sandbox_loop:
-	clld	$t1, $c15
-	bnez	$t1, libcheri_ccall_rtld_sandbox_busy
+	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
+libcheri_ccall_rtld_lock_thread_stacks_loop:
+	cllw	$t1, $c15
+	bnez	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
-	cscd	$t1, $t1, $c15
-	beqz	$t1, libcheri_ccall_rtld_lock_sandbox_loop
+	cscw	$t1, $t1, $c15
+	beqz	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	nop					# Branch-delay slot
+
+libcheri_ccall_rtld_lock_stack
+	/*
+	 * In-use sandbox thread stacks are offset tagged with 1.
+	 */
+	clc	$c13, $zero, 0($c13)
+	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
+	clc	$c12, $at, 0($c13)		# Load thread's stack
+	cgetoffset	$t1, $c12		# Check for reentrance
+	andi	$t2, $t1, 1
+	bnez	$t2, libcheri_ccall_rtld_sandbox_busy
+	ori	$t1, $t1, 1			# Branch-delay slot
+	csetoffset	$c16, $t1, $c12		# Tag stack
+	csc	$c16, $at, 0($c13)
+	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 
 libcheri_ccall_rtld_push_stack:
 	/*
@@ -333,7 +353,7 @@ libcheri_ccall_rtld_extract_target:
 	 *
 	 * NB: Notice capability offset 1 for rtld initialisation.
 	 */
-	clc	$c11, $zero, (6*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
+	cmove	$c11, $c12
 	clc	$c12, $zero, (4*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
 	csetdefault	$c12
 	clc	$c12, $zero, (1*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
@@ -404,6 +424,8 @@ libcheri_ccall_rtld_stack_overflow:
 	nop
 
 libcheri_ccall_rtld_sandbox_busy:
+	dli	$t1, 1
+	csw	$t1, $zero, 0($c15)		# Unlock thread lock
 	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
 	b	libcheri_ccall_rtld_error_return
 	nop
@@ -523,7 +545,6 @@ libcheri_ccall_invoke_check_globals:
 	 * context.
 	 *
 	 * XXXRW: This is currently quite inefficient architecturally, but
-	 * XXXRW: This is currently quite inefficient architecturally, but
 	 * would be easy to optimise with a conditional move instruction
 	 * based on permissions as input (or similar).
 	 */
@@ -635,8 +656,13 @@ libcheri_ccall_invoke_fetch_stack:
 	.set	pop
 	daddiu	$at, $at, %tprel_lo(__libcheri_stack_tls_storage)
 	daddu	$at, $t0, $at
-	clc		$c14, $zero, (5*CHERICAP_SIZE)($c26)
-	csetoffset	$c14, $c14, $at
+	clc		$c13, $zero, (5*CHERICAP_SIZE)($c26)
+	csetoffset	$c14, $c13, $at
+	/* Also load this thread's sandbox stacks vector. */
+	lui	$at, %tprel_hi(__libcheri_sandbox_stacks)
+	daddiu	$at, $at, %tprel_lo(__libcheri_sandbox_stacks)
+	daddu	$at, $t0, $at
+	csetoffset	$c13, $c13, $at
 
 libcheri_ccall_invoke_check_stack:
 	/*
@@ -652,13 +678,13 @@ libcheri_ccall_invoke_check_stack:
 	beqz	$t0, libcheri_ccall_invoke_stack_overflow
 	nop					# Branch-delay slot
 
-libcheri_ccall_invoke_lock_sandbox:
+libcheri_ccall_invoke_lock_stack:
 	/*
 	 * After we've performed all checks, the only remaining things to
-	 * confirm is that the object isn't busy.  Attempt to lock the object,
-	 * and don't perturb $t0 as we will need that later.  Once we get past
-	 * this point, we are committed to the transition, so we shouldn't
-	 * need to undo the lock operation.
+	 * confirm is that the object isn't busy in this thread.  Attempt
+	 * to lock the object, and don't perturb $t0 as we will need that later.
+	 * Once we get past this point, we are committed to the transition, so we
+	 * shouldn't need to undo the lock operation.
 	 *
 	 * XXXRW: There is a race condition if a signal delivers between
 	 * setting the lock and updating the trusted-stack pointer, in which
@@ -669,14 +695,29 @@ libcheri_ccall_invoke_lock_sandbox:
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
-	cincoffset	$c15, $c26, (7*CHERICAP_SIZE) # XXXRW: Hard-coded offset
-libcheri_ccall_invoke_lock_sandbox_loop:
-	clld	$t1, $c15
-	bnez	$t1, libcheri_ccall_invoke_sandbox_busy
+	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
+libcheri_ccall_invoke_lock_thread_stacks_loop:
+	cllw	$t1, $c15
+	bnez	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
-	cscd	$t1, $t1, $c15
-	beqz	$t1, libcheri_ccall_invoke_lock_sandbox_loop
+	cscw	$t1, $t1, $c15
+	beqz	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	nop					# Branch-delay slot
+
+libcheri_ccall_invoke_lock_stack
+	/*
+	 * In-use sandbox thread stacks are offset tagged with 1.
+	 */
+	clc	$c12, $zero, 0($c13)
+	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
+	clc	$c12, $at, 0($c13)		# Load thread's stack
+	cgetoffset	$t1, $c12		# Check for reentrance
+	andi	$t2, $t1, 1
+	bnez	$t2, libcheri_ccall_invoke_sandbox_busy
+	ori	$t1, $t1, 1			# Branch-delay slot
+	csetoffset	$c16, $t1, $c12		# Tag stack
+	csc	$c16, $at, 0($c13)
+	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 
 libcheri_ccall_invoke_push_stack:
 	/*
@@ -713,7 +754,7 @@ libcheri_ccall_invoke_extract_target:
 	 *
 	 * NB: Notice capability offset 2 for general invocation.
 	 */
-	clc	$c11, $zero, (6*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
+	cmove	$c11, $c12
 	clc	$c12, $zero, (4*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
 	csetdefault	$c12
 	clc	$c12, $zero, (2*CHERICAP_SIZE)($c26) # XXXRW: Hard-coded offset
@@ -784,6 +825,8 @@ libcheri_ccall_invoke_stack_overflow:
 	nop
 
 libcheri_ccall_invoke_sandbox_busy:
+	dli	$t1, 1
+	csw	$t1, $zero, 0($c15)		# Unlock thread lock
 	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
 	b	libcheri_ccall_invoke_error_return
 	nop
@@ -902,6 +945,11 @@ libcheri_creturn_fetch_stack:
 	daddiu	$at, $at, %tprel_lo(__libcheri_stack_tls_storage)
 	daddu	$at, $t0, $at
 	csetoffset	$c14, $c26, $at
+	/* Also load this thread's sandbox stacks vector. */
+	lui	$at, %tprel_hi(__libcheri_sandbox_stacks)
+	daddiu	$at, $at, %tprel_lo(__libcheri_sandbox_stacks)
+	daddu	$at, $t0, $at
+	csetoffset	$c13, $c26, $at
 
 libcheri_creturn_pop_stack_unlock_sandbox:
 	/*
@@ -928,11 +976,31 @@ libcheri_creturn_pop_stack_unlock_sandbox:
 	daddiu	$t0, $t0, 32			# XXXRW: Hard-coded offset
 
 	/*
-	 * Pop callee sandbox object pointer for unlock, and set lock field to
-	 * zero to release object.
-	 */
+	 * Pop callee sandbox object pointer for unlock, and unlock this
+	 * thread's stack. */
 	clc	$c15, $t0, (2*CHERICAP_SIZE)($c14)    # XXXRW: Hard-coded offset
-	csd	$zero, $zero, (7*CHERICAP_SIZE)($c15) # XXXRW: Hard-coded offset
+
+	cincoffset	$c17, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
+libcheri_creturn_lock_thread_stacks_loop:
+	cllw	$t1, $c17
+	bnez	$t1, libcheri_creturn_lock_thread_stacks_loop
+	dli	$t1, 1				# Branch-delay slot
+	cscd	$t1, $t1, $c17
+	beqz	$t1, libcheri_creturn_lock_thread_stacks_loop
+	nop					# Branch-delay slot
+
+libcheri_creturn_unlock_stack
+	/*
+	 * Remove 1 from stack tag
+	 */
+	clc	$c13, $zero, 0($c13)
+	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
+	clc	$c12, $at, 0($c13)		# Load thread's stack
+	cgetoffset	$t1, $c12
+	andi	$t1, $t1, 1
+	csetoffset	$c12, $t1, $c12		# Untag stack
+	csc	$c12, $at, 0($c13)
+	csw	$zero, $zero, 0($c17)		# Unlock thread lock
 
 	/* Pop caller return $pcc. */
 	clc	$c17, $t0, 0($c14)		# XXXRW: Hard-coded offset

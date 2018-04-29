@@ -311,6 +311,9 @@ cleanup:
 #endif /* _PTHREAD_FORCED_UNWIND */
 }
 
+void libcheri_sandbox_stack_thread_stopped(void);
+#pragma weak libcheri_sandbox_stack_thread_stopped
+
 static void
 exit_thread(void)
 {
@@ -328,6 +331,10 @@ exit_thread(void)
 	if (atomic_fetchadd_int(&_thread_active_threads, -1) == 1) {
 		exit(0);
 		/* Never reach! */
+	}
+
+	if (WEAK_SYMBOL_NONNULL(libcheri_sandbox_stack_thread_stopped)) {
+		libcheri_sandbox_stack_thread_stopped();
 	}
 
 	/* Tell malloc that the thread is exiting. */

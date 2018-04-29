@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 Robert N. M. Watson
+ * Copyright (c) 2018 James Clarke
  * All rights reserved.
  *
  * This software was developed by SRI International and the University of

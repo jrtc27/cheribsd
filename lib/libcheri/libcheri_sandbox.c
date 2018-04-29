@@ -63,6 +63,7 @@
 #include "libcheri_sandbox_elf.h"
 #include "libcheri_sandbox_internal.h"
 #include "libcheri_sandbox_methods.h"
+#include "libcheri_sandbox_stack.h"
 #include "libcheri_sandboxasm.h"
 #include "libcheri_system.h"
 #include "libcheri_type.h"
@@ -461,35 +462,6 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	 * a constant.
 	 */
 	sbop->sbo_stacklen = SANDBOX_STACK_SIZE;
-	sbop->sbo_stackmem = mmap(0, sbop->sbo_stacklen,
-	    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
-	if (sbop->sbo_stackmem == NULL) {
-		saved_errno = errno;
-		free((__cheri_fromcap void *)sbop->sbo_ring);
-		free(sbop);
-		errno = saved_errno;
-		return (-1);
-	}
-
-	/*
-	 * Configure the object's stack before loading so that the stack
-	 * capability can be installed into sandbox metadata.  Note that the
-	 * capability is local (can't be shared) and can store local pointers
-	 * (i.e., further stack-derived capabilities such as return
-	 * addresses).
-	 * XXX-JC: Made global since foo(&stackvar) is far too common, and
-	 * libcheri_system_calloc is a pain.
-	 */
-	/*sbop->sbo_stackcap = cheri_local(cheri_ptrperm(sbop->sbo_stackmem,
-	    sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
-	    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
-	    CHERI_PERM_STORE_LOCAL_CAP));*/
-	sbop->sbo_stackcap = cheri_ptrperm(sbop->sbo_stackmem,
-	    sbop->sbo_stacklen, CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP |
-	    CHERI_PERM_STORE | CHERI_PERM_STORE_CAP |
-	    CHERI_PERM_STORE_LOCAL_CAP);
-	sbop->sbo_csp = ((char *__capability )sbop->sbo_stackcap +
-	    sbop->sbo_stacklen);
 
 	/*
 	 * Set up the sandbox's code/data segments, sealed capabilities.
@@ -530,10 +502,10 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	/*
 	 * Now that constructors have completed, return object.
 	 */
+	libcheri_sandbox_stack_sandbox_created(sbop);
 	*sbopp = sbop;
 	return (0);
 error:
-	(void)munmap(sbop->sbo_stackmem, sbop->sbo_stacklen);
 	free((__cheri_fromcap void *)sbop->sbo_ring);
 	free(sbop);
 	errno = saved_errno;
@@ -623,18 +595,6 @@ sandbox_object_new_system_object(__capability void *private_data,
 }
 
 int
-sandbox_object_stack_reset(struct sandbox_object *sbop)
-{
-	if (mmap(sbop->sbo_stackmem, sbop->sbo_stacklen,
-	    PROT_READ | PROT_WRITE, MAP_ANON | MAP_FIXED, -1, 0) ==
-	    MAP_FAILED) {
-		warn("%s: stack reset", __func__);
-		return (-1);
-	}
-	return 0;
-}
-
-int
 sandbox_object_reset(struct sandbox_object *sbop)
 {
 	struct sandbox_class *sbcp;
@@ -654,7 +614,7 @@ sandbox_object_reset(struct sandbox_object *sbop)
 	/*
 	 * Reset external stack.
 	 */
-	if (sandbox_object_stack_reset(sbop)) {
+	if (libcheri_sandbox_stack_reset_stack(sbop)) {
 		return (-1);
 	}
 
@@ -715,8 +675,8 @@ sandbox_object_destroy(struct sandbox_object *sbop)
 	sbcp = sbop->sbo_sandbox_classp;
 	if (sbcp != NULL) {
 		/* Explicitly loaded class. */
+		libcheri_sandbox_stack_sandbox_destroyed(sbop);
 		sandbox_object_unload(sbop);		/* Unmap memory. */
-		(void)munmap(sbop->sbo_stackmem, sbop->sbo_stacklen);
 
 		/* Ensure recursion is bounded. */
 		assert(sbop->sbo_sandbox_system_objectp->sbo_sandbox_classp ==
@@ -724,7 +684,6 @@ sandbox_object_destroy(struct sandbox_object *sbop)
 		sandbox_object_destroy(sbop->sbo_sandbox_system_objectp);
 	} else {
 		/* System class. */
-		assert(sbop->sbo_stackmem == NULL);
 		assert(sbop->sbo_sandbox_system_objectp == NULL);
 	}
 	/* TODO: Stop worker before free */
@@ -746,13 +705,6 @@ sandbox_object_getsandboxdata(struct sandbox_object *sbop)
 {
 
 	return (sbop->sbo_idc);
-}
-
-__capability void *
-sandbox_object_getsandboxstack(struct sandbox_object *sbop)
-{
-
-	return (sbop->sbo_stackcap);
 }
 
 struct cheri_object

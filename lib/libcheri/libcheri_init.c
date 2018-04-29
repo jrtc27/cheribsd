@@ -34,6 +34,7 @@
 
 #include "libcheri_init.h"
 #include "libcheri_sandbox.h"
+#include "libcheri_sandbox_stack.h"
 
 static int	libcheri_initialised;
 
@@ -54,6 +55,7 @@ libcheri_init(void)
 	 */
 	libcheri_ccall_init();
 	libcheri_stack_init();
+	libcheri_sandbox_stack_init();
 	libcheri_enter_init();
 	libcheri_async_init();
 	sandbox_init();

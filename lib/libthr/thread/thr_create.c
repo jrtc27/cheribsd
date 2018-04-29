@@ -254,6 +254,9 @@ create_stack(struct pthread_attr *pattr)
 	return (ret);
 }
 
+void libcheri_sandbox_stack_thread_started(void);
+#pragma weak libcheri_sandbox_stack_thread_started
+
 static void
 thread_start(struct pthread *curthread)
 {
@@ -290,6 +293,10 @@ thread_start(struct pthread *curthread)
 	curthread->unwind_stackend = (char *)curthread->attr.stackaddr_attr +
 		curthread->attr.stacksize_attr;
 #endif
+
+	if (WEAK_SYMBOL_NONNULL(libcheri_sandbox_stack_thread_started)) {
+		libcheri_sandbox_stack_thread_started();
+	}
 
 	/* Run the current thread's start routine with argument: */
 	_pthread_exit(curthread->start_routine(curthread->arg));

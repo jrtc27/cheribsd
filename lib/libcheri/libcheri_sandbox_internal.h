@@ -120,8 +120,6 @@ sandbox_object {
 	 *
 	 * sbo_ddc	   DDC to install on invocation.
 	 *
-	 * sbo_csp	   CSP to install on invocation.
-	 *
 	 * These capabilities are used by libcheri itself when accessing data
 	 * from within the CCall trampoline, so that we don't have to assume
 	 * that the sandbox_object pointer is DDC-relative:
@@ -138,11 +136,11 @@ sandbox_object {
 	__capability void	*sbo_vtable;	/* Capability offset 3. */
 	__capability void	*sbo_ddc;	/* Capability offset 4. */
 	__capability void	*sbo_libcheri_tls; /* Capability offset 5. */
-	__capability void	*sbo_csp;	/* Capability offset 6. */
 	union {
-		int		 sbo_busy;	/* Capability offset 7. */
-		__capability void *_sbo_reserved; /* Pad to capability size. */
-	};
+		unsigned int	 sbo_stackoff;	/* Capability offset 6. */
+		__capability void *_sbo_reserved0; /* Pad to capability size. */
+	}
+	__capability void *_sbo_reserved1;	/* Capability offset 7. */
 
 	/*
 	 * Further fields are unknown to the assembly domain-transition code.
@@ -150,7 +148,6 @@ sandbox_object {
 	struct sandbox_class	*sbo_sandbox_classp;
 	struct sandbox_object	*sbo_sandbox_system_objectp;
 	void			*sbo_datamem;
-	void			*sbo_stackmem;
 
 	register_t		 sbo_datalen;
 	register_t		 sbo_heapbase;
@@ -171,12 +168,6 @@ sandbox_object {
 	 * sandbox metadata.
 	 */
 	struct cheri_object	 sbo_cheri_object_system;
-
-	/*
-	 * Stack capability that will also be installed in the object during
-	 * domain transition.
-	 */
-	__capability void	*sbo_stackcap;
 
 	/*
 	 * Sandbox statistics.
