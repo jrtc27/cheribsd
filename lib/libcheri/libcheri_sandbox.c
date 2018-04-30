@@ -472,6 +472,8 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 		goto error;
 	}
 
+	libcheri_sandbox_stack_sandbox_created(sbop);
+
 	/*
 	 * Invoke object instance's constructors.  Note that, given the tight
 	 * binding of class and object in the sandbox library currently, this
@@ -482,6 +484,7 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	    SANDBOX_RUNTIME_CONSTRUCTORS,
 	    0, 0, 0, 0, 0, 0, 0, 0,
 	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) != 0) {
+		libcheri_sandbox_stack_sandbox_destroyed(sbop);
 		sandbox_object_unload(sbop);
 		saved_errno = EPROT;
 		goto error;
@@ -490,19 +493,20 @@ sandbox_object_new_flags(struct sandbox_class *sbcp, size_t heaplen,
 	error = sandbox_object_protect(sbcp, sbop);
 	if (error) {
 		saved_errno = errno;
+		libcheri_sandbox_stack_sandbox_destroyed(sbop);
 		goto error;
 	}
 
 	error = libcheri_async_start_worker((__cheri_fromcap struct libcheri_ring *)sbop->sbo_ring);
 	if (error != 0) {
 		saved_errno = errno;
+		libcheri_sandbox_stack_sandbox_destroyed(sbop);
 		goto error;
 	}
 
 	/*
 	 * Now that constructors have completed, return object.
 	 */
-	libcheri_sandbox_stack_sandbox_created(sbop);
 	*sbopp = sbop;
 	return (0);
 error:
