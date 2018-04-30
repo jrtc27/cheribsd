@@ -32,9 +32,23 @@
 
 struct libcheri_thread_stacks_info
 {
+	/*
+	 * IMPORTANT: These fields must be at the top of
+	 * libcheri_thread_stacks_info, and in this specific order, as the
+	 * corresponding offsets to them are included in assembly
+	 * domain-transition code in libcheri_ccall_trampoline.S.
+	 *
+	 * stacks  Pointer to this thread's stacks vector.
+	 *
+	 * lock    Guards accessing stacks and its contents.
+	 */
 	void * __capability * __capability stacks;
-	struct libcheri_thread_stacks_info *next;
 	_Atomic(int) lock;
+
+	/*
+	 * Further fields are unknown to the assembly domain-transition code.
+	 */
+	struct libcheri_thread_stacks_info *next;
 };
 
 extern __thread struct libcheri_thread_stacks_info __libcheri_sandbox_stacks;
