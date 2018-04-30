@@ -126,7 +126,7 @@ void libcheri_sandbox_stack_thread_stopped(void)
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->sbo_stackoff / sizeof(void * __capability);
 		stackcap = (char * __capability)
-			__libcheri_sandbox_stacks.stacks[stackidx];
+			__libcheri_sandbox_stacks.stacks[stackidx]
 			- node->sbop->sbo_stacklen;
 		stackmem = (__cheri_fromcap void *)stackcap;
 		munmap(stackmem, node->sbop->sbo_stacklen);
