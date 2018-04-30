@@ -93,6 +93,7 @@ void libcheri_sandbox_stack_thread_started(void)
 
 		stackmem = mmap(0, node->sbop->sbo_stacklen,
 			PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		stackmem = (char *)stackmem + node->sbop->sbo_stacklen;
 
 		/*
 		 * Note that the capability is local (can't be shared) and can
@@ -114,14 +115,16 @@ void libcheri_sandbox_stack_thread_stopped(void)
 {
 	struct sandbox_object_list_node *node;
 	unsigned int stackidx;
+	void *stackmem;
 
 	pthread_mutex_lock(&global_lock);
 	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->sbo_stackoff / sizeof(void * __capability);
-		munmap((__cheri_fromcap void *)
-			__libcheri_sandbox_stacks.stacks[stackidx],
-			node->sbop->sbo_stacklen);
+		stackmem = (__cheri_fromcap void *)
+			__libcheri_sandbox_stacks.stacks[stackidx];
+		stackmem = (char *)stackmem - node->sbop->sbo_stacklen;
+		munmap(stackmem, node->sbop->sbo_stacklen);
 	}
 	/*
 	 * TODO: Implement
@@ -194,6 +197,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 
 		stackmem = mmap(0, sbop->sbo_stacklen,
 			PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		stackmem = (char *)stackmem + sbop->sbo_stacklen;
 
 		/*
 		 * Note that the capability is local (can't be shared) and can
@@ -217,6 +221,7 @@ void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 	struct sandbox_object_list_node *node;
 	struct sandbox_object_list_node **inptr;
 	unsigned int stackidx;
+	void *stackmem;
 
 	pthread_mutex_lock(&global_lock);
 
@@ -231,8 +236,9 @@ void libcheri_sandbox_stack_sandbox_destroyed(struct sandbox_object *sbop)
 
 	stackidx = sbop->sbo_stackoff / sizeof(void * __capability);
 	for (stacksp = stacks_list_head; stacksp; stacksp = stacksp->next) {
-		munmap((__cheri_fromcap void *)stacksp->stacks[stackidx],
-			sbop->sbo_stacklen);
+		stackmem = (__cheri_fromcap void *)stacksp->stacks[stackidx];
+		stackmem = (char *)stackmem - sbop->sbo_stacklen;
+		munmap(stackmem, sbop->sbo_stacklen);
 		stacksp->stacks[stackidx] = NULL;
 	}
 
@@ -265,6 +271,7 @@ libcheri_sandbox_stack_reset_stack(struct sandbox_object *sbop)
 		}
 
 		stackmem = (__cheri_fromcap void *)stacksp->stacks[stackidx];
+		stackmem = (char *)stackmem - sbop->sbo_stacklen;
 		if (mmap(stackmem, sbop->sbo_stacklen,
 		    PROT_READ | PROT_WRITE, MAP_ANON | MAP_FIXED, -1, 0) ==
 		    MAP_FAILED) {
