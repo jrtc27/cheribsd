@@ -997,7 +997,8 @@ libcheri_creturn_unlock_stack:
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c15)	# XXXJC: Hard-coded offset
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12
-	andi	$t1, $t1, 1
+	dli	$t2, -2				# -2 is ~1
+	and	$t1, $t1, $t2
 	csetoffset	$c12, $c12, $t1		# Untag stack
 	csc	$c12, $at, 0($c13)
 	csw	$zero, $zero, 0($c17)		# Unlock thread lock
