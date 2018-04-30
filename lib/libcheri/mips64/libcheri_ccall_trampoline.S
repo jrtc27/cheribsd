@@ -708,7 +708,7 @@ libcheri_ccall_invoke_do_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
-	clc	$c12, $zero, 0($c13)
+	clc	$c13, $zero, 0($c13)
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12		# Check for reentrance
