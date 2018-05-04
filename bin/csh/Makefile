@@ -12,7 +12,7 @@ PACKAGE=runtime
 TCSHDIR= ${SRCTOP}/contrib/tcsh
 .PATH: ${TCSHDIR}
 
-WANT_CHERI=yes
+WANT_CHERI=purecap
 
 PROG=	csh
 .if defined(RESCUE)
