@@ -12,6 +12,8 @@ PACKAGE=runtime
 TCSHDIR= ${SRCTOP}/contrib/tcsh
 .PATH: ${TCSHDIR}
 
+WANT_CHERI=yes
+
 PROG=	csh
 .if defined(RESCUE)
 DFLAGS= -D_PATH_TCSHELL='"/rescue/${PROG}"'
