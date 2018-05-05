@@ -13,6 +13,10 @@ TCSHDIR= ${SRCTOP}/contrib/tcsh
 .PATH: ${TCSHDIR}
 
 WANT_CHERI=purecap
+.if ${MK_CHERI_SHARED} == "yes"
+# Always build shared if we're building shared libs.
+MK_CHERI_SHARED_PROG=yes
+.endif
 
 PROG=	csh
 .if defined(RESCUE)
