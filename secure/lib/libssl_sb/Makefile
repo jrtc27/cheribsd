@@ -8,7 +8,7 @@ COMPARTMENT_NAME=	ssl
 SHLIB_MAJOR=	8
 
 LDFLAGS+=	-Wl,-T,${SRCTOP}/lib/libc_cheri/sandbox.ld \
-		-nostdlib -error-limit=0
+		-nostdlib -Wl,-error-limit=0
 
 BINDIR=		/usr/libcheri
 
