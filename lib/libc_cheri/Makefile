@@ -19,6 +19,7 @@ SRCS=		\
 		cheri_raise.c		\
 		cheri_stdio.c		\
 		cheri_stub.c		\
+		cheri_time.c		\
 		heap.c			\
 		libcheri_invoke_cabi.S	\
 		malloc.c
