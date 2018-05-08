@@ -14,6 +14,7 @@
 LIB=		c_cheri
 SRCS=		\
 		cheri_async.c		\
+		cheri_dirent.c		\
 		cheri_dl.c		\
 		cheri_env.c		\
 		cheri_netdb.c		\
