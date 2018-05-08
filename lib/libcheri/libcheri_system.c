@@ -233,6 +233,8 @@ libcheri_syscall_allow(void)
 
 libcheri_syscall_check_t libcheri_syscall_checks[SYS_MAXSYSCALL] = {
 	[SYS_issetugid] = (libcheri_syscall_check_t)libcheri_syscall_allow,
+	[SYS_clock_gettime] = (libcheri_syscall_check_t)libcheri_syscall_allow,
+	[SYS_gettimeofday] = (libcheri_syscall_check_t)libcheri_syscall_allow,
 };
 
 /*
