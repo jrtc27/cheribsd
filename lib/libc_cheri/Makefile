@@ -14,6 +14,7 @@
 LIB=		c_cheri
 SRCS=		\
 		cheri_async.c		\
+		cheri_env.c		\
 		cheri_printf.c		\
 		cheri_put.c		\
 		cheri_raise.c		\
