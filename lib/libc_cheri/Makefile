@@ -46,7 +46,8 @@ SRCS+=		glue.c			\
 		machdep_ldisd.c		\
 		misc.c
 # libc/gen
-SRCS+=		assert.c		\
+SRCS+=		arc4random.c		\
+		assert.c		\
 		fmtcheck.c		\
 		getprogname.c		\
 		errlst.c		\
