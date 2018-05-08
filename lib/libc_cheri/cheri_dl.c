@@ -34,6 +34,7 @@
 #include <cheri/cheric.h>
 #include <cheri/libcheri_system.h>
 
+#include <errno.h>
 #include <dlfcn.h>
 
 static int error;
