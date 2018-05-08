@@ -190,3 +190,29 @@ putc(int c, FILE *stream)
 	else
 		return (EOF);
 }
+
+int
+feof(FILE *stream)
+{
+	return (stream != stdout);
+}
+
+int
+ferror(FILE *stream)
+{
+	return (stream != stdout);
+}
+
+int
+fseek(FILE *stream)
+{
+	errno = ECAPMODE;
+	return (-1);
+}
+
+int
+ftell(FILE *stream)
+{
+	errno = ECAPMODE;
+	return (-1);
+}
