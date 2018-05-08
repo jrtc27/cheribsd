@@ -5,6 +5,9 @@
 SUBDIR= 
 .if ${MK_OPENSSL} != "no"
 SUBDIR+=libcrypto libssl
+.if ${MK_CHERI} != "no"
+SUBDIR+=libssl_sb
+.endif
 .if ${MK_OPENSSH} != "no"
 SUBDIR+=libssh
 .endif
