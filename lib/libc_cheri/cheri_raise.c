@@ -28,6 +28,7 @@
  * SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <signal.h>
 
@@ -35,4 +36,11 @@ int
 raise(int sig __unused)
 {
 	abort();
+}
+
+sig_t
+signal(int sig __unused, sig_t func __unused)
+{
+	errno = ECAPMODE;
+	return (SIG_ERR);
 }
