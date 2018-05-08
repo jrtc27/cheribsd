@@ -42,20 +42,8 @@
 #include <sys/time.h>
 #include <time.h>
 
-int
-clock_gettime(clockid_t clock_id, struct timespec *ts)
-{
-	return (__sys_clock_gettime(clock_id, ts));
-}
-
-int
-gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-	return (__sys_gettimeofday(tv, tz));
-}
-
 time_t
-time(time_t *tloc)
+time(time_t *t)
 {
 	struct timespec tt;
 	time_t retval;

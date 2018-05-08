@@ -377,6 +377,8 @@ _DP_rdmacm=	ibverbs
 _DP_cheri=	pthread
 _DP_helloworld=	cheri
 
+_DP_c_cheri=	cheri_syscalls
+
 # Define special cases
 LDADD_supcplusplus=	-lsupc++
 LIBATF_C=	${DESTDIR}${LIBDIR}/libprivateatf-c.a

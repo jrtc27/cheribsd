@@ -286,6 +286,8 @@ CFLAGS+=	-I${LIBC_DIR}/include			\
 		-I${.CURDIR}/../../contrib/gdtoa	\
 		-I${.CURDIR}/../../include
 
+LIBBADD=	cheri_syscalls
+
 .PATH: ${.CURDIR}/${MACHINE_ARCH}
 .PATH: ${LIBCHERI_DIR}
 .PATH: ${LIBCHERI_DIR}/${MACHINE_ARCH}
