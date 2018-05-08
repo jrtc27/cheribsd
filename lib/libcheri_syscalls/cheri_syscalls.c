@@ -147,7 +147,16 @@ ioctl(int fd __unused, unsigned long request __unused, ...)
 	return (ENOSYS);
 }
 
+int	stat(const char *path __unused, struct stat *sb __unused);
+int
+stat(const char *path __unused, struct stat *sb __unused)
+{
+
+	return (ENOSYS);
+}
+
 __weak_reference(ioctl, _ioctl);
+__weak_reference(stat, _stat);
 __weak_reference(sigaction, __libc_sigaction);
 __weak_reference(sigprocmask, __libc_sigprocmask);
 __weak_reference(sigprocmask, __sys_sigprocmask);
