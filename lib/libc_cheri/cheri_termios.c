@@ -38,15 +38,15 @@
 #include <termios.h>
 
 int
-tcgetattr(int fd, struct termios *t)
+tcgetattr(int fd __unused, struct termios *t __unused)
 {
-	errno = ECAPPERM;
+	errno = ECAPMODE;
 	return (-1);
 }
 
 int
-tcsetattr(int fd, int action, const struct termios *t)
+tcsetattr(int fd __unused, int action __unused, const struct termios *t __unused)
 {
-	errno = ECAPPERM;
+	errno = ECAPMODE;
 	return (-1);
 }

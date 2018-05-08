@@ -204,14 +204,14 @@ ferror(FILE *stream)
 }
 
 int
-fseek(FILE *stream)
+fseek(FILE *stream __unused)
 {
 	errno = ECAPMODE;
 	return (-1);
 }
 
 int
-ftell(FILE *stream)
+ftell(FILE *stream __unused)
 {
 	errno = ECAPMODE;
 	return (-1);

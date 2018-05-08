@@ -38,65 +38,65 @@
 #include <dirent.h>
 
 DIR *
-opendir(const char *filename)
+opendir(const char *filename __unused)
 {
 	errno = ECAPMODE;
 	return (NULL);
 }
 
 DIR *
-fdopendir(int fd)
+fdopendir(int fd __unused)
 {
 	errno = ECAPMODE;
 	return (NULL);
 }
 
 struct dirent *
-readdir(DIR *dirp)
+readdir(DIR *dirp __unused)
 {
 	errno = ECAPMODE;
 	return (NULL);
 }
 
 int
-readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
+readdir_r(DIR *dirp __unused, struct dirent *entry __unused, struct dirent **result __unused)
 {
 	return (ECAPMODE);
 }
 
 long
-telldir(DIR *dirp)
+telldir(DIR *dirp __unused)
 {
 	errno = ECAPMODE;
 	return (-1);
 }
 
 void
-seekdir(DIR *dirp, long loc)
+seekdir(DIR *dirp __unused, long loc __unused)
 {
 }
 
 void
-rewinddir(DIR *dirp)
+rewinddir(DIR *dirp __unused)
 {
 }
 
 int
-closedir(DIR *dirp)
-{
-	errno = ECAPMODE;
-	return (-1);
-}
-
-int
-fdclosedir(DIR *dirp)
+closedir(DIR *dirp __unused)
 {
 	errno = ECAPMODE;
 	return (-1);
 }
 
 int
-dirfd(DIR *dirp)
+fdclosedir(DIR *dirp __unused)
+{
+	errno = ECAPMODE;
+	return (-1);
+}
+
+int
+dirfd(DIR *dirp __unused)
 {
 	errno = ECAPMODE;
 	return (-1);

@@ -42,25 +42,25 @@ static int error;
 static char sorry[] = "Service unavailable";
 
 void *
-dlopen(const char *path, int mode)
+dlopen(const char *path __unused, int mode __unused)
 {
 	return (NULL);
 }
 
 void *
-fdlopen(int fd, int mode)
+fdlopen(int fd __unused, int mode __unused)
 {
 	return (NULL);
 }
 
 void *
-dlsym(void * restrict handle, const char * restrict symbol)
+dlsym(void * restrict handle __unused, const char * restrict symbol __unused)
 {
 	return (NULL);
 }
 
 dlfunc_t
-dlfunc(void * restrict handle, const char * restrict symbol)
+dlfunc(void * restrict handle __unused, const char * restrict symbol __unused)
 {
 	return (NULL);
 }
@@ -73,13 +73,13 @@ dlerror(void)
 }
 
 int
-dlclose(void *handle)
+dlclose(void *handle __unused)
 {
 	return (-1);
 }
 
 int
-dladdr(const void *addr, Dl_info *info)
+dladdr(const void *addr __unused, Dl_info *info __unused)
 {
 	return (0);
 }

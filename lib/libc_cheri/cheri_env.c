@@ -40,7 +40,7 @@
 #include <string.h>
 
 char *
-getenv(const char *name)
+getenv(const char *name __unused)
 {
 	return (NULL);
 }

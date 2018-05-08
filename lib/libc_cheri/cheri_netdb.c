@@ -42,34 +42,34 @@
 #include <netdb.h>
 
 struct hostent *
-gethostbyname(const char *name)
+gethostbyname(const char *name __unused)
 {
 	h_errno = NO_RECOVERY;
 	return (NULL);
 }
 
 struct hostent *
-gethostbyname2(const char *name, int af)
+gethostbyname2(const char *name __unused, int af __unused)
 {
 	h_errno = NO_RECOVERY;
 	return (NULL);
 }
 
 struct hostent *
-gethostbyaddr(const void *addr, socklen_t len, int af)
+gethostbyaddr(const void *addr __unused, socklen_t len __unused, int af __unused)
 {
 	h_errno = NO_RECOVERY;
 	return (NULL);
 }
 
 struct servent *
-getservbyname(const char *name, const char *proto)
+getservbyname(const char *name __unused, const char *proto __unused)
 {
 	return (NULL);
 }
 
 struct servent *
-getservbyport(int port, const char *proto);
+getservbyport(int port __unused, const char *proto __unused)
 {
 	return (NULL);
 }

@@ -46,6 +46,7 @@ SRCS+=		glue.c			\
 		machdep_ldisd.c		\
 		misc.c
 # libc/gen
+CFLAGS.arc4random.c=	-Wno-thread-safety-analysis
 SRCS+=		arc4random.c		\
 		assert.c		\
 		fmtcheck.c		\
