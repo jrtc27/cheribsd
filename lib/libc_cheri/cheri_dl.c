@@ -37,8 +37,6 @@
 #include <errno.h>
 #include <dlfcn.h>
 
-static int error;
-
 static char sorry[] = "Service unavailable";
 
 void *

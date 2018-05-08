@@ -191,12 +191,14 @@ putc(int c, FILE *stream)
 		return (EOF);
 }
 
+#undef feof
 int
 feof(FILE *stream)
 {
 	return (stream != stdout);
 }
 
+#undef ferror
 int
 ferror(FILE *stream)
 {
@@ -204,13 +206,13 @@ ferror(FILE *stream)
 }
 
 int
-fseek(FILE *stream __unused)
+fseek(FILE *stream __unused, long offset __unused, int whence __unused)
 {
 	errno = ECAPMODE;
 	return (-1);
 }
 
-int
+long
 ftell(FILE *stream __unused)
 {
 	errno = ECAPMODE;
