@@ -39,8 +39,37 @@
 #include <stdio.h>
 #include <string.h>
 
-char *
-getenv(const char *name)
+#include <netdb.h>
+
+struct hostent *
+gethostbyname(const char *name)
+{
+	h_errno = NO_RECOVERY;
+	return (NULL);
+}
+
+struct hostent *
+gethostbyname2(const char *name, int af)
+{
+	h_errno = NO_RECOVERY;
+	return (NULL);
+}
+
+struct hostent *
+gethostbyaddr(const void *addr, socklen_t len, int af)
+{
+	h_errno = NO_RECOVERY;
+	return (NULL);
+}
+
+struct servent *
+getservbyname(const char *name, const char *proto)
+{
+	return (NULL);
+}
+
+struct servent *
+getservbyport(int port, const char *proto);
 {
 	return (NULL);
 }
