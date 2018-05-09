@@ -233,9 +233,10 @@ libcheri_syscall_allow(void)
 }
 
 static int
-libcheri_syscall_sysctl_random(int *retp, __capability int *stub_errno,
-    int * __capability name, u_int namelen, void * __capability old,
-    size_t * __capability oldlenp, void * __capability new, size_t newlen)
+libcheri_syscall_sysctl_random(int *retp __unused, __capability int *stub_errno,
+    int * __capability name, u_int namelen, void * __capability old __unused,
+    size_t * __capability oldlenp __unused, void * __capability new __unused,
+    size_t newlen __unused)
 {
 
 	if (namelen == 2 && name[0] == CTL_KERN && name[1] == KERN_ARND) {
