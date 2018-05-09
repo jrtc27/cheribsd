@@ -2442,6 +2442,7 @@ _startup_libs=	gnu/lib/csu
 _startup_libs+=	lib/csu
 .if ${MK_CHERI} != "no"
 _startup_libs+= lib/libc_cheri
+_startup_libs+= lib/libcheri_syscalls
 .endif
 _startup_libs+=	lib/libcompiler_rt
 _startup_libs+=	lib/libc
