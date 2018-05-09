@@ -41,7 +41,7 @@
 
 #include <netdb.h>
 
-#undef h_errno;
+#undef h_errno
 __thread static int h_errno;
 
 int *
