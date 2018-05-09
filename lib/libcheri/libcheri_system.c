@@ -231,10 +231,25 @@ libcheri_syscall_allow(void)
 	return (0);
 }
 
+static int
+libcheri_syscall_sysctl_random(int *retp, __capability int *stub_errno,
+    int * __capability name, u_int namelen, void * __capability old,
+    size_t * __capability oldlenp, void * __capability new, size_t newlen)
+{
+
+	if (namelen == 2 && name[0] == CTL_KERN && name[1] == KERN_ARND) {
+		return (0);
+	} else {
+		*stub_errno = ECAPMODE;
+		return (1);
+	}
+}
+
 libcheri_syscall_check_t libcheri_syscall_checks[SYS_MAXSYSCALL] = {
 	[SYS_issetugid] = (libcheri_syscall_check_t)libcheri_syscall_allow,
 	[SYS_clock_gettime] = (libcheri_syscall_check_t)libcheri_syscall_allow,
 	[SYS_gettimeofday] = (libcheri_syscall_check_t)libcheri_syscall_allow,
+	[SYS___sysctl] = (libcheri_syscall_check_t)libcheri_syscall_sysctl_random,
 };
 
 /*
