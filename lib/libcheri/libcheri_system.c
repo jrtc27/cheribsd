@@ -228,7 +228,7 @@ static int
 libcheri_syscall_allow(void)
 {
 
-	return (1);
+	return (0);
 }
 
 libcheri_syscall_check_t libcheri_syscall_checks[SYS_MAXSYSCALL] = {
