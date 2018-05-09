@@ -17,6 +17,7 @@ SUBDIR_BOOTSTRAP= \
 	libcompiler_rt \
 	${_libc_cheri} \
 	${_libcheri} \
+	${_libcheri_syscalls} \
 	${_libclang_rt} \
 	${_libcplusplus} \
 	${_libcxxrt} \
@@ -143,6 +144,7 @@ SUBDIR.${MK_CHERI}+=	libpng_sb
 .if ${MK_CHERI} != "no"
 _libc_cheri=	libc_cheri
 _libcheri=	libcheri
+_libcheri_syscalls=	libcheri_syscalls
 .endif
 
 .if ${MACHINE_CPUARCH} == mips
@@ -232,7 +234,6 @@ SUBDIR:=	${SUBDIR:Nlibc++experimental}
 
 .if defined(LIBCHERI)
 SUBDIR+=	libmalloc_simple
-SUBDIR+=	libcheri_syscalls
 SUBDIR+=	libcheri_support
 SUBDIR_BOOTSTRAP:=	libgcc_s libgcc_eh ${SUBDIR_BOOTSTRAP}
 
