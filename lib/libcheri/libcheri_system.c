@@ -35,6 +35,7 @@
 #include <cheri/cheric.h>
 
 #include <sys/syscall.h>
+#include <sys/sysctl.h>
 
 #include <assert.h>
 #include <errno.h>
