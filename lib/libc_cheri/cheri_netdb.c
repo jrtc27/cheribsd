@@ -41,6 +41,16 @@
 
 #include <netdb.h>
 
+#undef h_errno;
+__thread static int h_errno;
+
+int *
+__h_errno(void)
+{
+	return &h_errno;
+}
+
+
 struct hostent *
 gethostbyname(const char *name __unused)
 {
