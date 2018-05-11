@@ -985,7 +985,7 @@ libcheri_creturn_lock_thread_stacks_loop:
 	cllw	$t1, $c17
 	bnez	$t1, libcheri_creturn_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
-	cscd	$t1, $t1, $c17
+	cscw	$t1, $t1, $c17
 	beqz	$t1, libcheri_creturn_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
