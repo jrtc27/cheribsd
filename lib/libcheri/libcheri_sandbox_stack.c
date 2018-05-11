@@ -146,8 +146,10 @@ void libcheri_sandbox_stack_thread_stopped(void)
 	void *stackmem;
 	void * __capability stackcap;
 
-	munmap(__libcheri_sandbox_stacks.system_stack,
-		LIBCHERI_SYSTEM_STACK_SIZE);
+	stackcap = (char * __capability)__libcheri_sandbox_stacks.system_stack
+		- LIBCHERI_SYSTEM_STACK_SIZE;
+	stackmem = (__cheri_fromcap void *)stackcap;
+	munmap(stackmem, LIBCHERI_SYSTEM_STACK_SIZE);
 
 	pthread_mutex_lock(&global_lock);
 	for (node = sbo_list_head; node; node = node->next) {
