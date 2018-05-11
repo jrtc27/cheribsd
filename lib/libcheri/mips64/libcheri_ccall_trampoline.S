@@ -424,8 +424,7 @@ libcheri_ccall_rtld_stack_overflow:
 	nop
 
 libcheri_ccall_rtld_sandbox_busy:
-	dli	$t1, 1
-	csw	$t1, $zero, 0($c15)		# Unlock thread lock
+	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
 	b	libcheri_ccall_rtld_error_return
 	nop
@@ -825,8 +824,7 @@ libcheri_ccall_invoke_stack_overflow:
 	nop
 
 libcheri_ccall_invoke_sandbox_busy:
-	dli	$t1, 1
-	csw	$t1, $zero, 0($c15)		# Unlock thread lock
+	csw	$zero, $zero, 0($c15)		# Unlock thread lock
 	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
 	b	libcheri_ccall_invoke_error_return
 	nop
