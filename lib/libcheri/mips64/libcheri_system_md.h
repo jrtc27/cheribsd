@@ -66,8 +66,6 @@
  * For now, assume:
  * (1) The caller has not set up the general-purpose register context, that's
  *     our job.
- * (2) That there is no concurrent sandbox use -- we have a single stack on
- *     the inbound path, which can't be the long-term solution.
  */
 
 #ifdef __CHERI_PURE_CAPABILITY__
@@ -87,12 +85,18 @@ __libcheri_ ## class ## _entry:						\
 	csetdefault	$c12;						\
 									\
 	/*								\
-	 * Install global invocation stack.  NB: this means we can't	\
-	 * support recursion or concurrency.  Further note: this is	\
-	 * shared by all classes outside of the sandbox.		\
+	 * Install thread-local invocation stack.  NB: this means we	\
+	 * can't support recursion.  Further note: this is shared by	\
+	 * all classes outside of the sandbox.				\
 	 */								\
-	dla	$t0, __libcheri_enter_stack_csp;			\
-	clc	$csp, $t0, 0($c12);					\
+	.set	push;							\
+	.set	mips32r2;						\
+	rdhwr	$t0, $29;						\
+	.set	pop;							\
+	lui	$t1, %tprel_hi(__libcheri_sandbox_stacks);		\
+	daddiu	$t1, %tprel_lo(__libcheri_sandbox_stacks);		\
+	daddu	$t0, $t0, $t1;						\
+	clc	$csp, $t0, 0($c12);	/* XXXJC: Hard-coded offset */	\
 									\
 	/*								\
 	 * Set up global pointer.					\
@@ -145,14 +149,19 @@ __libcheri_ ## class ## _entry:						\
 	csetdefault	$c12;						\
 									\
 	/*								\
-	 * Install global invocation stack.  NB: this means we can't	\
-	 * support recursion or concurrency.  Further note: this is	\
-	 * shared by all classes outside of the sandbox.		\
+	 * Install thread-local invocation stack.  NB: this means we	\
+	 * can't support recursion.  Further note: this is shared by	\
+	 * all classes outside of the sandbox.				\
 	 */								\
-	dla	$sp, __libcheri_enter_stack_cap;				\
-	clc	$c11, $sp, 0($c12);					\
-	dla	$sp, __libcheri_enter_stack_sp;				\
-	cld	$sp, $sp, 0($c12);					\
+	.set	push;							\
+	.set	mips32r2;						\
+	rdhwr	$t0, $29;						\
+	.set	pop;							\
+	lui	$sp, %tprel_hi(__libcheri_sandbox_stacks);		\
+	daddiu	$sp, %tprel_lo(__libcheri_sandbox_stacks);		\
+	daddu	$sp, $t0, $sp;						\
+	clc	$c11, $sp, 0($c12);	/* XXXJC: Hard-coded offset */	\
+	ctoptr	$sp, $c11, $c12;					\
 	move	$fp, $sp;						\
 									\
 	/*								\

@@ -48,35 +48,6 @@
 #include "libcheri_sandbox.h"
 
 /*
- * This file implements a stack landing pad for system classes provided by
- * libcheri.  The single stack is statically allocated -- meaning no
- * concurrent invocation from sandboxes in multiple threads (or reentrantly).
- * Currently, that is ensured by virtue of applications not themselves
- * invoking sandboxes concurrently.
- */
-
-/*
- * Stack for use on entering from sandbox, supporting both hybrid ABI (in
- * which the stack capability is combined with $sp) and pure-capability ABI
- * (in which only the stack capability is used).
- */
-#ifdef __CHERI_PURE_CAPABILITY__
-extern __capability void	*__libcheri_enter_stack_csp; /* Pure cap. */
-#else
-extern __capability void	*__libcheri_enter_stack_cap; /* Hybrid cap. */
-extern register_t		 __libcheri_enter_stack_sp;  /* Hybrid cap. */
-#endif
-
-#define	LIBCHERI_ENTER_STACK_SIZE	(PAGE_SIZE * 16)
-static void		*__libcheri_enter_stack;	/* Stack itself. */
-#ifdef __CHERI_PURE_CAPABILITY__
-__capability void	*__libcheri_enter_stack_csp;	/* Pure cap. */
-#else
-__capability void	*__libcheri_enter_stack_cap;	/* Hybrid cap. */
-register_t		 __libcheri_enter_stack_sp;	/* Hybrid cap. */
-#endif
-
-/*
  * Return capability to use from system objects.
  */
 struct cheri_object	 __libcheri_object_creturn;
@@ -87,25 +58,5 @@ struct cheri_object	 __libcheri_object_creturn;
 void
 libcheri_enter_init(void)
 {
-
-	/* XXX: Should be MAP_STACK, but that is broken. */
-	__libcheri_enter_stack = mmap(NULL, LIBCHERI_ENTER_STACK_SIZE,
-	    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
-	assert(__libcheri_enter_stack != MAP_FAILED);
-
-	/*
-	 * In CheriABI, we use the capability returned by mmap(2), which $sp
-	 * will be relative to, and implement solely $csp.  Otherwise, assume
-	 * a global $sp and use $c0.
-	 */
-#ifdef __CHERI_PURE_CAPABILITY__
-	__libcheri_enter_stack_csp = (caddr_t)__libcheri_enter_stack +
-	    LIBCHERI_ENTER_STACK_SIZE;
-#else
-	__libcheri_enter_stack_cap = cheri_getdefault();
-	__libcheri_enter_stack_sp =
-	    (register_t)((char *)__libcheri_enter_stack +
-	    LIBCHERI_ENTER_STACK_SIZE);
-#endif
 	__libcheri_object_creturn = libcheri_make_sealed_return_object();
 }
