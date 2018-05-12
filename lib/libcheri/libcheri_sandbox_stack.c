@@ -81,6 +81,8 @@ void libcheri_sandbox_stack_init(void)
 	void *stackmem;
 	void * __capability stackcap;
 
+	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
+
 	stackmem = mmap(0, LIBCHERI_SYSTEM_STACK_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_ANON, -1, 0);
 
@@ -91,7 +93,6 @@ void libcheri_sandbox_stack_init(void)
 	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 
-	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	libcheri_sandbox_stack_register_stacks(&__libcheri_sandbox_stacks);
 }
 
@@ -102,6 +103,9 @@ void libcheri_sandbox_stack_thread_started(void)
 	void *stackmem;
 	void * __capability stackcap;
 
+	pthread_mutex_lock(&global_lock);
+	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
+
 	stackmem = mmap(0, LIBCHERI_SYSTEM_STACK_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_ANON, -1, 0);
 
@@ -112,8 +116,6 @@ void libcheri_sandbox_stack_thread_started(void)
 	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 
-	pthread_mutex_lock(&global_lock);
-	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
 	for (node = sbo_list_head; node; node = node->next) {
 		stackidx = node->sbop->sbo_stackoff / sizeof(void * __capability);
 
