@@ -85,20 +85,6 @@ __libcheri_ ## class ## _entry:						\
 	csetdefault	$c12;						\
 									\
 	/*								\
-	 * Install thread-local invocation stack.  NB: this means we	\
-	 * can't support recursion.  Further note: this is shared by	\
-	 * all classes outside of the sandbox.				\
-	 */								\
-	.set	push;							\
-	.set	mips32r2;						\
-	rdhwr	$t0, $29;						\
-	.set	pop;							\
-	lui	$t1, %tprel_hi(__libcheri_sandbox_stacks);		\
-	daddiu	$t1, %tprel_lo(__libcheri_sandbox_stacks);		\
-	daddu	$t0, $t0, $t1;						\
-	clc	$csp, $t0, 0($c12);	/* XXXJC: Hard-coded offset */	\
-									\
-	/*								\
 	 * Set up global pointer.					\
 	 */								\
 	dla	$gp, _gp;						\
@@ -149,18 +135,9 @@ __libcheri_ ## class ## _entry:						\
 	csetdefault	$c12;						\
 									\
 	/*								\
-	 * Install thread-local invocation stack.  NB: this means we	\
-	 * can't support recursion.  Further note: this is shared by	\
-	 * all classes outside of the sandbox.				\
+	 * Set up stack pointer for hybrid code; ccall trampomline has	\
+	 * already set $c11.						\
 	 */								\
-	.set	push;							\
-	.set	mips32r2;						\
-	rdhwr	$t0, $29;						\
-	.set	pop;							\
-	lui	$sp, %tprel_hi(__libcheri_sandbox_stacks);		\
-	daddiu	$sp, %tprel_lo(__libcheri_sandbox_stacks);		\
-	daddu	$sp, $t0, $sp;						\
-	clc	$c11, $sp, 0($c12);	/* XXXJC: Hard-coded offset */	\
 	ctoptr	$sp, $c11, $c12;					\
 	move	$fp, $sp;						\
 									\

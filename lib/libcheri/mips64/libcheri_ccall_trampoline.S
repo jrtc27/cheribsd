@@ -294,7 +294,7 @@ libcheri_ccall_rtld_lock_stack:
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
-	cincoffset	$c15, $c13, 2*CHERICAP_SIZE	# XXXJC: Hard-coded offset
+	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_ccall_rtld_lock_thread_stacks_loop:
 	cllw	$t1, $c15
 	bnez	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
@@ -307,7 +307,7 @@ libcheri_ccall_rtld_do_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
-	clc	$c13, $zero, CHERICAP_SIZE($c13)	# XXXJC: Hard-coded offset
+	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12		# Check for reentrance
@@ -694,7 +694,7 @@ libcheri_ccall_invoke_lock_stack:
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
-	cincoffset	$c15, $c13, 2*CHERICAP_SIZE	# XXXJC: Hard-coded offset
+	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_ccall_invoke_lock_thread_stacks_loop:
 	cllw	$t1, $c15
 	bnez	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
@@ -707,7 +707,7 @@ libcheri_ccall_invoke_do_lock_stack:
 	/*
 	 * In-use sandbox thread stacks are offset tagged with 1.
 	 */
-	clc	$c13, $zero, CHERICAP_SIZE($c13)	# XXXJC: Hard-coded offset
+	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12		# Check for reentrance
@@ -978,7 +978,7 @@ libcheri_creturn_pop_stack_unlock_sandbox:
 	 * thread's stack. */
 	clc	$c15, $t0, (2*CHERICAP_SIZE)($c14)    # XXXRW: Hard-coded offset
 
-	cincoffset	$c17, $c13, 2*CHERICAP_SIZE	# XXXJC: Hard-coded offset
+	cincoffset	$c17, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_creturn_lock_thread_stacks_loop:
 	cllw	$t1, $c17
 	bnez	$t1, libcheri_creturn_lock_thread_stacks_loop
@@ -991,7 +991,7 @@ libcheri_creturn_unlock_stack:
 	/*
 	 * Remove 1 from stack tag
 	 */
-	clc	$c13, $zero, CHERICAP_SIZE($c13)	# XXXJC: Hard-coded offset
+	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c15)	# XXXJC: Hard-coded offset
 	clc	$c12, $at, 0($c13)		# Load thread's stack
 	cgetoffset	$t1, $c12

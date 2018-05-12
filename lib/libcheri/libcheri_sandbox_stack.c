@@ -88,7 +88,7 @@ void libcheri_sandbox_stack_init(void)
 	    LIBCHERI_SYSTEM_STACK_SIZE,
 	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
 	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP);
-	__libcheri_sandbox_stacks.system_stack =
+	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 
 	libcheri_sandbox_stack_realloc(&__libcheri_sandbox_stacks);
@@ -109,7 +109,7 @@ void libcheri_sandbox_stack_thread_started(void)
 	    LIBCHERI_SYSTEM_STACK_SIZE,
 	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
 	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP);
-	__libcheri_sandbox_stacks.system_stack =
+	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 
 	pthread_mutex_lock(&global_lock);
@@ -146,7 +146,7 @@ void libcheri_sandbox_stack_thread_stopped(void)
 	void *stackmem;
 	void * __capability stackcap;
 
-	stackcap = (char * __capability)__libcheri_sandbox_stacks.system_stack
+	stackcap = (char * __capability)__libcheri_sandbox_stacks.stacks[0]
 		- LIBCHERI_SYSTEM_STACK_SIZE;
 	stackmem = (__cheri_fromcap void *)stackcap;
 	munmap(stackmem, LIBCHERI_SYSTEM_STACK_SIZE);
@@ -197,7 +197,7 @@ void libcheri_sandbox_stack_sandbox_created(struct sandbox_object *sbop)
 	}
 
 	if (!prev) {
-		stackidx = 0;
+		stackidx = 1;
 		node->next = sbo_list_head;
 		sbo_list_head = node;
 	} else {
