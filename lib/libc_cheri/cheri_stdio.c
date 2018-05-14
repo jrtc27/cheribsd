@@ -141,6 +141,12 @@ fopen(const char * restrict path __unused, const char * restrict mode __unused)
 	return (NULL);
 }
 
+FILE *
+fdopen(int filedes __unused, const char * mode __unused)
+{
+	return (NULL);
+}
+
 size_t
 fread(void * restrict ptr __unused, size_t size __unused, size_t nmemb __unused,
     FILE * restrict stream __unused)
@@ -217,4 +223,17 @@ ftell(FILE *stream __unused)
 {
 	errno = ECAPMODE;
 	return (-1);
+}
+
+void
+perror(const char *string __unused)
+{
+
+}
+
+int
+setvbuf(FILE * restrict stream __unused, char * restrict buf __unused,
+    int mode __unused, size_t size __unused)
+{
+	return (EOF);
 }

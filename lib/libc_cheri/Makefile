@@ -23,6 +23,7 @@ SRCS=		\
 		cheri_raise.c		\
 		cheri_stdio.c		\
 		cheri_stub.c		\
+		cheri_syslog.c		\
 		cheri_termios.c		\
 		cheri_time.c		\
 		heap.c			\
