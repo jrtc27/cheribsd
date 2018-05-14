@@ -390,7 +390,7 @@ int ENGINE_add(ENGINE *e);
 /* Remove an existing "ENGINE" type from the array. */
 int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
-ENGINE *ENGINE_by_id(const char *id);
+CHERI_CCALL ENGINE *ENGINE_by_id(const char *id);
 /* Add all the built-in engines. */
 void ENGINE_load_openssl(void);
 void ENGINE_load_dynamic(void);
@@ -548,7 +548,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
  * exposed and break binary compatibility!
  */
 ENGINE *ENGINE_new(void);
-int ENGINE_free(ENGINE *e);
+CHERI_CCALL int ENGINE_free(ENGINE *e);
 int ENGINE_up_ref(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
@@ -588,7 +588,7 @@ void *ENGINE_get_ex_data(const ENGINE *e, int idx);
  * be called from ENGINE_cleanup(). Similarly, all ENGINE_register_***
  * functions ensure ENGINE_cleanup() will clean up after them.
  */
-void ENGINE_cleanup(void);
+CHERI_CCALL void ENGINE_cleanup(void);
 
 /*
  * These return values from within the ENGINE structure. These can be useful
@@ -661,7 +661,7 @@ int ENGINE_finish(ENGINE *e);
  * location, handled by the engine.  The storage may be on a card or
  * whatever.
  */
-EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
+CHERI_CCALL EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data);
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                  UI_METHOD *ui_method, void *callback_data);
@@ -718,7 +718,7 @@ int ENGINE_set_default_pkey_asn1_meths(ENGINE *e);
  * application requires only specific functionality, consider using more
  * selective functions.
  */
-int ENGINE_set_default(ENGINE *e, unsigned int flags);
+CHERI_CCALL int ENGINE_set_default(ENGINE *e, unsigned int flags);
 
 void ENGINE_add_conf_module(void);
 

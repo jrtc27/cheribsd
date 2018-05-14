@@ -652,25 +652,25 @@ int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 
 # ifndef OPENSSL_NO_FP_API
 BIO_METHOD *BIO_s_file(void);
-BIO *BIO_new_file(const char *filename, const char *mode);
+CHERI_CCALL BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 #  define BIO_s_file_internal    BIO_s_file
 # endif
-BIO *BIO_new(BIO_METHOD *type);
+CHERI_CCALL BIO *BIO_new(BIO_METHOD *type);
 int BIO_set(BIO *a, BIO_METHOD *type);
-int BIO_free(BIO *a);
+CHERI_CCALL int BIO_free(BIO *a);
 void BIO_vfree(BIO *a);
-int BIO_read(BIO *b, void *data, int len);
+CHERI_CCALL int BIO_read(BIO *b, void *data, int len);
 int BIO_gets(BIO *bp, char *buf, int size);
-int BIO_write(BIO *b, const void *data, int len);
+CHERI_CCALL int BIO_write(BIO *b, const void *data, int len);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
-long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
+CHERI_CCALL long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd,
                        void (*fp) (struct bio_st *, int, const char *, int,
                                    long, long));
 char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
-long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
+CHERI_CCALL long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *BIO_push(BIO *b, BIO *append);
 BIO *BIO_pop(BIO *b);
 void BIO_free_all(BIO *a);
@@ -688,7 +688,7 @@ int BIO_nwrite(BIO *bio, char **buf, int num);
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
                         long argl, long ret);
 
-BIO_METHOD *BIO_s_mem(void);
+CHERI_CCALL BIO_METHOD *BIO_s_mem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
 BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);

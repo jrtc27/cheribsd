@@ -98,7 +98,7 @@ int RAND_set_rand_engine(ENGINE *engine);
 # endif
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void);
-int RAND_bytes(unsigned char *buf, int num);
+CHERI_CCALL int RAND_bytes(unsigned char *buf, int num);
 int RAND_pseudo_bytes(unsigned char *buf, int num);
 void RAND_seed(const void *buf, int num);
 void RAND_add(const void *buf, int num, double entropy);

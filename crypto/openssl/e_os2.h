@@ -279,6 +279,30 @@ extern "C" {
 # endif
 # define OPENSSL_EXTERN OPENSSL_IMPORT
 
+# if defined(LIBSSL_INSIDE_COMPARTMENT) && !defined(LIBSSL_COMPARTMENT)
+#  define LIBSSL_COMPARTMENT
+# endif
+
+# if defined(LIBSSL_COMPARTMENT)
+#  include <cheri/cheri.h>
+#  include <cheri/libcheri_sandbox.h>
+extern struct cheri_object       __libssl;
+# endif
+
+# if defined(LIBSSL_INSIDE_COMPARTMENT)
+#  define CHERI_LIBSSL_CCALL                      \
+    __attribute__((cheri_ccallee))                \
+    __attribute__((cheri_method_class(__libssl)))
+# elif defined(LIBSSL_COMPARTMENT)
+#  define CHERI_LIBSSL_CCALL                                \
+    __attribute__((cheri_ccall))                            \
+    __attribute__((cheri_method_suffix("_cap")))            \
+    __attribute__((cheri_method_num_suffix("_method_num"))) \
+    __attribute__((cheri_method_class(__libssl)))
+# else
+#  define CHERI_LIBSSL_CCALL
+# endif
+
 /*-
  * Macros to allow global variables to be reached through function calls when
  * required (if a shared library version requires it, for example.

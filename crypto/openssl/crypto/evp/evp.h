@@ -530,7 +530,7 @@ int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_name(e)              OBJ_nid2sn(EVP_CIPHER_nid(e))
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
-int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
+CHERI_CCALL int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_mode(e)              (EVP_CIPHER_flags(e) & EVP_CIPH_MODE)
 
@@ -585,15 +585,15 @@ int EVP_Cipher(EVP_CIPHER_CTX *c,
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
-EVP_MD_CTX *EVP_MD_CTX_create(void);
-void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
+CHERI_CCALL EVP_MD_CTX *EVP_MD_CTX_create(void);
+CHERI_CCALL void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
 void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
-int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
-int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
-int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
+CHERI_CCALL int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
+CHERI_CCALL int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
+CHERI_CCALL int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
 int EVP_Digest(const void *data, size_t count,
                unsigned char *md, unsigned int *size, const EVP_MD *type,
                ENGINE *impl);
@@ -619,7 +619,7 @@ int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags);
 
 int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                     const unsigned char *key, const unsigned char *iv);
-int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+CHERI_CCALL int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv);
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -629,7 +629,7 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                     const unsigned char *key, const unsigned char *iv);
-int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+CHERI_CCALL int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                        ENGINE *impl, const unsigned char *key,
                        const unsigned char *iv);
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -717,14 +717,14 @@ const EVP_MD *EVP_md5(void);
 # endif
 # ifndef OPENSSL_NO_SHA
 const EVP_MD *EVP_sha(void);
-const EVP_MD *EVP_sha1(void);
+CHERI_CCALL const EVP_MD *EVP_sha1(void);
 const EVP_MD *EVP_dss(void);
 const EVP_MD *EVP_dss1(void);
 const EVP_MD *EVP_ecdsa(void);
 # endif
 # ifndef OPENSSL_NO_SHA256
 const EVP_MD *EVP_sha224(void);
-const EVP_MD *EVP_sha256(void);
+CHERI_CCALL const EVP_MD *EVP_sha256(void);
 # endif
 # ifndef OPENSSL_NO_SHA512
 const EVP_MD *EVP_sha384(void);
@@ -827,7 +827,7 @@ const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 # endif
 # ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);
-const EVP_CIPHER *EVP_aes_128_cbc(void);
+CHERI_CCALL const EVP_CIPHER *EVP_aes_128_cbc(void);
 const EVP_CIPHER *EVP_aes_128_cfb1(void);
 const EVP_CIPHER *EVP_aes_128_cfb8(void);
 const EVP_CIPHER *EVP_aes_128_cfb128(void);
@@ -850,7 +850,7 @@ const EVP_CIPHER *EVP_aes_192_ccm(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_192_wrap(void);
 const EVP_CIPHER *EVP_aes_256_ecb(void);
-const EVP_CIPHER *EVP_aes_256_cbc(void);
+CHERI_CCALL const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
 const EVP_CIPHER *EVP_aes_256_cfb8(void);
 const EVP_CIPHER *EVP_aes_256_cfb128(void);
@@ -902,7 +902,7 @@ const EVP_CIPHER *EVP_seed_cfb128(void);
 const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
-void OPENSSL_add_all_algorithms_noconf(void);
+CHERI_CCALL void OPENSSL_add_all_algorithms_noconf(void);
 void OPENSSL_add_all_algorithms_conf(void);
 
 # ifdef OPENSSL_LOAD_CONF
@@ -924,7 +924,7 @@ int EVP_add_digest(const EVP_MD *digest);
 
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
-void EVP_cleanup(void);
+CHERI_CCALL void EVP_cleanup(void);
 
 void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
                                    const char *from, const char *to, void *x),
@@ -978,7 +978,7 @@ struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 # endif
 
 EVP_PKEY *EVP_PKEY_new(void);
-void EVP_PKEY_free(EVP_PKEY *pkey);
+CHERI_CCALL void EVP_PKEY_free(EVP_PKEY *pkey);
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length);

@@ -74,8 +74,8 @@ typedef struct stack_st {
 # define M_sk_num(sk)            ((sk) ? (sk)->num:-1)
 # define M_sk_value(sk,n)        ((sk) ? (sk)->data[n] : NULL)
 
-int sk_num(const _STACK *);
-void *sk_value(const _STACK *, int);
+CHERI_CCALL int sk_num(const _STACK *);
+CHERI_CCALL void *sk_value(const _STACK *, int);
 
 void *sk_set(_STACK *, int, void *);
 
