@@ -8,7 +8,8 @@ COMPARTMENT_NAME=	ssl
 SHLIB_MAJOR=	8
 
 LDFLAGS+=	-Wl,-T,${SRCTOP}/lib/libc_cheri/sandbox.ld \
-		-nostdlib -Wl,-error-limit=0 -v -Wl,-v
+		-nostdlib -Wl,-error-limit=0 \
+		-Wl,--whole-archive -lcrypto_cheri -Wl,--no-whole-archive
 
 BINDIR=		/usr/libcheri
 
@@ -32,7 +33,7 @@ SRCS=	bio_ssl.c d1_both.c d1_clnt.c d1_lib.c d1_meth.c d1_pkt.c d1_srtp.c \
 INCS=	dtls1.h kssl.h srtp.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
 INCSDIR=${INCLUDEDIR}/openssl
 
-LIBADD=	c_cheri crypto_cheri
+LIBADD=	c_cheri
 
 CFLAGS+=	-I${LCRYPTO_SRC}/crypto
 CFLAGS+=	-DLIBSSL_INSIDE_COMPARTMENT
