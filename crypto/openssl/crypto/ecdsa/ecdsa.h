@@ -83,12 +83,12 @@ typedef struct ECDSA_SIG_st {
 /** Allocates and initialize a ECDSA_SIG structure
  *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
  */
-ECDSA_SIG *ECDSA_SIG_new(void);
+CHERI_LIBSSL_CCALL ECDSA_SIG *ECDSA_SIG_new(void);
 
 /** frees a ECDSA_SIG structure
  *  \param  sig  pointer to the ECDSA_SIG structure
  */
-void ECDSA_SIG_free(ECDSA_SIG *sig);
+CHERI_LIBSSL_CCALL void ECDSA_SIG_free(ECDSA_SIG *sig);
 
 /** DER encode content of ECDSA_SIG object (note: this function modifies *pp
  *  (*pp += length of the DER encoded signature)).
@@ -96,7 +96,7 @@ void ECDSA_SIG_free(ECDSA_SIG *sig);
  *  \param  pp   pointer to a unsigned char pointer for the output or NULL
  *  \return the length of the DER encoded ECDSA_SIG object or 0
  */
-int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
+CHERI_LIBSSL_CCALL int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
 
 /** Decodes a DER encoded ECDSA signature (note: this function changes *pp
  *  (*pp += len)).
@@ -105,7 +105,7 @@ int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  *  \param  len  length of the buffer
  *  \return pointer to the decoded ECDSA_SIG structure (or NULL)
  */
-ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
+CHERI_LIBSSL_CCALL ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
 
 /** Computes the ECDSA signature of the given hash value using
  *  the supplied private key and returns the created signature.
