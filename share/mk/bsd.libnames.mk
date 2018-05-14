@@ -47,6 +47,7 @@ LIBCOM_ERR?=	${DESTDIR}${LIBDIR}/libcom_err.a
 LIBCPLUSPLUS?=	${DESTDIR}${LIBDIR}/libc++.a
 LIBCRYPT?=	${DESTDIR}${LIBDIR}/libcrypt.a
 LIBCRYPTO?=	${DESTDIR}${LIBDIR}/libcrypto.a
+LIBCRYPTO_CHERI?=	${DESTDIR}${LIBDIR}/libcrypto_cheri.a
 LIBCTF?=	${DESTDIR}${LIBDIR}/libctf.a
 LIBCURL?=	${DESTDIR}${LIBDIR}/libcurl.a
 LIBCURSES?=	${DESTDIR}${LIBDIR}/libcurses.a
