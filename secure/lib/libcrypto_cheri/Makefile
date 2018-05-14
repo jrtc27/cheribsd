@@ -2,12 +2,12 @@
 
 NO_ENGINES=	yes
 
-.include "../libcrypto/Makefile"
-
-CFLAGS+=	-DLIBSSL_INSIDE_COMPARTMENT
-
 NEED_CHERI=	sandbox
 
 NO_SHARED=	yes
+
+.include "../libcrypto/Makefile"
+
+CFLAGS+=	-DLIBSSL_INSIDE_COMPARTMENT
 
 .PATH:	${.CURDIR}/../libcrypto
