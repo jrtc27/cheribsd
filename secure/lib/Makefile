@@ -7,6 +7,7 @@ SUBDIR=
 SUBDIR+=libcrypto libssl
 .if ${MK_CHERI} != "no"
 SUBDIR+=libcrypto_cheri libssl_sb
+SUBDIR_DEPEND_libssl_sb=libcrypto_cheri
 .endif
 .if ${MK_OPENSSH} != "no"
 SUBDIR+=libssh
