@@ -2510,6 +2510,7 @@ gnu/lib/libsupc++__L: gnu/lib/libstdc++__L
 .if ${MK_CHERI} != "no"
 _prebuild_libs+=	lib/libcheri
 _prebuild_libs+=	lib/libpng
+_prebuild_libs+=	secure/lib/libcrypto_cheri
 lib/libpng__L: lib/libz__L
 .endif
 
