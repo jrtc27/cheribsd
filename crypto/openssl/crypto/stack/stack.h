@@ -59,6 +59,8 @@
 #ifndef HEADER_STACK_H
 # define HEADER_STACK_H
 
+# include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
