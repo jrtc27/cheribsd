@@ -92,6 +92,7 @@ _LIBRARIES=	\
 		compiler_rt \
 		crypt \
 		crypto \
+		crypto_cheri \
 		css \
 		ctf \
 		curl \
