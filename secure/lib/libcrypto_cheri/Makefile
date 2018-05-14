@@ -8,4 +8,4 @@ NEED_CHERI=	sandbox
 
 NO_SHARED=	yes
 
-.PATH:	${LCRYPTO_SRC}
+.PATH:	${.CURDIR}/../libcrypto
