@@ -1,5 +1,7 @@
 # $FreeBSD$
 
+LIB=		crypto_cheri
+
 NO_ENGINES=	yes
 
 NEED_CHERI=	sandbox
