@@ -414,14 +414,14 @@ int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
 int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
                              const char *name, const char *value);
 
-CHERI_CCALL OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
+CHERI_LIBSSL_CCALL OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
                               X509_NAME *issuerName,
                               ASN1_BIT_STRING *issuerKey,
                               ASN1_INTEGER *serialNumber);
 
-CHERI_CCALL OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid);
+CHERI_LIBSSL_CCALL OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid);
 
 int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len);
 int OCSP_basic_add1_nonce(OCSP_BASICRESP *resp, unsigned char *val, int len);
@@ -437,8 +437,8 @@ int OCSP_request_sign(OCSP_REQUEST *req,
                       const EVP_MD *dgst,
                       STACK_OF(X509) *certs, unsigned long flags);
 
-CHERI_CCALL int OCSP_response_status(OCSP_RESPONSE *resp);
-CHERI_CCALL OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
+CHERI_LIBSSL_CCALL int OCSP_response_status(OCSP_RESPONSE *resp);
+CHERI_LIBSSL_CCALL OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
 int OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
@@ -447,12 +447,12 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
                             ASN1_GENERALIZEDTIME **revtime,
                             ASN1_GENERALIZEDTIME **thisupd,
                             ASN1_GENERALIZEDTIME **nextupd);
-CHERI_CCALL int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
+CHERI_LIBSSL_CCALL int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
                           int *reason,
                           ASN1_GENERALIZEDTIME **revtime,
                           ASN1_GENERALIZEDTIME **thisupd,
                           ASN1_GENERALIZEDTIME **nextupd);
-CHERI_CCALL int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
+CHERI_LIBSSL_CCALL int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
                         ASN1_GENERALIZEDTIME *nextupd, long sec, long maxsec);
 
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
@@ -559,14 +559,14 @@ DECLARE_ASN1_FUNCTIONS(OCSP_REQINFO)
 DECLARE_ASN1_FUNCTIONS(OCSP_CRLID)
 DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
 
-CHERI_CCALL const char *OCSP_response_status_str(long s);
-CHERI_CCALL const char *OCSP_cert_status_str(long s);
+CHERI_LIBSSL_CCALL const char *OCSP_response_status_str(long s);
+CHERI_LIBSSL_CCALL const char *OCSP_cert_status_str(long s);
 const char *OCSP_crl_reason_str(long s);
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *a, unsigned long flags);
 int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags);
 
-CHERI_CCALL int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+CHERI_LIBSSL_CCALL int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                       X509_STORE *st, unsigned long flags);
 
 /* BEGIN ERROR CODES */

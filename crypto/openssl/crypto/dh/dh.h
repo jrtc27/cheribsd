@@ -216,7 +216,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth);
 DH *DH_new_method(ENGINE *engine);
 
 DH *DH_new(void);
-CHERI_CCALL void DH_free(DH *dh);
+CHERI_LIBSSL_CCALL void DH_free(DH *dh);
 int DH_up_ref(DH *dh);
 int DH_size(const DH *dh);
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

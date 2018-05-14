@@ -323,7 +323,7 @@ int RSA_size(const RSA *rsa);
 
 /* Deprecated version */
 # ifndef OPENSSL_NO_DEPRECATED
-CHERI_CCALL RSA *RSA_generate_key(int bits, unsigned long e, void
+CHERI_LIBSSL_CCALL RSA *RSA_generate_key(int bits, unsigned long e, void
                        (*callback) (int, int, void *), void *cb_arg);
 # endif                         /* !defined(OPENSSL_NO_DEPRECATED) */
 

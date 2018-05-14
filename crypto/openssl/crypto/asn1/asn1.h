@@ -314,31 +314,31 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
         DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
 
 # define DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
-        CHERI_CCALL type *d2i_##name(type **a, const unsigned char **in, long len); \
-        CHERI_CCALL int i2d_##name(type *a, unsigned char **out); \
+        CHERI_LIBSSL_CCALL type *d2i_##name(type **a, const unsigned char **in, long len); \
+        CHERI_LIBSSL_CCALL int i2d_##name(type *a, unsigned char **out); \
         DECLARE_ASN1_ITEM(itname)
 
 # define DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
-        CHERI_CCALL type *d2i_##name(type **a, const unsigned char **in, long len); \
-        CHERI_CCALL int i2d_##name(const type *a, unsigned char **out); \
+        CHERI_LIBSSL_CCALL type *d2i_##name(type **a, const unsigned char **in, long len); \
+        CHERI_LIBSSL_CCALL int i2d_##name(const type *a, unsigned char **out); \
         DECLARE_ASN1_ITEM(name)
 
 # define DECLARE_ASN1_NDEF_FUNCTION(name) \
-        CHERI_CCALL int i2d_##name##_NDEF(name *a, unsigned char **out);
+        CHERI_LIBSSL_CCALL int i2d_##name##_NDEF(name *a, unsigned char **out);
 
 # define DECLARE_ASN1_FUNCTIONS_const(name) \
         DECLARE_ASN1_ALLOC_FUNCTIONS(name) \
         DECLARE_ASN1_ENCODE_FUNCTIONS_const(name, name)
 
 # define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
-        CHERI_CCALL type *name##_new(void); \
-        CHERI_CCALL void name##_free(type *a);
+        CHERI_LIBSSL_CCALL type *name##_new(void); \
+        CHERI_LIBSSL_CCALL void name##_free(type *a);
 
 # define DECLARE_ASN1_PRINT_FUNCTION(stname) \
         DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
 
 # define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
-        CHERI_CCALL int fname##_print_ctx(BIO *out, stname *x, int indent, \
+        CHERI_LIBSSL_CCALL int fname##_print_ctx(BIO *out, stname *x, int indent, \
                                          const ASN1_PCTX *pctx);
 
 # define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
@@ -910,7 +910,7 @@ STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       int ex_tag, int ex_class);
 
 # ifndef OPENSSL_NO_BIO
-CHERI_CCALL int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
+CHERI_LIBSSL_CCALL int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
@@ -1010,7 +1010,7 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
 # ifndef OPENSSL_NO_BIO
-CHERI_CCALL void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
+CHERI_LIBSSL_CCALL void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
 
 #  define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
     ((type*)ASN1_d2i_bio( CHECKED_NEW_OF(type, xnew), \
@@ -1033,8 +1033,8 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x);
 
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
-CHERI_CCALL int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
-CHERI_CCALL int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
+CHERI_LIBSSL_CCALL int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
+CHERI_LIBSSL_CCALL int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,

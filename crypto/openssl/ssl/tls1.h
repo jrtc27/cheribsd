@@ -306,7 +306,7 @@ extern "C" {
 
 #  define TLSEXT_MAXLEN_host_name 255
 
-CHERI_CCALL const char *SSL_get_servername(const SSL *s, const int type);
+CHERI_LIBSSL_CCALL const char *SSL_get_servername(const SSL *s, const int type);
 int SSL_get_servername_type(const SSL *s);
 /*
  * SSL_export_keying_material exports a value derived from the master secret,

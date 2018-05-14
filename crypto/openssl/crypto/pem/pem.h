@@ -344,16 +344,16 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 # ifndef OPENSSL_NO_BIO
 #  define DECLARE_PEM_read_bio(name, type) \
-        CHERI_CCALL type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
+        CHERI_LIBSSL_CCALL type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
 
 #  define DECLARE_PEM_write_bio(name, type) \
-        CHERI_CCALL int PEM_write_bio_##name(BIO *bp, type *x);
+        CHERI_LIBSSL_CCALL int PEM_write_bio_##name(BIO *bp, type *x);
 
 #  define DECLARE_PEM_write_bio_const(name, type) \
-        CHERI_CCALL int PEM_write_bio_##name(BIO *bp, const type *x);
+        CHERI_LIBSSL_CCALL int PEM_write_bio_##name(BIO *bp, const type *x);
 
 #  define DECLARE_PEM_write_cb_bio(name, type) \
-        CHERI_CCALL int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
+        CHERI_LIBSSL_CCALL int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
              unsigned char *kstr, int klen, pem_password_cb *cb, void *u);
 
 # else

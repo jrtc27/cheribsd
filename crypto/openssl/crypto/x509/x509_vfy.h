@@ -469,7 +469,7 @@ void X509_STORE_free(X509_STORE *v);
 
 STACK_OF(X509) *X509_STORE_get1_certs(X509_STORE_CTX *st, X509_NAME *nm);
 STACK_OF(X509_CRL) *X509_STORE_get1_crls(X509_STORE_CTX *st, X509_NAME *nm);
-CHERI_CCALL int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
+CHERI_LIBSSL_CCALL int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
@@ -482,22 +482,22 @@ void X509_STORE_set_lookup_crls_cb(X509_STORE *ctx,
                                                               *ctx,
                                                               X509_NAME *nm));
 
-CHERI_CCALL X509_STORE_CTX *X509_STORE_CTX_new(void);
+CHERI_LIBSSL_CCALL X509_STORE_CTX *X509_STORE_CTX_new(void);
 
-CHERI_CCALL int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+CHERI_LIBSSL_CCALL int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
-CHERI_CCALL void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
-CHERI_CCALL int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
+CHERI_LIBSSL_CCALL void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
+CHERI_LIBSSL_CCALL int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
                         X509 *x509, STACK_OF(X509) *chain);
 void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx);
 
-CHERI_CCALL X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
+CHERI_LIBSSL_CCALL X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
-CHERI_CCALL X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
+CHERI_LIBSSL_CCALL X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
 
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
@@ -505,7 +505,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
 int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
                               X509_OBJECT *ret);
 
-CHERI_CCALL int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
+CHERI_LIBSSL_CCALL int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
                      long argl, char **ret);
 
 # ifndef OPENSSL_NO_STDIO
@@ -539,11 +539,11 @@ int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
                                     CRYPTO_EX_dup *dup_func,
                                     CRYPTO_EX_free *free_func);
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data);
-CHERI_CCALL void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
-CHERI_CCALL int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
+CHERI_LIBSSL_CCALL void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
+CHERI_LIBSSL_CCALL int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);
-CHERI_CCALL int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
-CHERI_CCALL X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+CHERI_LIBSSL_CCALL int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
+CHERI_LIBSSL_CCALL X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
 X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx);

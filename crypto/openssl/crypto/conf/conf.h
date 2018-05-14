@@ -136,7 +136,7 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
-CHERI_CCALL void OPENSSL_config(const char *config_name);
+CHERI_LIBSSL_CCALL void OPENSSL_config(const char *config_name);
 void OPENSSL_no_config(void);
 
 /*

@@ -393,7 +393,7 @@ int CRYPTO_is_mem_check_on(void);
         CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 # define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
 
-CHERI_CCALL const char *SSLeay_version(int type);
+CHERI_LIBSSL_CCALL const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
 
 int OPENSSL_issetugid(void);
@@ -465,7 +465,7 @@ unsigned long CRYPTO_thread_id(void);
 # endif
 
 const char *CRYPTO_get_lock_name(int type);
-CHERI_CCALL int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
+CHERI_LIBSSL_CCALL int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
                     int line);
 
 int CRYPTO_get_new_dynlockid(void);
@@ -531,9 +531,9 @@ void CRYPTO_get_mem_debug_functions(void (**m)
 
 void *CRYPTO_malloc_locked(int num, const char *file, int line);
 void CRYPTO_free_locked(void *ptr);
-CHERI_CCALL void *CRYPTO_malloc(int num, const char *file, int line);
+CHERI_LIBSSL_CCALL void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
-CHERI_CCALL void CRYPTO_free(void *ptr);
+CHERI_LIBSSL_CCALL void CRYPTO_free(void *ptr);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
                            int line);

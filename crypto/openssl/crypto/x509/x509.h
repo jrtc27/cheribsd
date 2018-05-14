@@ -625,7 +625,7 @@ void *X509_CRL_get_meth_data(X509_CRL *crl);
  */
 # define         X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
 
-CHERI_CCALL const char *X509_verify_cert_error_string(long n);
+CHERI_LIBSSL_CCALL const char *X509_verify_cert_error_string(long n);
 
 # ifndef OPENSSL_NO_EVP
 int X509_verify(X509 *a, EVP_PKEY *r);
@@ -656,13 +656,13 @@ int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
                        unsigned char *md, unsigned int *len);
-CHERI_CCALL int X509_digest(const X509 *data, const EVP_MD *type,
+CHERI_LIBSSL_CCALL int X509_digest(const X509 *data, const EVP_MD *type,
                 unsigned char *md, unsigned int *len);
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len);
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len);
-CHERI_CCALL int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
+CHERI_LIBSSL_CCALL int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 # endif
 
@@ -825,10 +825,10 @@ DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
 DECLARE_ASN1_FUNCTIONS(X509_CERT_PAIR)
 
-CHERI_CCALL int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+CHERI_LIBSSL_CCALL int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
-CHERI_CCALL int X509_set_ex_data(X509 *r, int idx, void *arg);
-CHERI_CCALL void *X509_get_ex_data(X509 *r, int idx);
+CHERI_LIBSSL_CCALL int X509_set_ex_data(X509 *r, int idx, void *arg);
+CHERI_LIBSSL_CCALL void *X509_get_ex_data(X509 *r, int idx);
 int i2d_X509_AUX(X509 *a, unsigned char **pp);
 X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
 
@@ -872,7 +872,7 @@ DECLARE_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
 # ifndef OPENSSL_NO_EVP
 X509_INFO *X509_INFO_new(void);
 void X509_INFO_free(X509_INFO *a);
-CHERI_CCALL char *X509_NAME_oneline(X509_NAME *a, char *buf, int size);
+CHERI_LIBSSL_CCALL char *X509_NAME_oneline(X509_NAME *a, char *buf, int size);
 
 int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *algor1,
                 ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey);
@@ -900,11 +900,11 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
 
 int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
-CHERI_CCALL ASN1_INTEGER *X509_get_serialNumber(X509 *x);
+CHERI_LIBSSL_CCALL ASN1_INTEGER *X509_get_serialNumber(X509 *x);
 int X509_set_issuer_name(X509 *x, X509_NAME *name);
-CHERI_CCALL X509_NAME *X509_get_issuer_name(X509 *a);
+CHERI_LIBSSL_CCALL X509_NAME *X509_get_issuer_name(X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
-CHERI_CCALL X509_NAME *X509_get_subject_name(X509 *a);
+CHERI_LIBSSL_CCALL X509_NAME *X509_get_subject_name(X509 *a);
 int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
@@ -994,7 +994,7 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
 
 # ifndef OPENSSL_NO_BIO
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
-CHERI_CCALL int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
+CHERI_LIBSSL_CCALL int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
                        unsigned long flags);
 int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflag,
                   unsigned long cflag);

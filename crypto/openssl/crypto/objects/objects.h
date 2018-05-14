@@ -1007,7 +1007,7 @@ void OBJ_NAME_do_all_sorted(int type,
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
 ASN1_OBJECT *OBJ_nid2obj(int n);
 const char *OBJ_nid2ln(int n);
-CHERI_CCALL const char *OBJ_nid2sn(int n);
+CHERI_LIBSSL_CCALL const char *OBJ_nid2sn(int n);
 int OBJ_obj2nid(const ASN1_OBJECT *o);
 ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name);
 int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
