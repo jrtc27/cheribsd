@@ -594,6 +594,7 @@ LIBNCURSESWDIR=	${_LIB_OBJTOP}/lib/ncurses/ncursesw
 LIBPANELDIR=	${_LIB_OBJTOP}/lib/ncurses/panel
 LIBPANELWDIR=	${_LIB_OBJTOP}/lib/ncurses/panelw
 LIBCRYPTODIR=	${_LIB_OBJTOP}/secure/lib/libcrypto
+LIBCRYPTO_CHERIDIR=	${_LIB_OBJTOP}/secure/lib/libcrypto_cheri
 LIBSSHDIR=	${_LIB_OBJTOP}/secure/lib/libssh
 LIBSSLDIR=	${_LIB_OBJTOP}/secure/lib/libssl
 LIBTEKENDIR=	${_LIB_OBJTOP}/sys/teken/libteken
