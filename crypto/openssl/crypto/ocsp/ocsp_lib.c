@@ -74,6 +74,11 @@
 #include <openssl/ocsp.h>
 #include <openssl/asn1t.h>
 
+OCSP_RESPONSE *d2i_OCSP_RESPONSE_bio(BIO *bp, void **p)
+{
+    return ASN1_d2i_bio_of(OCSP_RESPONSE,OCSP_RESPONSE_new,d2i_OCSP_RESPONSE,bp,p);
+}
+
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
