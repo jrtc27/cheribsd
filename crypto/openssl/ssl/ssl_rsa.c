@@ -664,7 +664,7 @@ int SSL_CTX_use_PrivateKey_cheri(SSL_CTX *ctx, struct cheri_object file, int typ
     BIO *in;
     EVP_PKEY *pkey = NULL;
 
-    in = BIO_new_cheri(file);
+    in = BIO_new_cheri(file, 1);
     if (in == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI, ERR_R_BUF_LIB);
         goto end;
