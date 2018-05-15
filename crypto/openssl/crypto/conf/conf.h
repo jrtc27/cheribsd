@@ -136,7 +136,11 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
-CHERI_LIBSSL_CCALL void OPENSSL_config(const char *config_name);
+#ifdef LIBSSL_COMPARTMENT
+CHERI_LIBSSL_CCALL void OPENSSL_config(struct cheri_object config_file);
+#else
+void OPENSSL_config(const char *config_file);
+#endif
 void OPENSSL_no_config(void);
 
 /*
@@ -161,6 +165,9 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf, const char *file, long *eline);
+# ifdef LIBSSL_COMPARTMENT
+int NCONF_load_cheri(CONF *conf, struct cheri_object file, long *eline);
+# endif
 # ifndef OPENSSL_NO_FP_API
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 # endif

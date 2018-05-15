@@ -265,6 +265,21 @@ int NCONF_load(CONF *conf, const char *file, long *eline)
     return conf->meth->load(conf, file, eline);
 }
 
+#ifdef LIBSSL_COMPARTMENT
+int NCONF_load_cheri(CONF *conf, struct cheri_object file, long *eline)
+{
+    BIO *btmp;
+    int ret;
+    if (!(btmp = BIO_new_cheri(file, BIO_NOCLOSE))) {
+        CONFerr(CONF_F_NCONF_LOAD_CHERI, ERR_R_BUF_LIB);
+        return 0;
+    }
+    ret = NCONF_load_bio(conf, btmp, eline);
+    BIO_free(btmp);
+    return ret;
+}
+#endif
+
 #ifndef OPENSSL_NO_FP_API
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 {

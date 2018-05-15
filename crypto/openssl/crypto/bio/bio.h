@@ -108,6 +108,7 @@ extern "C" {
 # endif
 # define BIO_TYPE_ASN1           (22|0x0200)/* filter */
 # define BIO_TYPE_COMP           (23|0x0200)/* filter */
+# define BIO_TYPE_CHERI          (25|0x0400|0x0100)
 
 # define BIO_TYPE_DESCRIPTOR     0x0100/* socket, fd, connect or accept */
 # define BIO_TYPE_FILTER         0x0200
@@ -234,6 +235,7 @@ extern "C" {
  * data in any way.
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
+# define BIO_FLAGS_EOF           0x400
 
 typedef struct bio_st BIO;
 
@@ -332,7 +334,14 @@ struct bio_st {
     int flags;                  /* extra storage */
     int retry_reason;
     int num;
+#ifdef LIBSSL_COMPARTMENT
+    union {
+        void *ptr;
+        struct cheri_object obj;
+    };
+#else
     void *ptr;
+#endif
     struct bio_st *next_bio;    /* used by filter BIOs */
     struct bio_st *prev_bio;    /* used by filter BIOs */
     int references;
@@ -467,6 +476,9 @@ struct bio_dgram_sctp_prinfo {
 
 # define BIO_C_SET_EX_ARG                        153
 # define BIO_C_GET_EX_ARG                        154
+
+# define BIO_C_SET_CHERI_FILE                    155
+# define BIO_C_GET_CHERI_FILE                    156
 
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
@@ -630,6 +642,9 @@ int BIO_ctrl_reset_read_request(BIO *b);
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 
+# define BIO_set_cheri(b,cp,c)      BIO_ctrl(b,BIO_C_SET_CHERI_FILE,c,(char *)cp)
+# define BIO_get_cheri(b,cp)       BIO_ctrl(b,BIO_C_GET_CHERI_FILE,0,(char *)cp)
+
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
@@ -655,6 +670,10 @@ BIO_METHOD *BIO_s_file(void);
 CHERI_LIBSSL_CCALL BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 #  define BIO_s_file_internal    BIO_s_file
+# endif
+# ifdef LIBSSL_COMPARTMENT
+BIO_METHOD *BIO_s_cheri(void);
+BIO *BIO_new_cheri(struct cheri_object file, int close_flag);
 # endif
 CHERI_LIBSSL_CCALL BIO *BIO_new(BIO_METHOD *type);
 int BIO_set(BIO *a, BIO_METHOD *type);
@@ -845,6 +864,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_MEM_WRITE                                  117
 # define BIO_F_SSL_NEW                                    118
 # define BIO_F_WSASTARTUP                                 119
+# define BIO_F_CHERI_READ                                 120
 
 /* Reason codes. */
 # define BIO_R_ACCEPT_ERROR                               100

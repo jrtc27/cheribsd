@@ -159,24 +159,36 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 }
 
+#ifdef LIBSSL_COMPARTMENT
+int CONF_modules_load_file(struct cheri_object file, const char *appname,
+                           unsigned long flags)
+{
+#else
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags)
 {
     char *file = NULL;
+#endif
     CONF *conf = NULL;
     int ret = 0;
     conf = NCONF_new(NULL);
     if (!conf)
         goto err;
 
+#ifndef LIBSSL_COMPARTMENT
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
         if (!file)
             goto err;
     } else
         file = (char *)filename;
+#endif
 
+#ifdef LIBSSL_COMPARTMENT
+    if (NCONF_load_cheri(conf, file, NULL) <= 0) {
+#else
     if (NCONF_load(conf, file, NULL) <= 0) {
+#endif
         if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
             (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE)) {
             ERR_clear_error();
@@ -188,8 +200,10 @@ int CONF_modules_load_file(const char *filename, const char *appname,
     ret = CONF_modules_load(conf, appname, flags);
 
  err:
+#ifndef LIBSSL_COMPARTMENT
     if (filename == NULL)
         OPENSSL_free(file);
+#endif
     NCONF_free(conf);
 
     return ret;

@@ -88,6 +88,9 @@ SRCS+=	b_dump.c b_print.c b_sock.c bf_buff.c bf_nbio.c bf_null.c bio_cb.c \
 	bio_err.c bio_lib.c bss_acpt.c bss_bio.c bss_conn.c bss_dgram.c \
 	bss_fd.c bss_file.c bss_log.c bss_mem.c bss_null.c bss_sock.c
 INCS+=	bio.h
+.if ${LCRYPTO_CHERI:Uno} == yes
+SRCS+=	bio_cheri.c
+.endif
 
 # bn
 SRCS+=	bn_add.c bn_blind.c bn_const.c bn_ctx.c bn_depr.c bn_div.c bn_err.c \

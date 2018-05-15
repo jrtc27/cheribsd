@@ -104,6 +104,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_MEM_WRITE), "MEM_WRITE"},
     {ERR_FUNC(BIO_F_SSL_NEW), "SSL_new"},
     {ERR_FUNC(BIO_F_WSASTARTUP), "WSASTARTUP"},
+    {ERR_FUNC(BIO_F_CHERI_READ), "CHERI_READ"},
     {0, NULL}
 };
 
