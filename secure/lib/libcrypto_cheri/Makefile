@@ -3,6 +3,7 @@
 LIB=		crypto_cheri
 
 NO_ENGINES=	yes
+LCRYPTO_CHERI=	yes
 
 NEED_CHERI=	sandbox
 
