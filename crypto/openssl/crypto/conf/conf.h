@@ -137,9 +137,9 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 #ifdef LIBSSL_COMPARTMENT
-CHERI_LIBSSL_CCALL void OPENSSL_config(struct cheri_object config_file);
+CHERI_LIBSSL_CCALL void OPENSSL_config(struct cheri_object config_file, const char *config_name);
 #else
-void OPENSSL_config(const char *config_file);
+void OPENSSL_config(const char *config_name);
 #endif
 void OPENSSL_no_config(void);
 

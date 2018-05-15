@@ -77,11 +77,13 @@
 static int openssl_configured = 0;
 
 #ifdef LIBSSL_COMPARTMENT
-void OPENSSL_config(struct cheri_object config_file)
-#else
-void OPENSSL_config(const char *config_file)
-#endif
+void OPENSSL_config(struct cheri_object config_file, const char *config_name)
 {
+#else
+void OPENSSL_config(const char *config_name)
+{
+    const char *config_file = NULL;
+#endif
     if (openssl_configured)
         return;
 
@@ -91,7 +93,7 @@ void OPENSSL_config(const char *config_file)
     ENGINE_load_builtin_engines();
 #endif
     ERR_clear_error();
-    CONF_modules_load_file(NULL, config_file,
+    CONF_modules_load_file(config_file, config_name,
                                CONF_MFLAGS_DEFAULT_SECTION |
                                CONF_MFLAGS_IGNORE_MISSING_FILE);
     openssl_configured = 1;
