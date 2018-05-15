@@ -673,7 +673,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 # endif
 # ifdef LIBSSL_COMPARTMENT
 BIO_METHOD *BIO_s_cheri(void);
-BIO *BIO_new_cheri(struct cheri_object file, int close_flag);
+CHERI_LIBSSL_CCALL BIO *BIO_new_cheri(struct cheri_object file, int close_flag);
 # endif
 CHERI_LIBSSL_CCALL BIO *BIO_new(BIO_METHOD *type);
 int BIO_set(BIO *a, BIO_METHOD *type);
