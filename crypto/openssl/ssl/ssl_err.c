@@ -270,6 +270,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_CTX_USE_PRIVATEKEY), "SSL_CTX_use_PrivateKey"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1),
      "SSL_CTX_use_PrivateKey_ASN1"},
+    {ERR_FUNC(SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI),
+     "SSL_CTX_use_PrivateKey_cheri"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE),
      "SSL_CTX_use_PrivateKey_file"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT),

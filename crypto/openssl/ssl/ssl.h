@@ -2196,7 +2196,10 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
 int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
-CHERI_LIBSSL_CCALL int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+#  ifdef LIBSSL_COMPARTMENT
+CHERI_LIBSSL_CCALL int SSL_CTX_use_PrivateKey_cheri(SSL_CTX *ctx, struct cheri_object file, int type);
+#  endif
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
 /* PEM type */
 int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file);
@@ -2750,6 +2753,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_FILE               173
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY                     174
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1                175
+# define SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI               425
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE                176
 # define SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT              272
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY                  177

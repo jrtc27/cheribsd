@@ -656,6 +656,44 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
         BIO_free(in);
     return (ret);
 }
+
+#ifdef LIBSSL_COMPARTMENT
+int SSL_CTX_use_PrivateKey_cheri(SSL_CTX *ctx, struct cheri_object file, int type)
+{
+    int j, ret = 0;
+    BIO *in;
+    EVP_PKEY *pkey = NULL;
+
+    in = BIO_new_cheri(file);
+    if (in == NULL) {
+        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI, ERR_R_BUF_LIB);
+        goto end;
+    }
+
+    if (type == SSL_FILETYPE_PEM) {
+        j = ERR_R_PEM_LIB;
+        pkey = PEM_read_bio_PrivateKey(in, NULL,
+                                       ctx->default_passwd_callback,
+                                       ctx->default_passwd_callback_userdata);
+    } else if (type == SSL_FILETYPE_ASN1) {
+        j = ERR_R_ASN1_LIB;
+        pkey = d2i_PrivateKey_bio(in, NULL);
+    } else {
+        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI, SSL_R_BAD_SSL_FILETYPE);
+        goto end;
+    }
+    if (pkey == NULL) {
+        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_CHERI, j);
+        goto end;
+    }
+    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
+    EVP_PKEY_free(pkey);
+ end:
+    if (in != NULL)
+        BIO_free(in);
+    return (ret);
+}
+#endif
 #endif
 
 int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
