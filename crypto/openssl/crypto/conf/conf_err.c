@@ -89,6 +89,7 @@ static ERR_STRING_DATA CONF_str_functs[] = {
     {ERR_FUNC(CONF_F_NCONF_GET_STRING), "NCONF_get_string"},
     {ERR_FUNC(CONF_F_NCONF_LOAD), "NCONF_load"},
     {ERR_FUNC(CONF_F_NCONF_LOAD_BIO), "NCONF_load_bio"},
+    {ERR_FUNC(CONF_F_NCONF_LOAD_CHERI), "NCONF_load_cheri"},
     {ERR_FUNC(CONF_F_NCONF_LOAD_FP), "NCONF_load_fp"},
     {ERR_FUNC(CONF_F_NCONF_NEW), "NCONF_new"},
     {ERR_FUNC(CONF_F_STR_COPY), "STR_COPY"},

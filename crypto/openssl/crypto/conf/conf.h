@@ -191,8 +191,13 @@ long NCONF_get_number(CONF *conf, char *group, char *name);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
+# ifdef LIBSSL_COMPARTMENT
+int CONF_modules_load_file(struct cheri_object file, const char *appname,
+                           unsigned long flags);
+# else
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
+# endif
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
 void CONF_modules_free(void);
@@ -246,6 +251,7 @@ void ERR_load_CONF_strings(void);
 # define CONF_F_NCONF_GET_STRING                          109
 # define CONF_F_NCONF_LOAD                                113
 # define CONF_F_NCONF_LOAD_BIO                            110
+# define CONF_F_NCONF_LOAD_CHERI                          122
 # define CONF_F_NCONF_LOAD_FP                             114
 # define CONF_F_NCONF_NEW                                 111
 # define CONF_F_STR_COPY                                  101

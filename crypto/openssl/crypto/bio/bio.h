@@ -864,7 +864,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_MEM_WRITE                                  117
 # define BIO_F_SSL_NEW                                    118
 # define BIO_F_WSASTARTUP                                 119
-# define BIO_F_CHERI_READ                                 120
+# define BIO_F_CHERI_READ                                 134
 
 /* Reason codes. */
 # define BIO_R_ACCEPT_ERROR                               100
