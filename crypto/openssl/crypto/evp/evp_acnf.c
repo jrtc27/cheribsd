@@ -66,8 +66,10 @@
  * automatically when OPENSSL_LOAD_CONF is set.
  */
 
+#ifndef LIBSSL_COMPARTMENT
 void OPENSSL_add_all_algorithms_conf(void)
 {
     OPENSSL_add_all_algorithms_noconf();
     OPENSSL_config(NULL);
 }
+#endif

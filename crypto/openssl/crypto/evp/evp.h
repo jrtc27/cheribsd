@@ -903,9 +903,11 @@ const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
 CHERI_LIBSSL_CCALL void OPENSSL_add_all_algorithms_noconf(void);
+# ifndef LIBSSL_COMPARTMENT
 void OPENSSL_add_all_algorithms_conf(void);
+# endif
 
-# ifdef OPENSSL_LOAD_CONF
+# if defined(OPENSSL_LOAD_CONF) && !defined(LIBSSL_COMPARTMENT)
 #  define OpenSSL_add_all_algorithms() \
                 OPENSSL_add_all_algorithms_conf()
 # else
