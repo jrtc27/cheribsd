@@ -116,3 +116,10 @@ call_libcheri_fd_write_c(struct cheri_object fd_object)
 	return (libcheri_fd_write_c(fd_object,
 	    hello_world_buf_c, len_buf_c).lcfr_retval0);
 }
+
+int
+call_cheri_ccallback(void (* __capability callback)(void) __attribute__((cheri_ccallback)))
+{
+	(*callback)();
+	return 1248;
+}

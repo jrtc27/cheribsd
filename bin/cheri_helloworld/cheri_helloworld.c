@@ -69,6 +69,13 @@ helloworld_cb(void * __capability arg, int err /*, retval */)
 	pthread_mutex_unlock(&lock);
 }
 
+__attribute__((cheri_ccallback))
+static void
+helloworld_cheri_ccallback(void)
+{
+	puts("hello world (cheri_ccallback)");
+}
+
 int
 main(void)
 {
@@ -112,6 +119,9 @@ main(void)
 
 	ret = call_libcheri_system_puts_async();
 	assert(ret >= 0);
+
+	ret = call_cheri_ccallback(helloworld_cheri_ccallback);
+	assert(ret == 1248);
 
 	libcheri_fd_destroy(sbop);
 
