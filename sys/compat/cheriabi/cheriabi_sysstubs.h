@@ -18,8 +18,8 @@
 struct __wrusage;
 struct acl;
 struct aiocb;
-struct auditinfo_addr;
 struct auditinfo;
+struct auditinfo_addr;
 struct ffclock_estimate;
 struct fhandle;
 struct iovec;
@@ -84,7 +84,7 @@ SYS_STUB(3, ssize_t, read,
     /* _callargs */ (fd, (__cheri_fromcap void * )buf, nbyte),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf, nbyte),
     /* _callargs_err */ (&errno, fd, (void * )buf, nbyte),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(4, ssize_t, write,
@@ -94,7 +94,7 @@ SYS_STUB(4, ssize_t, write,
     /* _callargs */ (fd, (__cheri_fromcap const void * )buf, nbyte),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf, nbyte),
     /* _callargs_err */ (&errno, fd, (const void * )buf, nbyte),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB_VA(5, int, open, flags,
@@ -105,7 +105,7 @@ SYS_STUB_VA(5, int, open, flags,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, flags, mode),
     /* _callargs_err */ (&errno, (const char * )path, flags, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(6, int, close,
@@ -125,7 +125,7 @@ SYS_STUB(7, int, wait4,
     /* _callargs */ (pid, (__cheri_fromcap int * )status, options, (__cheri_fromcap struct rusage * )rusage),
     /* _callargs_chk */ (&ret, stub_errno, pid, status, options, rusage),
     /* _callargs_err */ (&errno, pid, (int * )status, options, (struct rusage * )rusage),
-    /* _localcheck */ {if (!(cheri_getperm(status) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(rusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(status) && !(cheri_getperm(status) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(rusage) && !(cheri_getperm(rusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(9, int, link,
@@ -135,7 +135,7 @@ SYS_STUB(9, int, link,
     /* _callargs */ ((__cheri_fromcap const char * )path, (__cheri_fromcap const char * )to),
     /* _callargs_chk */ (&ret, stub_errno, path, to),
     /* _callargs_err */ (&errno, (const char * )path, (const char * )to),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(to) && !(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(10, int, unlink,
@@ -145,7 +145,7 @@ SYS_STUB(10, int, unlink,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(12, int, chdir,
@@ -155,7 +155,7 @@ SYS_STUB(12, int, chdir,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(13, int, fchdir,
@@ -175,7 +175,7 @@ SYS_STUB(15, int, chmod,
     /* _callargs */ ((__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, mode),
     /* _callargs_err */ (&errno, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(16, int, chown,
@@ -185,7 +185,7 @@ SYS_STUB(16, int, chown,
     /* _callargs */ ((__cheri_fromcap const char * )path, uid, gid),
     /* _callargs_chk */ (&ret, stub_errno, path, uid, gid),
     /* _callargs_err */ (&errno, (const char * )path, uid, gid),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(20, pid_t, getpid,
@@ -205,7 +205,7 @@ SYS_STUB(21, int, mount,
     /* _callargs */ ((__cheri_fromcap const char * )type, (__cheri_fromcap const char * )path, flags, (__cheri_fromcap void * )data),
     /* _callargs_chk */ (&ret, stub_errno, type, path, flags, data),
     /* _callargs_err */ (&errno, (const char * )type, (const char * )path, flags, (void * )data),
-    /* _localcheck */ {if (!(cheri_getperm(type) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(type) && !(cheri_getperm(type) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(22, int, unmount,
@@ -215,7 +215,7 @@ SYS_STUB(22, int, unmount,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags),
     /* _callargs_chk */ (&ret, stub_errno, path, flags),
     /* _callargs_err */ (&errno, (const char * )path, flags),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(23, int, setuid,
@@ -255,7 +255,7 @@ SYS_STUB(26, int, ptrace,
     /* _callargs */ (req, pid, (__cheri_fromcap char * )addr, data),
     /* _callargs_chk */ (&ret, stub_errno, req, pid, addr, data),
     /* _callargs_err */ (&errno, req, pid, (char * )addr, data),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(27, ssize_t, recvmsg,
@@ -265,7 +265,7 @@ SYS_STUB_ARGHASPTRS(27, ssize_t, recvmsg,
     /* _callargs */ (s, (__cheri_fromcap struct msghdr* )msg, flags),
     /* _callargs_chk */ (&ret, stub_errno, s, msg, flags),
     /* _callargs_err */ (&errno, s, (struct msghdr* )msg, flags),
-    /* _localcheck */ {if (!(cheri_getperm(msg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msg) && !(cheri_getperm(msg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(28, ssize_t, sendmsg,
@@ -275,7 +275,7 @@ SYS_STUB_ARGHASPTRS(28, ssize_t, sendmsg,
     /* _callargs */ (s, (__cheri_fromcap const struct msghdr* )msg, flags),
     /* _callargs_chk */ (&ret, stub_errno, s, msg, flags),
     /* _callargs_err */ (&errno, s, (const struct msghdr* )msg, flags),
-    /* _localcheck */ {if (!(cheri_getperm(msg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msg) && !(cheri_getperm(msg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(29, ssize_t, recvfrom,
@@ -285,7 +285,7 @@ SYS_STUB(29, ssize_t, recvfrom,
     /* _callargs */ (s, (__cheri_fromcap void * )buf, len, flags, (__cheri_fromcap struct sockaddr * )from, (__cheri_fromcap __socklen_t * )fromlenaddr),
     /* _callargs_chk */ (&ret, stub_errno, s, buf, len, flags, from, fromlenaddr),
     /* _callargs_err */ (&errno, s, (void * )buf, len, flags, (struct sockaddr * )from, (__socklen_t * )fromlenaddr),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(from) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(fromlenaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(from) && !(cheri_getperm(from) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(fromlenaddr) && !(cheri_getperm(fromlenaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(30, int, accept,
@@ -295,7 +295,7 @@ SYS_STUB(30, int, accept,
     /* _callargs */ (s, (__cheri_fromcap struct sockaddr * )name, (__cheri_fromcap __socklen_t * )anamelen),
     /* _callargs_chk */ (&ret, stub_errno, s, name, anamelen),
     /* _callargs_err */ (&errno, s, (struct sockaddr * )name, (__socklen_t * )anamelen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(anamelen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(anamelen) && !(cheri_getperm(anamelen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(31, int, getpeername,
@@ -305,7 +305,7 @@ SYS_STUB(31, int, getpeername,
     /* _callargs */ (fdes, (__cheri_fromcap struct sockaddr * )asa, (__cheri_fromcap __socklen_t * )alen),
     /* _callargs_chk */ (&ret, stub_errno, fdes, asa, alen),
     /* _callargs_err */ (&errno, fdes, (struct sockaddr * )asa, (__socklen_t * )alen),
-    /* _localcheck */ {if (!(cheri_getperm(asa) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(alen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(asa) && !(cheri_getperm(asa) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(alen) && !(cheri_getperm(alen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(32, int, getsockname,
@@ -315,7 +315,7 @@ SYS_STUB(32, int, getsockname,
     /* _callargs */ (fdes, (__cheri_fromcap struct sockaddr * )asa, (__cheri_fromcap __socklen_t * )alen),
     /* _callargs_chk */ (&ret, stub_errno, fdes, asa, alen),
     /* _callargs_err */ (&errno, fdes, (struct sockaddr * )asa, (__socklen_t * )alen),
-    /* _localcheck */ {if (!(cheri_getperm(asa) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(alen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(asa) && !(cheri_getperm(asa) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(alen) && !(cheri_getperm(alen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(33, int, access,
@@ -325,7 +325,7 @@ SYS_STUB(33, int, access,
     /* _callargs */ ((__cheri_fromcap const char * )path, amode),
     /* _callargs_chk */ (&ret, stub_errno, path, amode),
     /* _callargs_err */ (&errno, (const char * )path, amode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(34, int, chflags,
@@ -335,7 +335,7 @@ SYS_STUB(34, int, chflags,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags),
     /* _callargs_chk */ (&ret, stub_errno, path, flags),
     /* _callargs_err */ (&errno, (const char * )path, flags),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(35, int, fchflags,
@@ -405,7 +405,7 @@ SYS_STUB(44, int, profil,
     /* _callargs */ ((__cheri_fromcap void * )samples, size, offset, scale),
     /* _callargs_chk */ (&ret, stub_errno, samples, size, offset, scale),
     /* _callargs_err */ (&errno, (void * )samples, size, offset, scale),
-    /* _localcheck */ {if (!(cheri_getperm(samples) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(samples) && !(cheri_getperm(samples) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(45, int, ktrace,
@@ -415,7 +415,7 @@ SYS_STUB(45, int, ktrace,
     /* _callargs */ ((__cheri_fromcap const char * )fname, ops, facs, pid),
     /* _callargs_chk */ (&ret, stub_errno, fname, ops, facs, pid),
     /* _callargs_err */ (&errno, (const char * )fname, ops, facs, pid),
-    /* _localcheck */ {if (!(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fname) && !(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(47, gid_t, getgid,
@@ -435,7 +435,7 @@ SYS_STUB(49, int, getlogin,
     /* _callargs */ ((__cheri_fromcap char * )namebuf, namelen),
     /* _callargs_chk */ (&ret, stub_errno, namebuf, namelen),
     /* _callargs_err */ (&errno, (char * )namebuf, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(namebuf) && !(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(50, int, setlogin,
@@ -445,7 +445,7 @@ SYS_STUB(50, int, setlogin,
     /* _callargs */ ((__cheri_fromcap const char * )namebuf),
     /* _callargs_chk */ (&ret, stub_errno, namebuf),
     /* _callargs_err */ (&errno, (const char * )namebuf),
-    /* _localcheck */ {if (!(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(namebuf) && !(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(51, int, acct,
@@ -455,7 +455,7 @@ SYS_STUB(51, int, acct,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(53, int, sigaltstack,
@@ -465,7 +465,7 @@ SYS_STUB(53, int, sigaltstack,
     /* _callargs */ ((__cheri_fromcap const cheriabi_stack_t * )ss, (__cheri_fromcap cheriabi_stack_t * )oss),
     /* _callargs_chk */ (&ret, stub_errno, ss, oss),
     /* _callargs_err */ (&errno, (const cheriabi_stack_t * )ss, (cheriabi_stack_t * )oss),
-    /* _localcheck */ {if (!(cheri_getperm(ss) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oss) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ss) && !(cheri_getperm(ss) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oss) && !(cheri_getperm(oss) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(55, int, reboot,
@@ -485,7 +485,7 @@ SYS_STUB(56, int, revoke,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(57, int, symlink,
@@ -495,7 +495,7 @@ SYS_STUB(57, int, symlink,
     /* _callargs */ ((__cheri_fromcap const char * )path, (__cheri_fromcap const char * )link),
     /* _callargs_chk */ (&ret, stub_errno, path, link),
     /* _callargs_err */ (&errno, (const char * )path, (const char * )link),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(link) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(link) && !(cheri_getperm(link) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(58, ssize_t, readlink,
@@ -505,7 +505,7 @@ SYS_STUB(58, ssize_t, readlink,
     /* _callargs */ ((__cheri_fromcap const char * )path, (__cheri_fromcap char * )buf, count),
     /* _callargs_chk */ (&ret, stub_errno, path, buf, count),
     /* _callargs_err */ (&errno, (const char * )path, (char * )buf, count),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(60, mode_t, umask,
@@ -525,7 +525,7 @@ SYS_STUB(61, int, chroot,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(65, int, msync,
@@ -535,7 +535,7 @@ SYS_STUB(65, int, msync,
     /* _callargs */ ((__cheri_fromcap void * )addr, len, flags),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, flags),
     /* _callargs_err */ (&errno, (void * )addr, len, flags),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(66, int, vfork,
@@ -555,7 +555,7 @@ SYS_STUB(73, int, munmap,
     /* _callargs */ ((__cheri_fromcap void * )addr, len),
     /* _callargs_chk */ (&ret, stub_errno, addr, len),
     /* _callargs_err */ (&errno, (void * )addr, len),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(74, int, mprotect,
@@ -565,7 +565,7 @@ SYS_STUB(74, int, mprotect,
     /* _callargs */ ((__cheri_fromcap const void * )addr, len, prot),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, prot),
     /* _callargs_err */ (&errno, (const void * )addr, len, prot),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(75, int, madvise,
@@ -575,7 +575,7 @@ SYS_STUB(75, int, madvise,
     /* _callargs */ ((__cheri_fromcap void * )addr, len, behav),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, behav),
     /* _callargs_err */ (&errno, (void * )addr, len, behav),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(78, int, mincore,
@@ -585,7 +585,7 @@ SYS_STUB(78, int, mincore,
     /* _callargs */ ((__cheri_fromcap const void * )addr, len, (__cheri_fromcap char * )vec),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, vec),
     /* _callargs_err */ (&errno, (const void * )addr, len, (char * )vec),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(vec) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(vec) && !(cheri_getperm(vec) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(79, int, getgroups,
@@ -595,7 +595,7 @@ SYS_STUB(79, int, getgroups,
     /* _callargs */ (gidsetsize, (__cheri_fromcap gid_t * )gidset),
     /* _callargs_chk */ (&ret, stub_errno, gidsetsize, gidset),
     /* _callargs_err */ (&errno, gidsetsize, (gid_t * )gidset),
-    /* _localcheck */ {if (!(cheri_getperm(gidset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(gidset) && !(cheri_getperm(gidset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(80, int, setgroups,
@@ -605,7 +605,7 @@ SYS_STUB(80, int, setgroups,
     /* _callargs */ (gidsetsize, (__cheri_fromcap const gid_t * )gidset),
     /* _callargs_chk */ (&ret, stub_errno, gidsetsize, gidset),
     /* _callargs_err */ (&errno, gidsetsize, (const gid_t * )gidset),
-    /* _localcheck */ {if (!(cheri_getperm(gidset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(gidset) && !(cheri_getperm(gidset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(81, int, getpgrp,
@@ -635,7 +635,7 @@ SYS_STUB(83, int, setitimer,
     /* _callargs */ (which, (__cheri_fromcap const struct itimerval * )itv, (__cheri_fromcap struct itimerval * )oitv),
     /* _callargs_chk */ (&ret, stub_errno, which, itv, oitv),
     /* _callargs_err */ (&errno, which, (const struct itimerval * )itv, (struct itimerval * )oitv),
-    /* _localcheck */ {if (!(cheri_getperm(itv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oitv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(itv) && !(cheri_getperm(itv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oitv) && !(cheri_getperm(oitv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(85, int, swapon,
@@ -645,7 +645,7 @@ SYS_STUB(85, int, swapon,
     /* _callargs */ ((__cheri_fromcap const char * )name),
     /* _callargs_chk */ (&ret, stub_errno, name),
     /* _callargs_err */ (&errno, (const char * )name),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(86, int, getitimer,
@@ -655,7 +655,7 @@ SYS_STUB(86, int, getitimer,
     /* _callargs */ (which, (__cheri_fromcap struct itimerval * )itv),
     /* _callargs_chk */ (&ret, stub_errno, which, itv),
     /* _callargs_err */ (&errno, which, (struct itimerval * )itv),
-    /* _localcheck */ {if (!(cheri_getperm(itv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(itv) && !(cheri_getperm(itv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(89, int, getdtablesize,
@@ -685,7 +685,7 @@ SYS_STUB(93, int, select,
     /* _callargs */ (nd, (__cheri_fromcap fd_set * )in, (__cheri_fromcap fd_set * )ou, (__cheri_fromcap fd_set * )ex, (__cheri_fromcap struct timeval * )tv),
     /* _callargs_chk */ (&ret, stub_errno, nd, in, ou, ex, tv),
     /* _callargs_err */ (&errno, nd, (fd_set * )in, (fd_set * )ou, (fd_set * )ex, (struct timeval * )tv),
-    /* _localcheck */ {if (!(cheri_getperm(in) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ou) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ex) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(tv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(in) && !(cheri_getperm(in) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ou) && !(cheri_getperm(ou) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ex) && !(cheri_getperm(ex) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(tv) && !(cheri_getperm(tv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(95, int, fsync,
@@ -725,7 +725,7 @@ SYS_STUB(98, int, connect,
     /* _callargs */ (s, (__cheri_fromcap const struct sockaddr * )name, namelen),
     /* _callargs_chk */ (&ret, stub_errno, s, name, namelen),
     /* _callargs_err */ (&errno, s, (const struct sockaddr * )name, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(100, int, getpriority,
@@ -745,7 +745,7 @@ SYS_STUB(104, int, bind,
     /* _callargs */ (s, (__cheri_fromcap const struct sockaddr * )name, namelen),
     /* _callargs_chk */ (&ret, stub_errno, s, name, namelen),
     /* _callargs_err */ (&errno, s, (const struct sockaddr * )name, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(105, int, setsockopt,
@@ -755,7 +755,7 @@ SYS_STUB(105, int, setsockopt,
     /* _callargs */ (s, level, name, (__cheri_fromcap const void * )val, valsize),
     /* _callargs_chk */ (&ret, stub_errno, s, level, name, val, valsize),
     /* _callargs_err */ (&errno, s, level, name, (const void * )val, valsize),
-    /* _localcheck */ {if (!(cheri_getperm(val) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(val) && !(cheri_getperm(val) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(106, int, listen,
@@ -775,7 +775,7 @@ SYS_STUB(116, int, gettimeofday,
     /* _callargs */ ((__cheri_fromcap struct timeval * )tp, (__cheri_fromcap struct timezone * )tzp),
     /* _callargs_chk */ (&ret, stub_errno, tp, tzp),
     /* _callargs_err */ (&errno, (struct timeval * )tp, (struct timezone * )tzp),
-    /* _localcheck */ {if (!(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(tzp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tp) && !(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(tzp) && !(cheri_getperm(tzp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(117, int, getrusage,
@@ -785,7 +785,7 @@ SYS_STUB(117, int, getrusage,
     /* _callargs */ (who, (__cheri_fromcap struct rusage * )rusage),
     /* _callargs_chk */ (&ret, stub_errno, who, rusage),
     /* _callargs_err */ (&errno, who, (struct rusage * )rusage),
-    /* _localcheck */ {if (!(cheri_getperm(rusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rusage) && !(cheri_getperm(rusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(118, int, getsockopt,
@@ -795,7 +795,7 @@ SYS_STUB(118, int, getsockopt,
     /* _callargs */ (s, level, name, (__cheri_fromcap void * )val, (__cheri_fromcap __socklen_t * )avalsize),
     /* _callargs_chk */ (&ret, stub_errno, s, level, name, val, avalsize),
     /* _callargs_err */ (&errno, s, level, name, (void * )val, (__socklen_t * )avalsize),
-    /* _localcheck */ {if (!(cheri_getperm(val) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(avalsize) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(val) && !(cheri_getperm(val) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(avalsize) && !(cheri_getperm(avalsize) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(120, int, readv,
@@ -805,7 +805,7 @@ SYS_STUB_ARGHASPTRS(120, int, readv,
     /* _callargs */ (fd, (__cheri_fromcap struct iovec* )iovp, iovcnt),
     /* _callargs_chk */ (&ret, stub_errno, fd, iovp, iovcnt),
     /* _callargs_err */ (&errno, fd, (struct iovec* )iovp, iovcnt),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(121, int, writev,
@@ -815,7 +815,7 @@ SYS_STUB_ARGHASPTRS(121, int, writev,
     /* _callargs */ (fd, (__cheri_fromcap struct iovec* )iovp, iovcnt),
     /* _callargs_chk */ (&ret, stub_errno, fd, iovp, iovcnt),
     /* _callargs_err */ (&errno, fd, (struct iovec* )iovp, iovcnt),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(122, int, settimeofday,
@@ -825,7 +825,7 @@ SYS_STUB(122, int, settimeofday,
     /* _callargs */ ((__cheri_fromcap const struct timeval * )tv, (__cheri_fromcap const struct timezone * )tzp),
     /* _callargs_chk */ (&ret, stub_errno, tv, tzp),
     /* _callargs_err */ (&errno, (const struct timeval * )tv, (const struct timezone * )tzp),
-    /* _localcheck */ {if (!(cheri_getperm(tv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(tzp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tv) && !(cheri_getperm(tv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(tzp) && !(cheri_getperm(tzp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(123, int, fchown,
@@ -875,7 +875,7 @@ SYS_STUB(128, int, rename,
     /* _callargs */ ((__cheri_fromcap const char * )from, (__cheri_fromcap const char * )to),
     /* _callargs_chk */ (&ret, stub_errno, from, to),
     /* _callargs_err */ (&errno, (const char * )from, (const char * )to),
-    /* _localcheck */ {if (!(cheri_getperm(from) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(from) && !(cheri_getperm(from) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(to) && !(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(131, int, flock,
@@ -895,7 +895,7 @@ SYS_STUB(132, int, mkfifo,
     /* _callargs */ ((__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, mode),
     /* _callargs_err */ (&errno, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(133, ssize_t, sendto,
@@ -905,7 +905,7 @@ SYS_STUB(133, ssize_t, sendto,
     /* _callargs */ (s, (__cheri_fromcap const void * )buf, len, flags, (__cheri_fromcap const struct sockaddr * )to, tolen),
     /* _callargs_chk */ (&ret, stub_errno, s, buf, len, flags, to, tolen),
     /* _callargs_err */ (&errno, s, (const void * )buf, len, flags, (const struct sockaddr * )to, tolen),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(to) && !(cheri_getperm(to) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(134, int, shutdown,
@@ -925,7 +925,7 @@ SYS_STUB(135, int, socketpair,
     /* _callargs */ (domain, type, protocol, (__cheri_fromcap int * )rsv),
     /* _callargs_chk */ (&ret, stub_errno, domain, type, protocol, rsv),
     /* _callargs_err */ (&errno, domain, type, protocol, (int * )rsv),
-    /* _localcheck */ {if (!(cheri_getperm(rsv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rsv) && !(cheri_getperm(rsv) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(136, int, mkdir,
@@ -935,7 +935,7 @@ SYS_STUB(136, int, mkdir,
     /* _callargs */ ((__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, mode),
     /* _callargs_err */ (&errno, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(137, int, rmdir,
@@ -945,7 +945,7 @@ SYS_STUB(137, int, rmdir,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(138, int, utimes,
@@ -955,7 +955,7 @@ SYS_STUB(138, int, utimes,
     /* _callargs */ ((__cheri_fromcap const char * )path, (__cheri_fromcap const struct timeval * )tptr),
     /* _callargs_chk */ (&ret, stub_errno, path, tptr),
     /* _callargs_err */ (&errno, (const char * )path, (const struct timeval * )tptr),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(tptr) && !(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(140, int, adjtime,
@@ -965,7 +965,7 @@ SYS_STUB(140, int, adjtime,
     /* _callargs */ ((__cheri_fromcap const struct timeval * )delta, (__cheri_fromcap struct timeval * )olddelta),
     /* _callargs_chk */ (&ret, stub_errno, delta, olddelta),
     /* _callargs_err */ (&errno, (const struct timeval * )delta, (struct timeval * )olddelta),
-    /* _localcheck */ {if (!(cheri_getperm(delta) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(olddelta) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(delta) && !(cheri_getperm(delta) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(olddelta) && !(cheri_getperm(olddelta) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(147, int, setsid,
@@ -985,7 +985,7 @@ SYS_STUB(148, int, quotactl,
     /* _callargs */ ((__cheri_fromcap const char * )path, cmd, uid, (__cheri_fromcap void * )arg),
     /* _callargs_chk */ (&ret, stub_errno, path, cmd, uid, arg),
     /* _callargs_err */ (&errno, (const char * )path, cmd, uid, (void * )arg),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(arg) && !(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(155, int, nfssvc,
@@ -995,7 +995,7 @@ SYS_STUB(155, int, nfssvc,
     /* _callargs */ (flag, (__cheri_fromcap void * )argp),
     /* _callargs_chk */ (&ret, stub_errno, flag, argp),
     /* _callargs_err */ (&errno, flag, (void * )argp),
-    /* _localcheck */ {if (!(cheri_getperm(argp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(argp) && !(cheri_getperm(argp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(160, int, lgetfh,
@@ -1005,7 +1005,7 @@ SYS_STUB(160, int, lgetfh,
     /* _callargs */ ((__cheri_fromcap const char * )fname, (__cheri_fromcap struct fhandle * )fhp),
     /* _callargs_chk */ (&ret, stub_errno, fname, fhp),
     /* _callargs_err */ (&errno, (const char * )fname, (struct fhandle * )fhp),
-    /* _localcheck */ {if (!(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fname) && !(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(fhp) && !(cheri_getperm(fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(161, int, getfh,
@@ -1015,7 +1015,7 @@ SYS_STUB(161, int, getfh,
     /* _callargs */ ((__cheri_fromcap const char * )fname, (__cheri_fromcap struct fhandle * )fhp),
     /* _callargs_chk */ (&ret, stub_errno, fname, fhp),
     /* _callargs_err */ (&errno, (const char * )fname, (struct fhandle * )fhp),
-    /* _localcheck */ {if (!(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fname) && !(cheri_getperm(fname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(fhp) && !(cheri_getperm(fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(165, int, sysarch,
@@ -1025,7 +1025,7 @@ SYS_STUB(165, int, sysarch,
     /* _callargs */ (op, (__cheri_fromcap char * )parms),
     /* _callargs_chk */ (&ret, stub_errno, op, parms),
     /* _callargs_err */ (&errno, op, (char * )parms),
-    /* _localcheck */ {if (!(cheri_getperm(parms) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(parms) && !(cheri_getperm(parms) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(166, int, rtprio,
@@ -1035,7 +1035,7 @@ SYS_STUB(166, int, rtprio,
     /* _callargs */ (function, pid, (__cheri_fromcap struct rtprio * )rtp),
     /* _callargs_chk */ (&ret, stub_errno, function, pid, rtp),
     /* _callargs_err */ (&errno, function, pid, (struct rtprio * )rtp),
-    /* _localcheck */ {if (!(cheri_getperm(rtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rtp) && !(cheri_getperm(rtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(175, int, setfib,
@@ -1055,7 +1055,7 @@ SYS_STUB(176, int, ntp_adjtime,
     /* _callargs */ ((__cheri_fromcap struct timex * )tp),
     /* _callargs_chk */ (&ret, stub_errno, tp),
     /* _callargs_err */ (&errno, (struct timex * )tp),
-    /* _localcheck */ {if (!(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tp) && !(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(181, int, setgid,
@@ -1095,7 +1095,7 @@ SYS_STUB(191, int, pathconf,
     /* _callargs */ ((__cheri_fromcap const char * )path, name),
     /* _callargs_chk */ (&ret, stub_errno, path, name),
     /* _callargs_err */ (&errno, (const char * )path, name),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(192, int, fpathconf,
@@ -1115,7 +1115,7 @@ SYS_STUB(194, int, getrlimit,
     /* _callargs */ (which, (__cheri_fromcap struct rlimit * )rlp),
     /* _callargs_chk */ (&ret, stub_errno, which, rlp),
     /* _callargs_err */ (&errno, which, (struct rlimit * )rlp),
-    /* _localcheck */ {if (!(cheri_getperm(rlp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rlp) && !(cheri_getperm(rlp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(195, int, setrlimit,
@@ -1125,7 +1125,7 @@ SYS_STUB(195, int, setrlimit,
     /* _callargs */ (which, (__cheri_fromcap struct rlimit * )rlp),
     /* _callargs_chk */ (&ret, stub_errno, which, rlp),
     /* _callargs_err */ (&errno, which, (struct rlimit * )rlp),
-    /* _localcheck */ {if (!(cheri_getperm(rlp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rlp) && !(cheri_getperm(rlp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(202, int, __sysctl,
@@ -1135,7 +1135,7 @@ SYS_STUB(202, int, __sysctl,
     /* _callargs */ ((__cheri_fromcap int * )name, namelen, (__cheri_fromcap void * )old, (__cheri_fromcap size_t * )oldlenp, (__cheri_fromcap void * )new, newlen),
     /* _callargs_chk */ (&ret, stub_errno, name, namelen, old, oldlenp, new, newlen),
     /* _callargs_err */ (&errno, (int * )name, namelen, (void * )old, (size_t * )oldlenp, (void * )new, newlen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(old) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oldlenp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(new) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(old) && !(cheri_getperm(old) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oldlenp) && !(cheri_getperm(oldlenp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(new) && !(cheri_getperm(new) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(203, int, mlock,
@@ -1145,7 +1145,7 @@ SYS_STUB(203, int, mlock,
     /* _callargs */ ((__cheri_fromcap const void * )addr, len),
     /* _callargs_chk */ (&ret, stub_errno, addr, len),
     /* _callargs_err */ (&errno, (const void * )addr, len),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(204, int, munlock,
@@ -1155,7 +1155,7 @@ SYS_STUB(204, int, munlock,
     /* _callargs */ ((__cheri_fromcap const void * )addr, len),
     /* _callargs_chk */ (&ret, stub_errno, addr, len),
     /* _callargs_err */ (&errno, (const void * )addr, len),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(205, int, undelete,
@@ -1165,7 +1165,7 @@ SYS_STUB(205, int, undelete,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(206, int, futimes,
@@ -1175,7 +1175,7 @@ SYS_STUB(206, int, futimes,
     /* _callargs */ (fd, (__cheri_fromcap const struct timeval * )tptr),
     /* _callargs_chk */ (&ret, stub_errno, fd, tptr),
     /* _callargs_err */ (&errno, fd, (const struct timeval * )tptr),
-    /* _localcheck */ {if (!(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tptr) && !(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(207, int, getpgid,
@@ -1195,7 +1195,7 @@ SYS_STUB(209, int, poll,
     /* _callargs */ ((__cheri_fromcap struct pollfd * )fds, nfds, timeout),
     /* _callargs_chk */ (&ret, stub_errno, fds, nfds, timeout),
     /* _callargs_err */ (&errno, (struct pollfd * )fds, nfds, timeout),
-    /* _localcheck */ {if (!(cheri_getperm(fds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fds) && !(cheri_getperm(fds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(221, int, semget,
@@ -1215,7 +1215,7 @@ SYS_STUB(222, int, semop,
     /* _callargs */ (semid, (__cheri_fromcap struct sembuf * )sops, nsops),
     /* _callargs_chk */ (&ret, stub_errno, semid, sops, nsops),
     /* _callargs_err */ (&errno, semid, (struct sembuf * )sops, nsops),
-    /* _localcheck */ {if (!(cheri_getperm(sops) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(sops) && !(cheri_getperm(sops) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(225, int, msgget,
@@ -1235,7 +1235,7 @@ SYS_STUB(226, int, msgsnd,
     /* _callargs */ (msqid, (__cheri_fromcap void * )msgp, msgsz, msgflg),
     /* _callargs_chk */ (&ret, stub_errno, msqid, msgp, msgsz, msgflg),
     /* _callargs_err */ (&errno, msqid, (void * )msgp, msgsz, msgflg),
-    /* _localcheck */ {if (!(cheri_getperm(msgp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msgp) && !(cheri_getperm(msgp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(227, int, msgrcv,
@@ -1245,7 +1245,7 @@ SYS_STUB(227, int, msgrcv,
     /* _callargs */ (msqid, (__cheri_fromcap void * )msgp, msgsz, msgtyp, msgflg),
     /* _callargs_chk */ (&ret, stub_errno, msqid, msgp, msgsz, msgtyp, msgflg),
     /* _callargs_err */ (&errno, msqid, (void * )msgp, msgsz, msgtyp, msgflg),
-    /* _localcheck */ {if (!(cheri_getperm(msgp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msgp) && !(cheri_getperm(msgp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(228, void*, shmat,
@@ -1255,7 +1255,7 @@ SYS_STUB(228, void*, shmat,
     /* _callargs */ (shmid, (__cheri_fromcap void * )shmaddr, shmflg),
     /* _callargs_chk */ (&ret, stub_errno, shmid, shmaddr, shmflg),
     /* _callargs_err */ (&errno, shmid, (void * )shmaddr, shmflg),
-    /* _localcheck */ {if (!(cheri_getperm(shmaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((void*)-1);} }
+    /* _localcheck */ {if (cheri_gettag(shmaddr) && !(cheri_getperm(shmaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((void*)-1);} }
 )
 
 SYS_STUB(230, int, shmdt,
@@ -1265,7 +1265,7 @@ SYS_STUB(230, int, shmdt,
     /* _callargs */ ((__cheri_fromcap void * )shmaddr),
     /* _callargs_chk */ (&ret, stub_errno, shmaddr),
     /* _callargs_err */ (&errno, (void * )shmaddr),
-    /* _localcheck */ {if (!(cheri_getperm(shmaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(shmaddr) && !(cheri_getperm(shmaddr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(231, int, shmget,
@@ -1285,7 +1285,7 @@ SYS_STUB(232, int, clock_gettime,
     /* _callargs */ (clock_id, (__cheri_fromcap struct timespec * )tp),
     /* _callargs_chk */ (&ret, stub_errno, clock_id, tp),
     /* _callargs_err */ (&errno, clock_id, (struct timespec * )tp),
-    /* _localcheck */ {if (!(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tp) && !(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(233, int, clock_settime,
@@ -1295,7 +1295,7 @@ SYS_STUB(233, int, clock_settime,
     /* _callargs */ (clock_id, (__cheri_fromcap const struct timespec * )tp),
     /* _callargs_chk */ (&ret, stub_errno, clock_id, tp),
     /* _callargs_err */ (&errno, clock_id, (const struct timespec * )tp),
-    /* _localcheck */ {if (!(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tp) && !(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(234, int, clock_getres,
@@ -1305,7 +1305,7 @@ SYS_STUB(234, int, clock_getres,
     /* _callargs */ (clock_id, (__cheri_fromcap struct timespec * )tp),
     /* _callargs_chk */ (&ret, stub_errno, clock_id, tp),
     /* _callargs_err */ (&errno, clock_id, (struct timespec * )tp),
-    /* _localcheck */ {if (!(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(tp) && !(cheri_getperm(tp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(235, int, ktimer_create,
@@ -1315,7 +1315,7 @@ SYS_STUB_ARGHASPTRS(235, int, ktimer_create,
     /* _callargs */ (clock_id, (__cheri_fromcap struct sigevent* )evp, (__cheri_fromcap int * )timerid),
     /* _callargs_chk */ (&ret, stub_errno, clock_id, evp, timerid),
     /* _callargs_err */ (&errno, clock_id, (struct sigevent* )evp, (int * )timerid),
-    /* _localcheck */ {if (!(cheri_getperm(evp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(timerid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(evp) && !(cheri_getperm(evp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(timerid) && !(cheri_getperm(timerid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(236, int, ktimer_delete,
@@ -1335,7 +1335,7 @@ SYS_STUB(237, int, ktimer_settime,
     /* _callargs */ (timerid, flags, (__cheri_fromcap const struct itimerspec * )value, (__cheri_fromcap struct itimerspec * )ovalue),
     /* _callargs_chk */ (&ret, stub_errno, timerid, flags, value, ovalue),
     /* _callargs_err */ (&errno, timerid, flags, (const struct itimerspec * )value, (struct itimerspec * )ovalue),
-    /* _localcheck */ {if (!(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ovalue) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(value) && !(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ovalue) && !(cheri_getperm(ovalue) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(238, int, ktimer_gettime,
@@ -1345,7 +1345,7 @@ SYS_STUB(238, int, ktimer_gettime,
     /* _callargs */ (timerid, (__cheri_fromcap struct itimerspec * )value),
     /* _callargs_chk */ (&ret, stub_errno, timerid, value),
     /* _callargs_err */ (&errno, timerid, (struct itimerspec * )value),
-    /* _localcheck */ {if (!(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(value) && !(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(239, int, ktimer_getoverrun,
@@ -1365,7 +1365,7 @@ SYS_STUB(240, int, nanosleep,
     /* _callargs */ ((__cheri_fromcap const struct timespec * )rqtp, (__cheri_fromcap struct timespec * )rmtp),
     /* _callargs_chk */ (&ret, stub_errno, rqtp, rmtp),
     /* _callargs_err */ (&errno, (const struct timespec * )rqtp, (struct timespec * )rmtp),
-    /* _localcheck */ {if (!(cheri_getperm(rqtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(rmtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rqtp) && !(cheri_getperm(rqtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(rmtp) && !(cheri_getperm(rmtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(241, int, ffclock_getcounter,
@@ -1375,7 +1375,7 @@ SYS_STUB(241, int, ffclock_getcounter,
     /* _callargs */ ((__cheri_fromcap ffcounter * )ffcount),
     /* _callargs_chk */ (&ret, stub_errno, ffcount),
     /* _callargs_err */ (&errno, (ffcounter * )ffcount),
-    /* _localcheck */ {if (!(cheri_getperm(ffcount) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ffcount) && !(cheri_getperm(ffcount) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(242, int, ffclock_setestimate,
@@ -1385,7 +1385,7 @@ SYS_STUB(242, int, ffclock_setestimate,
     /* _callargs */ ((__cheri_fromcap struct ffclock_estimate * )cest),
     /* _callargs_chk */ (&ret, stub_errno, cest),
     /* _callargs_err */ (&errno, (struct ffclock_estimate * )cest),
-    /* _localcheck */ {if (!(cheri_getperm(cest) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(cest) && !(cheri_getperm(cest) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(243, int, ffclock_getestimate,
@@ -1395,7 +1395,7 @@ SYS_STUB(243, int, ffclock_getestimate,
     /* _callargs */ ((__cheri_fromcap struct ffclock_estimate * )cest),
     /* _callargs_chk */ (&ret, stub_errno, cest),
     /* _callargs_err */ (&errno, (struct ffclock_estimate * )cest),
-    /* _localcheck */ {if (!(cheri_getperm(cest) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(cest) && !(cheri_getperm(cest) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(244, int, clock_nanosleep,
@@ -1405,7 +1405,7 @@ SYS_STUB(244, int, clock_nanosleep,
     /* _callargs */ (clock_id, flags, (__cheri_fromcap const struct timespec * )rqtp, (__cheri_fromcap struct timespec * )rmtp),
     /* _callargs_chk */ (&ret, stub_errno, clock_id, flags, rqtp, rmtp),
     /* _callargs_err */ (&errno, clock_id, flags, (const struct timespec * )rqtp, (struct timespec * )rmtp),
-    /* _localcheck */ {if (!(cheri_getperm(rqtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(rmtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rqtp) && !(cheri_getperm(rqtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(rmtp) && !(cheri_getperm(rmtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(247, int, clock_getcpuclockid2,
@@ -1415,7 +1415,7 @@ SYS_STUB(247, int, clock_getcpuclockid2,
     /* _callargs */ (id, which, (__cheri_fromcap clockid_t * )clock_id),
     /* _callargs_chk */ (&ret, stub_errno, id, which, clock_id),
     /* _callargs_err */ (&errno, id, which, (clockid_t * )clock_id),
-    /* _localcheck */ {if (!(cheri_getperm(clock_id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(clock_id) && !(cheri_getperm(clock_id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(248, int, ntp_gettime,
@@ -1425,7 +1425,7 @@ SYS_STUB(248, int, ntp_gettime,
     /* _callargs */ ((__cheri_fromcap struct ntptimeval * )ntvp),
     /* _callargs_chk */ (&ret, stub_errno, ntvp),
     /* _callargs_err */ (&errno, (struct ntptimeval * )ntvp),
-    /* _localcheck */ {if (!(cheri_getperm(ntvp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ntvp) && !(cheri_getperm(ntvp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(250, int, minherit,
@@ -1435,7 +1435,7 @@ SYS_STUB(250, int, minherit,
     /* _callargs */ ((__cheri_fromcap void * )addr, len, inherit),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, inherit),
     /* _callargs_err */ (&errno, (void * )addr, len, inherit),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(251, int, rfork,
@@ -1465,7 +1465,7 @@ SYS_STUB(254, int, lchown,
     /* _callargs */ ((__cheri_fromcap const char * )path, uid, gid),
     /* _callargs_chk */ (&ret, stub_errno, path, uid, gid),
     /* _callargs_err */ (&errno, (const char * )path, uid, gid),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(255, int, aio_read,
@@ -1475,7 +1475,7 @@ SYS_STUB_ARGHASPTRS(255, int, aio_read,
     /* _callargs */ ((__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp),
     /* _callargs_err */ (&errno, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(256, int, aio_write,
@@ -1485,7 +1485,7 @@ SYS_STUB_ARGHASPTRS(256, int, aio_write,
     /* _callargs */ ((__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp),
     /* _callargs_err */ (&errno, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(257, int, lio_listio,
@@ -1495,7 +1495,7 @@ SYS_STUB_ARGHASPTRS(257, int, lio_listio,
     /* _callargs */ (mode, (__cheri_fromcap struct aiocb*  const * __capability)acb_list, nent, (__cheri_fromcap struct sigevent* )sig),
     /* _callargs_chk */ (&ret, stub_errno, mode, acb_list, nent, sig),
     /* _callargs_err */ (&errno, mode, (struct aiocb*  const * __capability)acb_list, nent, (struct sigevent* )sig),
-    /* _localcheck */ {if (!(cheri_getperm(acb_list) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sig) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(acb_list) && !(cheri_getperm(acb_list) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sig) && !(cheri_getperm(sig) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(258, int, kbounce,
@@ -1505,7 +1505,7 @@ SYS_STUB(258, int, kbounce,
     /* _callargs */ ((__cheri_fromcap const void * )src, (__cheri_fromcap void * )dst, len, flags),
     /* _callargs_chk */ (&ret, stub_errno, src, dst, len, flags),
     /* _callargs_err */ (&errno, (const void * )src, (void * )dst, len, flags),
-    /* _localcheck */ {if (!(cheri_getperm(src) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(dst) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(src) && !(cheri_getperm(src) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(dst) && !(cheri_getperm(dst) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(274, int, lchmod,
@@ -1515,7 +1515,7 @@ SYS_STUB(274, int, lchmod,
     /* _callargs */ ((__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, mode),
     /* _callargs_err */ (&errno, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(276, int, lutimes,
@@ -1525,7 +1525,7 @@ SYS_STUB(276, int, lutimes,
     /* _callargs */ ((__cheri_fromcap const char * )path, (__cheri_fromcap const struct timeval * )tptr),
     /* _callargs_chk */ (&ret, stub_errno, path, tptr),
     /* _callargs_err */ (&errno, (const char * )path, (const struct timeval * )tptr),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(tptr) && !(cheri_getperm(tptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(289, ssize_t, preadv,
@@ -1535,7 +1535,7 @@ SYS_STUB_ARGHASPTRS(289, ssize_t, preadv,
     /* _callargs */ (fd, (__cheri_fromcap struct iovec* )iovp, iovcnt, offset),
     /* _callargs_chk */ (&ret, stub_errno, fd, iovp, iovcnt, offset),
     /* _callargs_err */ (&errno, fd, (struct iovec* )iovp, iovcnt, offset),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(290, ssize_t, pwritev,
@@ -1545,7 +1545,7 @@ SYS_STUB_ARGHASPTRS(290, ssize_t, pwritev,
     /* _callargs */ (fd, (__cheri_fromcap struct iovec* )iovp, iovcnt, offset),
     /* _callargs_chk */ (&ret, stub_errno, fd, iovp, iovcnt, offset),
     /* _callargs_err */ (&errno, fd, (struct iovec* )iovp, iovcnt, offset),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(298, int, fhopen,
@@ -1555,7 +1555,7 @@ SYS_STUB(298, int, fhopen,
     /* _callargs */ ((__cheri_fromcap const struct fhandle * )u_fhp, flags),
     /* _callargs_chk */ (&ret, stub_errno, u_fhp, flags),
     /* _callargs_err */ (&errno, (const struct fhandle * )u_fhp, flags),
-    /* _localcheck */ {if (!(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(u_fhp) && !(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(300, int, modnext,
@@ -1575,7 +1575,7 @@ SYS_STUB(301, int, modstat,
     /* _callargs */ (modid, (__cheri_fromcap struct module_stat * )stat),
     /* _callargs_chk */ (&ret, stub_errno, modid, stat),
     /* _callargs_err */ (&errno, modid, (struct module_stat * )stat),
-    /* _localcheck */ {if (!(cheri_getperm(stat) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(stat) && !(cheri_getperm(stat) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(302, int, modfnext,
@@ -1595,7 +1595,7 @@ SYS_STUB(303, int, modfind,
     /* _callargs */ ((__cheri_fromcap const char * )name),
     /* _callargs_chk */ (&ret, stub_errno, name),
     /* _callargs_err */ (&errno, (const char * )name),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(304, int, kldload,
@@ -1605,7 +1605,7 @@ SYS_STUB(304, int, kldload,
     /* _callargs */ ((__cheri_fromcap const char * )file),
     /* _callargs_chk */ (&ret, stub_errno, file),
     /* _callargs_err */ (&errno, (const char * )file),
-    /* _localcheck */ {if (!(cheri_getperm(file) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(file) && !(cheri_getperm(file) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(305, int, kldunload,
@@ -1625,7 +1625,7 @@ SYS_STUB(306, int, kldfind,
     /* _callargs */ ((__cheri_fromcap const char * )file),
     /* _callargs_chk */ (&ret, stub_errno, file),
     /* _callargs_err */ (&errno, (const char * )file),
-    /* _localcheck */ {if (!(cheri_getperm(file) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(file) && !(cheri_getperm(file) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(307, int, kldnext,
@@ -1645,7 +1645,7 @@ SYS_STUB_ARGHASPTRS(308, int, kldstat,
     /* _callargs */ (fileid, (__cheri_fromcap struct kld_file_stat* )stat),
     /* _callargs_chk */ (&ret, stub_errno, fileid, stat),
     /* _callargs_err */ (&errno, fileid, (struct kld_file_stat* )stat),
-    /* _localcheck */ {if (!(cheri_getperm(stat) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(stat) && !(cheri_getperm(stat) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(309, int, kldfirstmod,
@@ -1695,7 +1695,7 @@ SYS_STUB_ARGHASPTRS(314, int, aio_return,
     /* _callargs */ ((__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp),
     /* _callargs_err */ (&errno, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(315, int, aio_suspend,
@@ -1705,7 +1705,7 @@ SYS_STUB_ARGHASPTRS(315, int, aio_suspend,
     /* _callargs */ ((__cheri_fromcap struct aiocb*  const * __capability)aiocbp, nent, (__cheri_fromcap const struct timespec * )timeout),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp, nent, timeout),
     /* _callargs_err */ (&errno, (struct aiocb*  const * __capability)aiocbp, nent, (const struct timespec * )timeout),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(timeout) && !(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(316, int, aio_cancel,
@@ -1715,7 +1715,7 @@ SYS_STUB_ARGHASPTRS(316, int, aio_cancel,
     /* _callargs */ (fd, (__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, fd, aiocbp),
     /* _callargs_err */ (&errno, fd, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(317, int, aio_error,
@@ -1725,7 +1725,7 @@ SYS_STUB_ARGHASPTRS(317, int, aio_error,
     /* _callargs */ ((__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp),
     /* _callargs_err */ (&errno, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(324, int, mlockall,
@@ -1755,7 +1755,7 @@ SYS_STUB(326, int, __getcwd,
     /* _callargs */ ((__cheri_fromcap char * )buf, buflen),
     /* _callargs_chk */ (&ret, stub_errno, buf, buflen),
     /* _callargs_err */ (&errno, (char * )buf, buflen),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(327, int, sched_setparam,
@@ -1765,7 +1765,7 @@ SYS_STUB(327, int, sched_setparam,
     /* _callargs */ (pid, (__cheri_fromcap const struct sched_param * )param),
     /* _callargs_chk */ (&ret, stub_errno, pid, param),
     /* _callargs_err */ (&errno, pid, (const struct sched_param * )param),
-    /* _localcheck */ {if (!(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(param) && !(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(328, int, sched_getparam,
@@ -1775,7 +1775,7 @@ SYS_STUB(328, int, sched_getparam,
     /* _callargs */ (pid, (__cheri_fromcap struct sched_param * )param),
     /* _callargs_chk */ (&ret, stub_errno, pid, param),
     /* _callargs_err */ (&errno, pid, (struct sched_param * )param),
-    /* _localcheck */ {if (!(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(param) && !(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(329, int, sched_setscheduler,
@@ -1785,7 +1785,7 @@ SYS_STUB(329, int, sched_setscheduler,
     /* _callargs */ (pid, policy, (__cheri_fromcap const struct sched_param * )param),
     /* _callargs_chk */ (&ret, stub_errno, pid, policy, param),
     /* _callargs_err */ (&errno, pid, policy, (const struct sched_param * )param),
-    /* _localcheck */ {if (!(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(param) && !(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(330, int, sched_getscheduler,
@@ -1835,7 +1835,7 @@ SYS_STUB(334, int, sched_rr_get_interval,
     /* _callargs */ (pid, (__cheri_fromcap struct timespec * )interval),
     /* _callargs_chk */ (&ret, stub_errno, pid, interval),
     /* _callargs_err */ (&errno, pid, (struct timespec * )interval),
-    /* _localcheck */ {if (!(cheri_getperm(interval) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(interval) && !(cheri_getperm(interval) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(335, int, utrace,
@@ -1845,7 +1845,7 @@ SYS_STUB(335, int, utrace,
     /* _callargs */ ((__cheri_fromcap const void * )addr, len),
     /* _callargs_chk */ (&ret, stub_errno, addr, len),
     /* _callargs_err */ (&errno, (const void * )addr, len),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(337, int, kldsym,
@@ -1855,7 +1855,7 @@ SYS_STUB_ARGHASPTRS(337, int, kldsym,
     /* _callargs */ (fileid, cmd, (__cheri_fromcap struct kld_sym_lookup* )data),
     /* _callargs_chk */ (&ret, stub_errno, fileid, cmd, data),
     /* _callargs_err */ (&errno, fileid, cmd, (struct kld_sym_lookup* )data),
-    /* _localcheck */ {if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(338, int, jail,
@@ -1865,7 +1865,7 @@ SYS_STUB_ARGHASPTRS(338, int, jail,
     /* _callargs */ ((__cheri_fromcap struct jail* )jailp),
     /* _callargs_chk */ (&ret, stub_errno, jailp),
     /* _callargs_err */ (&errno, (struct jail* )jailp),
-    /* _localcheck */ {if (!(cheri_getperm(jailp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(jailp) && !(cheri_getperm(jailp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(340, int, sigprocmask,
@@ -1875,7 +1875,7 @@ SYS_STUB(340, int, sigprocmask,
     /* _callargs */ (how, (__cheri_fromcap const sigset_t * )set, (__cheri_fromcap sigset_t * )oset),
     /* _callargs_chk */ (&ret, stub_errno, how, set, oset),
     /* _callargs_err */ (&errno, how, (const sigset_t * )set, (sigset_t * )oset),
-    /* _localcheck */ {if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oset) && !(cheri_getperm(oset) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(341, int, sigsuspend,
@@ -1885,7 +1885,7 @@ SYS_STUB(341, int, sigsuspend,
     /* _callargs */ ((__cheri_fromcap const sigset_t * )sigmask),
     /* _callargs_chk */ (&ret, stub_errno, sigmask),
     /* _callargs_err */ (&errno, (const sigset_t * )sigmask),
-    /* _localcheck */ {if (!(cheri_getperm(sigmask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(sigmask) && !(cheri_getperm(sigmask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(343, int, sigpending,
@@ -1895,7 +1895,7 @@ SYS_STUB(343, int, sigpending,
     /* _callargs */ ((__cheri_fromcap sigset_t * )set),
     /* _callargs_chk */ (&ret, stub_errno, set),
     /* _callargs_err */ (&errno, (sigset_t * )set),
-    /* _localcheck */ {if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(345, int, sigtimedwait,
@@ -1905,7 +1905,7 @@ SYS_STUB_ARGHASPTRS(345, int, sigtimedwait,
     /* _callargs */ ((__cheri_fromcap const sigset_t * )set, (__cheri_fromcap struct siginfo* )info, (__cheri_fromcap const struct timespec * )timeout),
     /* _callargs_chk */ (&ret, stub_errno, set, info, timeout),
     /* _callargs_err */ (&errno, (const sigset_t * )set, (struct siginfo* )info, (const struct timespec * )timeout),
-    /* _localcheck */ {if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(info) && !(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(timeout) && !(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(346, int, sigwaitinfo,
@@ -1915,7 +1915,7 @@ SYS_STUB_ARGHASPTRS(346, int, sigwaitinfo,
     /* _callargs */ ((__cheri_fromcap const sigset_t * )set, (__cheri_fromcap struct siginfo* )info),
     /* _callargs_chk */ (&ret, stub_errno, set, info),
     /* _callargs_err */ (&errno, (const sigset_t * )set, (struct siginfo* )info),
-    /* _localcheck */ {if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(info) && !(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(347, int, __acl_get_file,
@@ -1925,7 +1925,7 @@ SYS_STUB(347, int, __acl_get_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(348, int, __acl_set_file,
@@ -1935,7 +1935,7 @@ SYS_STUB(348, int, __acl_set_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(349, int, __acl_get_fd,
@@ -1945,7 +1945,7 @@ SYS_STUB(349, int, __acl_get_fd,
     /* _callargs */ (filedes, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, filedes, type, aclp),
     /* _callargs_err */ (&errno, filedes, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(350, int, __acl_set_fd,
@@ -1955,7 +1955,7 @@ SYS_STUB(350, int, __acl_set_fd,
     /* _callargs */ (filedes, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, filedes, type, aclp),
     /* _callargs_err */ (&errno, filedes, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(351, int, __acl_delete_file,
@@ -1965,7 +1965,7 @@ SYS_STUB(351, int, __acl_delete_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, type),
     /* _callargs_chk */ (&ret, stub_errno, path, type),
     /* _callargs_err */ (&errno, (const char * )path, type),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(352, int, __acl_delete_fd,
@@ -1985,7 +1985,7 @@ SYS_STUB(353, int, __acl_aclcheck_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(354, int, __acl_aclcheck_fd,
@@ -1995,7 +1995,7 @@ SYS_STUB(354, int, __acl_aclcheck_fd,
     /* _callargs */ (filedes, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, filedes, type, aclp),
     /* _callargs_err */ (&errno, filedes, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(355, int, extattrctl,
@@ -2005,7 +2005,7 @@ SYS_STUB(355, int, extattrctl,
     /* _callargs */ ((__cheri_fromcap const char * )path, cmd, (__cheri_fromcap const char * )filename, attrnamespace, (__cheri_fromcap const char * )attrname),
     /* _callargs_chk */ (&ret, stub_errno, path, cmd, filename, attrnamespace, attrname),
     /* _callargs_err */ (&errno, (const char * )path, cmd, (const char * )filename, attrnamespace, (const char * )attrname),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(filename) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(filename) && !(cheri_getperm(filename) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(356, ssize_t, extattr_set_file,
@@ -2015,7 +2015,7 @@ SYS_STUB(356, ssize_t, extattr_set_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(357, ssize_t, extattr_get_file,
@@ -2025,7 +2025,7 @@ SYS_STUB(357, ssize_t, extattr_get_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(358, int, extattr_delete_file,
@@ -2035,7 +2035,7 @@ SYS_STUB(358, int, extattr_delete_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(359, int, aio_waitcomplete,
@@ -2045,7 +2045,7 @@ SYS_STUB_ARGHASPTRS(359, int, aio_waitcomplete,
     /* _callargs */ ((__cheri_fromcap struct aiocb*  * __capability)aiocbp, (__cheri_fromcap struct timespec * )timeout),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp, timeout),
     /* _callargs_err */ (&errno, (struct aiocb*  * __capability)aiocbp, (struct timespec * )timeout),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(timeout) && !(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(360, int, getresuid,
@@ -2055,7 +2055,7 @@ SYS_STUB(360, int, getresuid,
     /* _callargs */ ((__cheri_fromcap uid_t * )ruid, (__cheri_fromcap uid_t * )euid, (__cheri_fromcap uid_t * )suid),
     /* _callargs_chk */ (&ret, stub_errno, ruid, euid, suid),
     /* _callargs_err */ (&errno, (uid_t * )ruid, (uid_t * )euid, (uid_t * )suid),
-    /* _localcheck */ {if (!(cheri_getperm(ruid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(euid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(suid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ruid) && !(cheri_getperm(ruid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(euid) && !(cheri_getperm(euid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(suid) && !(cheri_getperm(suid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(361, int, getresgid,
@@ -2065,7 +2065,7 @@ SYS_STUB(361, int, getresgid,
     /* _callargs */ ((__cheri_fromcap gid_t * )rgid, (__cheri_fromcap gid_t * )egid, (__cheri_fromcap gid_t * )sgid),
     /* _callargs_chk */ (&ret, stub_errno, rgid, egid, sgid),
     /* _callargs_err */ (&errno, (gid_t * )rgid, (gid_t * )egid, (gid_t * )sgid),
-    /* _localcheck */ {if (!(cheri_getperm(rgid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(egid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sgid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rgid) && !(cheri_getperm(rgid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(egid) && !(cheri_getperm(egid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sgid) && !(cheri_getperm(sgid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(362, int, kqueue,
@@ -2085,7 +2085,7 @@ SYS_STUB(371, ssize_t, extattr_set_fd,
     /* _callargs */ (fd, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, fd, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, fd, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(372, ssize_t, extattr_get_fd,
@@ -2095,7 +2095,7 @@ SYS_STUB(372, ssize_t, extattr_get_fd,
     /* _callargs */ (fd, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, fd, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, fd, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(373, int, extattr_delete_fd,
@@ -2105,7 +2105,7 @@ SYS_STUB(373, int, extattr_delete_fd,
     /* _callargs */ (fd, attrnamespace, (__cheri_fromcap const char * )attrname),
     /* _callargs_chk */ (&ret, stub_errno, fd, attrnamespace, attrname),
     /* _callargs_err */ (&errno, fd, attrnamespace, (const char * )attrname),
-    /* _localcheck */ {if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(374, int, __setugid,
@@ -2125,7 +2125,7 @@ SYS_STUB(376, int, eaccess,
     /* _callargs */ ((__cheri_fromcap char * )path, amode),
     /* _callargs_chk */ (&ret, stub_errno, path, amode),
     /* _callargs_err */ (&errno, (char * )path, amode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(378, int, nmount,
@@ -2135,7 +2135,7 @@ SYS_STUB_ARGHASPTRS(378, int, nmount,
     /* _callargs */ ((__cheri_fromcap struct iovec* )iovp, iovcnt, flags),
     /* _callargs_chk */ (&ret, stub_errno, iovp, iovcnt, flags),
     /* _callargs_err */ (&errno, (struct iovec* )iovp, iovcnt, flags),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(384, int, __mac_get_proc,
@@ -2145,7 +2145,7 @@ SYS_STUB_ARGHASPTRS(384, int, __mac_get_proc,
     /* _callargs */ ((__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, mac_p),
     /* _callargs_err */ (&errno, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(385, int, __mac_set_proc,
@@ -2155,7 +2155,7 @@ SYS_STUB_ARGHASPTRS(385, int, __mac_set_proc,
     /* _callargs */ ((__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, mac_p),
     /* _callargs_err */ (&errno, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(386, int, __mac_get_fd,
@@ -2165,7 +2165,7 @@ SYS_STUB_ARGHASPTRS(386, int, __mac_get_fd,
     /* _callargs */ (fd, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, fd, mac_p),
     /* _callargs_err */ (&errno, fd, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(387, int, __mac_get_file,
@@ -2175,7 +2175,7 @@ SYS_STUB_ARGHASPTRS(387, int, __mac_get_file,
     /* _callargs */ ((__cheri_fromcap const char * )path_p, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, path_p, mac_p),
     /* _callargs_err */ (&errno, (const char * )path_p, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path_p) && !(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(388, int, __mac_set_fd,
@@ -2185,7 +2185,7 @@ SYS_STUB_ARGHASPTRS(388, int, __mac_set_fd,
     /* _callargs */ (fd, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, fd, mac_p),
     /* _callargs_err */ (&errno, fd, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(389, int, __mac_set_file,
@@ -2195,7 +2195,7 @@ SYS_STUB_ARGHASPTRS(389, int, __mac_set_file,
     /* _callargs */ ((__cheri_fromcap const char * )path_p, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, path_p, mac_p),
     /* _callargs_err */ (&errno, (const char * )path_p, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path_p) && !(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(390, int, kenv,
@@ -2205,7 +2205,7 @@ SYS_STUB(390, int, kenv,
     /* _callargs */ (what, (__cheri_fromcap const char * )name, (__cheri_fromcap char * )value, len),
     /* _callargs_chk */ (&ret, stub_errno, what, name, value, len),
     /* _callargs_err */ (&errno, what, (const char * )name, (char * )value, len),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(value) && !(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(391, int, lchflags,
@@ -2215,7 +2215,7 @@ SYS_STUB(391, int, lchflags,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags),
     /* _callargs_chk */ (&ret, stub_errno, path, flags),
     /* _callargs_err */ (&errno, (const char * )path, flags),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(392, int, uuidgen,
@@ -2225,7 +2225,7 @@ SYS_STUB(392, int, uuidgen,
     /* _callargs */ ((__cheri_fromcap struct uuid * )store, count),
     /* _callargs_chk */ (&ret, stub_errno, store, count),
     /* _callargs_err */ (&errno, (struct uuid * )store, count),
-    /* _localcheck */ {if (!(cheri_getperm(store) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(store) && !(cheri_getperm(store) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(393, int, sendfile,
@@ -2235,7 +2235,7 @@ SYS_STUB_ARGHASPTRS(393, int, sendfile,
     /* _callargs */ (fd, s, offset, nbytes, (__cheri_fromcap struct sf_hdtr* )hdtr, (__cheri_fromcap off_t * )sbytes, flags),
     /* _callargs_chk */ (&ret, stub_errno, fd, s, offset, nbytes, hdtr, sbytes, flags),
     /* _callargs_err */ (&errno, fd, s, offset, nbytes, (struct sf_hdtr* )hdtr, (off_t * )sbytes, flags),
-    /* _localcheck */ {if (!(cheri_getperm(hdtr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sbytes) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(hdtr) && !(cheri_getperm(hdtr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sbytes) && !(cheri_getperm(sbytes) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(394, int, mac_syscall,
@@ -2245,7 +2245,7 @@ SYS_STUB(394, int, mac_syscall,
     /* _callargs */ ((__cheri_fromcap const char * )policy, call, (__cheri_fromcap void * )arg),
     /* _callargs_chk */ (&ret, stub_errno, policy, call, arg),
     /* _callargs_err */ (&errno, (const char * )policy, call, (void * )arg),
-    /* _localcheck */ {if (!(cheri_getperm(policy) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(policy) && !(cheri_getperm(policy) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(arg) && !(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(409, int, __mac_get_pid,
@@ -2255,7 +2255,7 @@ SYS_STUB_ARGHASPTRS(409, int, __mac_get_pid,
     /* _callargs */ (pid, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, pid, mac_p),
     /* _callargs_err */ (&errno, pid, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(410, int, __mac_get_link,
@@ -2265,7 +2265,7 @@ SYS_STUB_ARGHASPTRS(410, int, __mac_get_link,
     /* _callargs */ ((__cheri_fromcap const char * )path_p, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, path_p, mac_p),
     /* _callargs_err */ (&errno, (const char * )path_p, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path_p) && !(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(411, int, __mac_set_link,
@@ -2275,7 +2275,7 @@ SYS_STUB_ARGHASPTRS(411, int, __mac_set_link,
     /* _callargs */ ((__cheri_fromcap const char * )path_p, (__cheri_fromcap struct mac* )mac_p),
     /* _callargs_chk */ (&ret, stub_errno, path_p, mac_p),
     /* _callargs_err */ (&errno, (const char * )path_p, (struct mac* )mac_p),
-    /* _localcheck */ {if (!(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path_p) && !(cheri_getperm(path_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(mac_p) && !(cheri_getperm(mac_p) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(412, ssize_t, extattr_set_link,
@@ -2285,7 +2285,7 @@ SYS_STUB(412, ssize_t, extattr_set_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(413, ssize_t, extattr_get_link,
@@ -2295,7 +2295,7 @@ SYS_STUB(413, ssize_t, extattr_get_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(414, int, extattr_delete_link,
@@ -2305,7 +2305,7 @@ SYS_STUB(414, int, extattr_delete_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap const char * )attrname),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, attrname),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (const char * )attrname),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(attrname) && !(cheri_getperm(attrname) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(416, int, sigaction,
@@ -2315,7 +2315,7 @@ SYS_STUB_ARGHASPTRS(416, int, sigaction,
     /* _callargs */ (sig, (__cheri_fromcap struct sigaction* )act, (__cheri_fromcap struct sigaction* )oact),
     /* _callargs_chk */ (&ret, stub_errno, sig, act, oact),
     /* _callargs_err */ (&errno, sig, (struct sigaction* )act, (struct sigaction* )oact),
-    /* _localcheck */ {if (!(cheri_getperm(act) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oact) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(act) && !(cheri_getperm(act) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oact) && !(cheri_getperm(oact) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(417, int, sigreturn,
@@ -2325,7 +2325,7 @@ SYS_STUB_ARGHASPTRS(417, int, sigreturn,
     /* _callargs */ ((__cheri_fromcap const ucontext_t * )sigcntxp),
     /* _callargs_chk */ (&ret, stub_errno, sigcntxp),
     /* _callargs_err */ (&errno, (const ucontext_t * )sigcntxp),
-    /* _localcheck */ {if (!(cheri_getperm(sigcntxp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(sigcntxp) && !(cheri_getperm(sigcntxp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(421, int, getcontext,
@@ -2335,7 +2335,7 @@ SYS_STUB_ARGHASPTRS(421, int, getcontext,
     /* _callargs */ ((__cheri_fromcap ucontext_t * )ucp),
     /* _callargs_chk */ (&ret, stub_errno, ucp),
     /* _callargs_err */ (&errno, (ucontext_t * )ucp),
-    /* _localcheck */ {if (!(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ucp) && !(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(422, int, setcontext,
@@ -2345,7 +2345,7 @@ SYS_STUB_ARGHASPTRS(422, int, setcontext,
     /* _callargs */ ((__cheri_fromcap const ucontext_t * )ucp),
     /* _callargs_chk */ (&ret, stub_errno, ucp),
     /* _callargs_err */ (&errno, (const ucontext_t * )ucp),
-    /* _localcheck */ {if (!(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ucp) && !(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(423, int, swapcontext,
@@ -2355,7 +2355,7 @@ SYS_STUB_ARGHASPTRS(423, int, swapcontext,
     /* _callargs */ ((__cheri_fromcap ucontext_t * )oucp, (__cheri_fromcap const ucontext_t * )ucp),
     /* _callargs_chk */ (&ret, stub_errno, oucp, ucp),
     /* _callargs_err */ (&errno, (ucontext_t * )oucp, (const ucontext_t * )ucp),
-    /* _localcheck */ {if (!(cheri_getperm(oucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(oucp) && !(cheri_getperm(oucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ucp) && !(cheri_getperm(ucp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(424, int, swapoff,
@@ -2365,7 +2365,7 @@ SYS_STUB(424, int, swapoff,
     /* _callargs */ ((__cheri_fromcap const char * )name),
     /* _callargs_chk */ (&ret, stub_errno, name),
     /* _callargs_err */ (&errno, (const char * )name),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(425, int, __acl_get_link,
@@ -2375,7 +2375,7 @@ SYS_STUB(425, int, __acl_get_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(426, int, __acl_set_link,
@@ -2385,7 +2385,7 @@ SYS_STUB(426, int, __acl_set_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(427, int, __acl_delete_link,
@@ -2395,7 +2395,7 @@ SYS_STUB(427, int, __acl_delete_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, type),
     /* _callargs_chk */ (&ret, stub_errno, path, type),
     /* _callargs_err */ (&errno, (const char * )path, type),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(428, int, __acl_aclcheck_link,
@@ -2405,7 +2405,7 @@ SYS_STUB(428, int, __acl_aclcheck_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, type, (__cheri_fromcap struct acl * )aclp),
     /* _callargs_chk */ (&ret, stub_errno, path, type, aclp),
     /* _callargs_err */ (&errno, (const char * )path, type, (struct acl * )aclp),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(aclp) && !(cheri_getperm(aclp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(429, int, sigwait,
@@ -2415,7 +2415,7 @@ SYS_STUB(429, int, sigwait,
     /* _callargs */ ((__cheri_fromcap const sigset_t * )set, (__cheri_fromcap int * )sig),
     /* _callargs_chk */ (&ret, stub_errno, set, sig),
     /* _callargs_err */ (&errno, (const sigset_t * )set, (int * )sig),
-    /* _localcheck */ {if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sig) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sig) && !(cheri_getperm(sig) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(430, int, thr_create,
@@ -2425,7 +2425,7 @@ SYS_STUB_ARGHASPTRS(430, int, thr_create,
     /* _callargs */ ((__cheri_fromcap ucontext_t * )ctx, (__cheri_fromcap long * )id, flags),
     /* _callargs_chk */ (&ret, stub_errno, ctx, id, flags),
     /* _callargs_err */ (&errno, (ucontext_t * )ctx, (long * )id, flags),
-    /* _localcheck */ {if (!(cheri_getperm(ctx) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(ctx) && !(cheri_getperm(ctx) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(id) && !(cheri_getperm(id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(432, int, thr_self,
@@ -2435,7 +2435,7 @@ SYS_STUB(432, int, thr_self,
     /* _callargs */ ((__cheri_fromcap long * )id),
     /* _callargs_chk */ (&ret, stub_errno, id),
     /* _callargs_err */ (&errno, (long * )id),
-    /* _localcheck */ {if (!(cheri_getperm(id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(id) && !(cheri_getperm(id) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(433, int, thr_kill,
@@ -2465,7 +2465,7 @@ SYS_STUB(437, ssize_t, extattr_list_fd,
     /* _callargs */ (fd, attrnamespace, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, fd, attrnamespace, data, nbytes),
     /* _callargs_err */ (&errno, fd, attrnamespace, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(438, ssize_t, extattr_list_file,
@@ -2475,7 +2475,7 @@ SYS_STUB(438, ssize_t, extattr_list_file,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(439, ssize_t, extattr_list_link,
@@ -2485,7 +2485,7 @@ SYS_STUB(439, ssize_t, extattr_list_link,
     /* _callargs */ ((__cheri_fromcap const char * )path, attrnamespace, (__cheri_fromcap void * )data, nbytes),
     /* _callargs_chk */ (&ret, stub_errno, path, attrnamespace, data, nbytes),
     /* _callargs_err */ (&errno, (const char * )path, attrnamespace, (void * )data, nbytes),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(442, int, thr_suspend,
@@ -2495,7 +2495,7 @@ SYS_STUB(442, int, thr_suspend,
     /* _callargs */ ((__cheri_fromcap const struct timespec * )timeout),
     /* _callargs_chk */ (&ret, stub_errno, timeout),
     /* _callargs_err */ (&errno, (const struct timespec * )timeout),
-    /* _localcheck */ {if (!(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(timeout) && !(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(443, int, thr_wake,
@@ -2525,7 +2525,7 @@ SYS_STUB(445, int, audit,
     /* _callargs */ ((__cheri_fromcap const void * )record, length),
     /* _callargs_chk */ (&ret, stub_errno, record, length),
     /* _callargs_err */ (&errno, (const void * )record, length),
-    /* _localcheck */ {if (!(cheri_getperm(record) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(record) && !(cheri_getperm(record) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(446, int, auditon,
@@ -2535,7 +2535,7 @@ SYS_STUB(446, int, auditon,
     /* _callargs */ (cmd, (__cheri_fromcap void * )data, length),
     /* _callargs_chk */ (&ret, stub_errno, cmd, data, length),
     /* _callargs_err */ (&errno, cmd, (void * )data, length),
-    /* _localcheck */ {if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(447, int, getauid,
@@ -2545,7 +2545,7 @@ SYS_STUB(447, int, getauid,
     /* _callargs */ ((__cheri_fromcap uid_t * )auid),
     /* _callargs_chk */ (&ret, stub_errno, auid),
     /* _callargs_err */ (&errno, (uid_t * )auid),
-    /* _localcheck */ {if (!(cheri_getperm(auid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auid) && !(cheri_getperm(auid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(448, int, setauid,
@@ -2555,7 +2555,7 @@ SYS_STUB(448, int, setauid,
     /* _callargs */ ((__cheri_fromcap uid_t * )auid),
     /* _callargs_chk */ (&ret, stub_errno, auid),
     /* _callargs_err */ (&errno, (uid_t * )auid),
-    /* _localcheck */ {if (!(cheri_getperm(auid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auid) && !(cheri_getperm(auid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(449, int, getaudit,
@@ -2565,7 +2565,7 @@ SYS_STUB(449, int, getaudit,
     /* _callargs */ ((__cheri_fromcap struct auditinfo * )auditinfo),
     /* _callargs_chk */ (&ret, stub_errno, auditinfo),
     /* _callargs_err */ (&errno, (struct auditinfo * )auditinfo),
-    /* _localcheck */ {if (!(cheri_getperm(auditinfo) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auditinfo) && !(cheri_getperm(auditinfo) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(450, int, setaudit,
@@ -2575,7 +2575,7 @@ SYS_STUB(450, int, setaudit,
     /* _callargs */ ((__cheri_fromcap struct auditinfo * )auditinfo),
     /* _callargs_chk */ (&ret, stub_errno, auditinfo),
     /* _callargs_err */ (&errno, (struct auditinfo * )auditinfo),
-    /* _localcheck */ {if (!(cheri_getperm(auditinfo) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auditinfo) && !(cheri_getperm(auditinfo) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(451, int, getaudit_addr,
@@ -2585,7 +2585,7 @@ SYS_STUB(451, int, getaudit_addr,
     /* _callargs */ ((__cheri_fromcap struct auditinfo_addr * )auditinfo_addr, length),
     /* _callargs_chk */ (&ret, stub_errno, auditinfo_addr, length),
     /* _callargs_err */ (&errno, (struct auditinfo_addr * )auditinfo_addr, length),
-    /* _localcheck */ {if (!(cheri_getperm(auditinfo_addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auditinfo_addr) && !(cheri_getperm(auditinfo_addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(452, int, setaudit_addr,
@@ -2595,7 +2595,7 @@ SYS_STUB(452, int, setaudit_addr,
     /* _callargs */ ((__cheri_fromcap struct auditinfo_addr * )auditinfo_addr, length),
     /* _callargs_chk */ (&ret, stub_errno, auditinfo_addr, length),
     /* _callargs_err */ (&errno, (struct auditinfo_addr * )auditinfo_addr, length),
-    /* _localcheck */ {if (!(cheri_getperm(auditinfo_addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(auditinfo_addr) && !(cheri_getperm(auditinfo_addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(453, int, auditctl,
@@ -2605,7 +2605,7 @@ SYS_STUB(453, int, auditctl,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(454, int, _umtx_op,
@@ -2615,7 +2615,7 @@ SYS_STUB(454, int, _umtx_op,
     /* _callargs */ ((__cheri_fromcap void * )obj, op, val, (__cheri_fromcap void * )uaddr1, (__cheri_fromcap void * )uaddr2),
     /* _callargs_chk */ (&ret, stub_errno, obj, op, val, uaddr1, uaddr2),
     /* _callargs_err */ (&errno, (void * )obj, op, val, (void * )uaddr1, (void * )uaddr2),
-    /* _localcheck */ {if (!(cheri_getperm(obj) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(uaddr1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(uaddr2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(obj) && !(cheri_getperm(obj) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(uaddr1) && !(cheri_getperm(uaddr1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(uaddr2) && !(cheri_getperm(uaddr2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(455, int, thr_new,
@@ -2625,7 +2625,7 @@ SYS_STUB_ARGHASPTRS(455, int, thr_new,
     /* _callargs */ ((__cheri_fromcap struct thr_param* )param, param_size),
     /* _callargs_chk */ (&ret, stub_errno, param, param_size),
     /* _callargs_err */ (&errno, (struct thr_param* )param, param_size),
-    /* _localcheck */ {if (!(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(param) && !(cheri_getperm(param) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(456, int, sigqueue,
@@ -2635,7 +2635,7 @@ SYS_STUB(456, int, sigqueue,
     /* _callargs */ (pid, signum, (__cheri_fromcap void * )value),
     /* _callargs_chk */ (&ret, stub_errno, pid, signum, value),
     /* _callargs_err */ (&errno, pid, signum, (void * )value),
-    /* _localcheck */ {if (!(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(value) && !(cheri_getperm(value) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(457, int, kmq_open,
@@ -2645,7 +2645,7 @@ SYS_STUB(457, int, kmq_open,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags, mode, (__cheri_fromcap const struct mq_attr * )attr),
     /* _callargs_chk */ (&ret, stub_errno, path, flags, mode, attr),
     /* _callargs_err */ (&errno, (const char * )path, flags, mode, (const struct mq_attr * )attr),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(attr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(attr) && !(cheri_getperm(attr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(458, int, kmq_setattr,
@@ -2655,7 +2655,7 @@ SYS_STUB(458, int, kmq_setattr,
     /* _callargs */ (mqd, (__cheri_fromcap const struct mq_attr * )attr, (__cheri_fromcap struct mq_attr * )oattr),
     /* _callargs_chk */ (&ret, stub_errno, mqd, attr, oattr),
     /* _callargs_err */ (&errno, mqd, (const struct mq_attr * )attr, (struct mq_attr * )oattr),
-    /* _localcheck */ {if (!(cheri_getperm(attr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(oattr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(attr) && !(cheri_getperm(attr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(oattr) && !(cheri_getperm(oattr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(459, int, kmq_timedreceive,
@@ -2665,7 +2665,7 @@ SYS_STUB(459, int, kmq_timedreceive,
     /* _callargs */ (mqd, (__cheri_fromcap char * )msg_ptr, msg_len, (__cheri_fromcap unsigned * )msg_prio, (__cheri_fromcap const struct timespec * )abs_timeout),
     /* _callargs_chk */ (&ret, stub_errno, mqd, msg_ptr, msg_len, msg_prio, abs_timeout),
     /* _callargs_err */ (&errno, mqd, (char * )msg_ptr, msg_len, (unsigned * )msg_prio, (const struct timespec * )abs_timeout),
-    /* _localcheck */ {if (!(cheri_getperm(msg_ptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(msg_prio) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(abs_timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msg_ptr) && !(cheri_getperm(msg_ptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(msg_prio) && !(cheri_getperm(msg_prio) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(abs_timeout) && !(cheri_getperm(abs_timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(460, int, kmq_timedsend,
@@ -2675,7 +2675,7 @@ SYS_STUB(460, int, kmq_timedsend,
     /* _callargs */ (mqd, (__cheri_fromcap const char * )msg_ptr, msg_len, msg_prio, (__cheri_fromcap const struct timespec * )abs_timeout),
     /* _callargs_chk */ (&ret, stub_errno, mqd, msg_ptr, msg_len, msg_prio, abs_timeout),
     /* _callargs_err */ (&errno, mqd, (const char * )msg_ptr, msg_len, msg_prio, (const struct timespec * )abs_timeout),
-    /* _localcheck */ {if (!(cheri_getperm(msg_ptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(abs_timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(msg_ptr) && !(cheri_getperm(msg_ptr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(abs_timeout) && !(cheri_getperm(abs_timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(461, int, kmq_notify,
@@ -2685,7 +2685,7 @@ SYS_STUB_ARGHASPTRS(461, int, kmq_notify,
     /* _callargs */ (mqd, (__cheri_fromcap const struct sigevent* )sigev),
     /* _callargs_chk */ (&ret, stub_errno, mqd, sigev),
     /* _callargs_err */ (&errno, mqd, (const struct sigevent* )sigev),
-    /* _localcheck */ {if (!(cheri_getperm(sigev) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(sigev) && !(cheri_getperm(sigev) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(462, int, kmq_unlink,
@@ -2695,7 +2695,7 @@ SYS_STUB(462, int, kmq_unlink,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(464, int, thr_set_name,
@@ -2705,7 +2705,7 @@ SYS_STUB(464, int, thr_set_name,
     /* _callargs */ (id, (__cheri_fromcap const char * )name),
     /* _callargs_chk */ (&ret, stub_errno, id, name),
     /* _callargs_err */ (&errno, id, (const char * )name),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(465, int, aio_fsync,
@@ -2715,7 +2715,7 @@ SYS_STUB_ARGHASPTRS(465, int, aio_fsync,
     /* _callargs */ (op, (__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, op, aiocbp),
     /* _callargs_err */ (&errno, op, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(466, int, rtprio_thread,
@@ -2725,7 +2725,7 @@ SYS_STUB(466, int, rtprio_thread,
     /* _callargs */ (function, lwpid, (__cheri_fromcap struct rtprio * )rtp),
     /* _callargs_chk */ (&ret, stub_errno, function, lwpid, rtp),
     /* _callargs_err */ (&errno, function, lwpid, (struct rtprio * )rtp),
-    /* _localcheck */ {if (!(cheri_getperm(rtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rtp) && !(cheri_getperm(rtp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(471, int, sctp_peeloff,
@@ -2745,7 +2745,7 @@ SYS_STUB(475, ssize_t, pread,
     /* _callargs */ (fd, (__cheri_fromcap void * )buf, nbyte, offset),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf, nbyte, offset),
     /* _callargs_err */ (&errno, fd, (void * )buf, nbyte, offset),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(476, ssize_t, pwrite,
@@ -2755,7 +2755,7 @@ SYS_STUB(476, ssize_t, pwrite,
     /* _callargs */ (fd, (__cheri_fromcap const void * )buf, nbyte, offset),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf, nbyte, offset),
     /* _callargs_err */ (&errno, fd, (const void * )buf, nbyte, offset),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(477, void*, mmap,
@@ -2765,7 +2765,7 @@ SYS_STUB(477, void*, mmap,
     /* _callargs */ ((__cheri_fromcap void * )addr, len, prot, flags, fd, pos),
     /* _callargs_chk */ (&ret, stub_errno, addr, len, prot, flags, fd, pos),
     /* _callargs_err */ (&errno, (void * )addr, len, prot, flags, fd, pos),
-    /* _localcheck */ {if (!(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((void*)-1);} }
+    /* _localcheck */ {if (cheri_gettag(addr) && !(cheri_getperm(addr) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((void*)-1);} }
 )
 
 SYS_STUB(478, off_t, lseek,
@@ -2785,7 +2785,7 @@ SYS_STUB(479, int, truncate,
     /* _callargs */ ((__cheri_fromcap const char * )path, length),
     /* _callargs_chk */ (&ret, stub_errno, path, length),
     /* _callargs_err */ (&errno, (const char * )path, length),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(480, int, ftruncate,
@@ -2815,7 +2815,7 @@ SYS_STUB(482, int, shm_open,
     /* _callargs */ ((__cheri_fromcap const char * )path, flags, mode),
     /* _callargs_chk */ (&ret, stub_errno, path, flags, mode),
     /* _callargs_err */ (&errno, (const char * )path, flags, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(483, int, shm_unlink,
@@ -2825,7 +2825,7 @@ SYS_STUB(483, int, shm_unlink,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(484, int, cpuset,
@@ -2835,7 +2835,7 @@ SYS_STUB(484, int, cpuset,
     /* _callargs */ ((__cheri_fromcap cpusetid_t * )setid),
     /* _callargs_chk */ (&ret, stub_errno, setid),
     /* _callargs_err */ (&errno, (cpusetid_t * )setid),
-    /* _localcheck */ {if (!(cheri_getperm(setid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(setid) && !(cheri_getperm(setid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(485, int, cpuset_setid,
@@ -2855,7 +2855,7 @@ SYS_STUB(486, int, cpuset_getid,
     /* _callargs */ (level, which, id, (__cheri_fromcap cpusetid_t * )setid),
     /* _callargs_chk */ (&ret, stub_errno, level, which, id, setid),
     /* _callargs_err */ (&errno, level, which, id, (cpusetid_t * )setid),
-    /* _localcheck */ {if (!(cheri_getperm(setid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(setid) && !(cheri_getperm(setid) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(487, int, cpuset_getaffinity,
@@ -2865,7 +2865,7 @@ SYS_STUB(487, int, cpuset_getaffinity,
     /* _callargs */ (level, which, id, cpusetsize, (__cheri_fromcap cpuset_t * )mask),
     /* _callargs_chk */ (&ret, stub_errno, level, which, id, cpusetsize, mask),
     /* _callargs_err */ (&errno, level, which, id, cpusetsize, (cpuset_t * )mask),
-    /* _localcheck */ {if (!(cheri_getperm(mask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mask) && !(cheri_getperm(mask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(488, int, cpuset_setaffinity,
@@ -2875,7 +2875,7 @@ SYS_STUB(488, int, cpuset_setaffinity,
     /* _callargs */ (level, which, id, cpusetsize, (__cheri_fromcap const cpuset_t * )mask),
     /* _callargs_chk */ (&ret, stub_errno, level, which, id, cpusetsize, mask),
     /* _callargs_err */ (&errno, level, which, id, cpusetsize, (const cpuset_t * )mask),
-    /* _localcheck */ {if (!(cheri_getperm(mask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(mask) && !(cheri_getperm(mask) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(489, int, faccessat,
@@ -2885,7 +2885,7 @@ SYS_STUB(489, int, faccessat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, amode, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, amode, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, amode, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(490, int, fchmodat,
@@ -2895,7 +2895,7 @@ SYS_STUB(490, int, fchmodat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, mode, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, mode, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, mode, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(491, int, fchownat,
@@ -2905,7 +2905,7 @@ SYS_STUB(491, int, fchownat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, uid, gid, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, uid, gid, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, uid, gid, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(494, int, futimesat,
@@ -2915,7 +2915,7 @@ SYS_STUB(494, int, futimesat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, (__cheri_fromcap const struct timeval * )times),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, times),
     /* _callargs_err */ (&errno, fd, (const char * )path, (const struct timeval * )times),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(times) && !(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(495, int, linkat,
@@ -2925,7 +2925,7 @@ SYS_STUB(495, int, linkat,
     /* _callargs */ (fd1, (__cheri_fromcap const char * )path1, fd2, (__cheri_fromcap const char * )path2, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd1, path1, fd2, path2, flag),
     /* _callargs_err */ (&errno, fd1, (const char * )path1, fd2, (const char * )path2, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(path2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path1) && !(cheri_getperm(path1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(path2) && !(cheri_getperm(path2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(496, int, mkdirat,
@@ -2935,7 +2935,7 @@ SYS_STUB(496, int, mkdirat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, mode),
     /* _callargs_err */ (&errno, fd, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(497, int, mkfifoat,
@@ -2945,7 +2945,7 @@ SYS_STUB(497, int, mkfifoat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, mode),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, mode),
     /* _callargs_err */ (&errno, fd, (const char * )path, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_VA(499, int, openat, flag,
@@ -2956,7 +2956,7 @@ SYS_STUB_VA(499, int, openat, flag,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, flag, mode),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, flag, mode),
     /* _callargs_err */ (&errno, fd, (const char * )path, flag, mode),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(500, int, readlinkat,
@@ -2966,7 +2966,7 @@ SYS_STUB(500, int, readlinkat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, (__cheri_fromcap char * )buf, bufsize),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, buf, bufsize),
     /* _callargs_err */ (&errno, fd, (const char * )path, (char * )buf, bufsize),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(501, int, renameat,
@@ -2976,7 +2976,7 @@ SYS_STUB(501, int, renameat,
     /* _callargs */ (oldfd, (__cheri_fromcap const char * )old, newfd, (__cheri_fromcap const char * )new),
     /* _callargs_chk */ (&ret, stub_errno, oldfd, old, newfd, new),
     /* _callargs_err */ (&errno, oldfd, (const char * )old, newfd, (const char * )new),
-    /* _localcheck */ {if (!(cheri_getperm(old) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(new) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(old) && !(cheri_getperm(old) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(new) && !(cheri_getperm(new) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(502, int, symlinkat,
@@ -2986,7 +2986,7 @@ SYS_STUB(502, int, symlinkat,
     /* _callargs */ ((__cheri_fromcap const char * )path1, fd, (__cheri_fromcap const char * )path2),
     /* _callargs_chk */ (&ret, stub_errno, path1, fd, path2),
     /* _callargs_err */ (&errno, (const char * )path1, fd, (const char * )path2),
-    /* _localcheck */ {if (!(cheri_getperm(path1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(path2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path1) && !(cheri_getperm(path1) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(path2) && !(cheri_getperm(path2) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(503, int, unlinkat,
@@ -2996,7 +2996,7 @@ SYS_STUB(503, int, unlinkat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(504, int, posix_openpt,
@@ -3016,7 +3016,7 @@ SYS_STUB(505, int, gssd_syscall,
     /* _callargs */ ((__cheri_fromcap const char * )path),
     /* _callargs_chk */ (&ret, stub_errno, path),
     /* _callargs_err */ (&errno, (const char * )path),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(506, int, jail_get,
@@ -3026,7 +3026,7 @@ SYS_STUB_ARGHASPTRS(506, int, jail_get,
     /* _callargs */ ((__cheri_fromcap struct iovec* )iovp, iovcnt, flags),
     /* _callargs_chk */ (&ret, stub_errno, iovp, iovcnt, flags),
     /* _callargs_err */ (&errno, (struct iovec* )iovp, iovcnt, flags),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(507, int, jail_set,
@@ -3036,7 +3036,7 @@ SYS_STUB_ARGHASPTRS(507, int, jail_set,
     /* _callargs */ ((__cheri_fromcap struct iovec* )iovp, iovcnt, flags),
     /* _callargs_chk */ (&ret, stub_errno, iovp, iovcnt, flags),
     /* _callargs_err */ (&errno, (struct iovec* )iovp, iovcnt, flags),
-    /* _localcheck */ {if (!(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(iovp) && !(cheri_getperm(iovp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(508, int, jail_remove,
@@ -3066,7 +3066,7 @@ SYS_STUB_ARGHASPTRS(510, int, __semctl,
     /* _callargs */ (semid, semnum, cmd, (__cheri_fromcap union semun* )arg),
     /* _callargs_chk */ (&ret, stub_errno, semid, semnum, cmd, arg),
     /* _callargs_err */ (&errno, semid, semnum, cmd, (union semun* )arg),
-    /* _localcheck */ {if (!(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(arg) && !(cheri_getperm(arg) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(511, int, msgctl,
@@ -3076,7 +3076,7 @@ SYS_STUB_ARGHASPTRS(511, int, msgctl,
     /* _callargs */ (msqid, cmd, (__cheri_fromcap struct msqid_ds* )buf),
     /* _callargs_chk */ (&ret, stub_errno, msqid, cmd, buf),
     /* _callargs_err */ (&errno, msqid, cmd, (struct msqid_ds* )buf),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(512, int, shmctl,
@@ -3086,7 +3086,7 @@ SYS_STUB(512, int, shmctl,
     /* _callargs */ (shmid, cmd, (__cheri_fromcap struct shmid_ds * )buf),
     /* _callargs_chk */ (&ret, stub_errno, shmid, cmd, buf),
     /* _callargs_err */ (&errno, shmid, cmd, (struct shmid_ds * )buf),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(513, int, lpathconf,
@@ -3096,7 +3096,7 @@ SYS_STUB(513, int, lpathconf,
     /* _callargs */ ((__cheri_fromcap const char * )path, name),
     /* _callargs_chk */ (&ret, stub_errno, path, name),
     /* _callargs_err */ (&errno, (const char * )path, name),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(515, int, __cap_rights_get,
@@ -3106,7 +3106,7 @@ SYS_STUB(515, int, __cap_rights_get,
     /* _callargs */ (version, fd, (__cheri_fromcap cap_rights_t * )rightsp),
     /* _callargs_chk */ (&ret, stub_errno, version, fd, rightsp),
     /* _callargs_err */ (&errno, version, fd, (cap_rights_t * )rightsp),
-    /* _localcheck */ {if (!(cheri_getperm(rightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rightsp) && !(cheri_getperm(rightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(516, int, cap_enter,
@@ -3126,7 +3126,7 @@ SYS_STUB(517, int, cap_getmode,
     /* _callargs */ ((__cheri_fromcap u_int * )modep),
     /* _callargs_chk */ (&ret, stub_errno, modep),
     /* _callargs_err */ (&errno, (u_int * )modep),
-    /* _localcheck */ {if (!(cheri_getperm(modep) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(modep) && !(cheri_getperm(modep) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(518, int, pdfork,
@@ -3136,7 +3136,7 @@ SYS_STUB(518, int, pdfork,
     /* _callargs */ ((__cheri_fromcap int * )fdp, flags),
     /* _callargs_chk */ (&ret, stub_errno, fdp, flags),
     /* _callargs_err */ (&errno, (int * )fdp, flags),
-    /* _localcheck */ {if (!(cheri_getperm(fdp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fdp) && !(cheri_getperm(fdp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(519, int, pdkill,
@@ -3156,7 +3156,7 @@ SYS_STUB(520, int, pdgetpid,
     /* _callargs */ (fd, (__cheri_fromcap pid_t * )pidp),
     /* _callargs_chk */ (&ret, stub_errno, fd, pidp),
     /* _callargs_err */ (&errno, fd, (pid_t * )pidp),
-    /* _localcheck */ {if (!(cheri_getperm(pidp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(pidp) && !(cheri_getperm(pidp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(522, int, pselect,
@@ -3166,7 +3166,7 @@ SYS_STUB(522, int, pselect,
     /* _callargs */ (nd, (__cheri_fromcap fd_set * )in, (__cheri_fromcap fd_set * )ou, (__cheri_fromcap fd_set * )ex, (__cheri_fromcap const struct timespec * )ts, (__cheri_fromcap const sigset_t * )sm),
     /* _callargs_chk */ (&ret, stub_errno, nd, in, ou, ex, ts, sm),
     /* _callargs_err */ (&errno, nd, (fd_set * )in, (fd_set * )ou, (fd_set * )ex, (const struct timespec * )ts, (const sigset_t * )sm),
-    /* _localcheck */ {if (!(cheri_getperm(in) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ou) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ex) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ts) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sm) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(in) && !(cheri_getperm(in) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ou) && !(cheri_getperm(ou) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ex) && !(cheri_getperm(ex) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ts) && !(cheri_getperm(ts) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sm) && !(cheri_getperm(sm) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(523, int, getloginclass,
@@ -3176,7 +3176,7 @@ SYS_STUB(523, int, getloginclass,
     /* _callargs */ ((__cheri_fromcap char * )namebuf, namelen),
     /* _callargs_chk */ (&ret, stub_errno, namebuf, namelen),
     /* _callargs_err */ (&errno, (char * )namebuf, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(namebuf) && !(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(524, int, setloginclass,
@@ -3186,7 +3186,7 @@ SYS_STUB(524, int, setloginclass,
     /* _callargs */ ((__cheri_fromcap const char * )namebuf),
     /* _callargs_chk */ (&ret, stub_errno, namebuf),
     /* _callargs_err */ (&errno, (const char * )namebuf),
-    /* _localcheck */ {if (!(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(namebuf) && !(cheri_getperm(namebuf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(525, int, rctl_get_racct,
@@ -3196,7 +3196,7 @@ SYS_STUB(525, int, rctl_get_racct,
     /* _callargs */ ((__cheri_fromcap const void * )inbufp, inbuflen, (__cheri_fromcap void * )outbufp, outbuflen),
     /* _callargs_chk */ (&ret, stub_errno, inbufp, inbuflen, outbufp, outbuflen),
     /* _callargs_err */ (&errno, (const void * )inbufp, inbuflen, (void * )outbufp, outbuflen),
-    /* _localcheck */ {if (!(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(inbufp) && !(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(outbufp) && !(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(526, int, rctl_get_rules,
@@ -3206,7 +3206,7 @@ SYS_STUB(526, int, rctl_get_rules,
     /* _callargs */ ((__cheri_fromcap const void * )inbufp, inbuflen, (__cheri_fromcap void * )outbufp, outbuflen),
     /* _callargs_chk */ (&ret, stub_errno, inbufp, inbuflen, outbufp, outbuflen),
     /* _callargs_err */ (&errno, (const void * )inbufp, inbuflen, (void * )outbufp, outbuflen),
-    /* _localcheck */ {if (!(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(inbufp) && !(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(outbufp) && !(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(527, int, rctl_get_limits,
@@ -3216,7 +3216,7 @@ SYS_STUB(527, int, rctl_get_limits,
     /* _callargs */ ((__cheri_fromcap const void * )inbufp, inbuflen, (__cheri_fromcap void * )outbufp, outbuflen),
     /* _callargs_chk */ (&ret, stub_errno, inbufp, inbuflen, outbufp, outbuflen),
     /* _callargs_err */ (&errno, (const void * )inbufp, inbuflen, (void * )outbufp, outbuflen),
-    /* _localcheck */ {if (!(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(inbufp) && !(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(outbufp) && !(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(528, int, rctl_add_rule,
@@ -3226,7 +3226,7 @@ SYS_STUB(528, int, rctl_add_rule,
     /* _callargs */ ((__cheri_fromcap const void * )inbufp, inbuflen, (__cheri_fromcap void * )outbufp, outbuflen),
     /* _callargs_chk */ (&ret, stub_errno, inbufp, inbuflen, outbufp, outbuflen),
     /* _callargs_err */ (&errno, (const void * )inbufp, inbuflen, (void * )outbufp, outbuflen),
-    /* _localcheck */ {if (!(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(inbufp) && !(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(outbufp) && !(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(529, int, rctl_remove_rule,
@@ -3236,7 +3236,7 @@ SYS_STUB(529, int, rctl_remove_rule,
     /* _callargs */ ((__cheri_fromcap const void * )inbufp, inbuflen, (__cheri_fromcap void * )outbufp, outbuflen),
     /* _callargs_chk */ (&ret, stub_errno, inbufp, inbuflen, outbufp, outbuflen),
     /* _callargs_err */ (&errno, (const void * )inbufp, inbuflen, (void * )outbufp, outbuflen),
-    /* _localcheck */ {if (!(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(inbufp) && !(cheri_getperm(inbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(outbufp) && !(cheri_getperm(outbufp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(530, int, posix_fallocate,
@@ -3266,7 +3266,7 @@ SYS_STUB_ARGHASPTRS(532, int, wait6,
     /* _callargs */ (idtype, id, (__cheri_fromcap int * )status, options, (__cheri_fromcap struct __wrusage * )wrusage, (__cheri_fromcap struct siginfo* )info),
     /* _callargs_chk */ (&ret, stub_errno, idtype, id, status, options, wrusage, info),
     /* _callargs_err */ (&errno, idtype, id, (int * )status, options, (struct __wrusage * )wrusage, (struct siginfo* )info),
-    /* _localcheck */ {if (!(cheri_getperm(status) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(wrusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(status) && !(cheri_getperm(status) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(wrusage) && !(cheri_getperm(wrusage) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(info) && !(cheri_getperm(info) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(533, int, cap_rights_limit,
@@ -3276,7 +3276,7 @@ SYS_STUB(533, int, cap_rights_limit,
     /* _callargs */ (fd, (__cheri_fromcap cap_rights_t * )rightsp),
     /* _callargs_chk */ (&ret, stub_errno, fd, rightsp),
     /* _callargs_err */ (&errno, fd, (cap_rights_t * )rightsp),
-    /* _localcheck */ {if (!(cheri_getperm(rightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(rightsp) && !(cheri_getperm(rightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(534, int, cap_ioctls_limit,
@@ -3286,7 +3286,7 @@ SYS_STUB(534, int, cap_ioctls_limit,
     /* _callargs */ (fd, (__cheri_fromcap const u_long * )cmds, ncmds),
     /* _callargs_chk */ (&ret, stub_errno, fd, cmds, ncmds),
     /* _callargs_err */ (&errno, fd, (const u_long * )cmds, ncmds),
-    /* _localcheck */ {if (!(cheri_getperm(cmds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(cmds) && !(cheri_getperm(cmds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(535, ssize_t, cap_ioctls_get,
@@ -3296,7 +3296,7 @@ SYS_STUB(535, ssize_t, cap_ioctls_get,
     /* _callargs */ (fd, (__cheri_fromcap u_long * )cmds, maxcmds),
     /* _callargs_chk */ (&ret, stub_errno, fd, cmds, maxcmds),
     /* _callargs_err */ (&errno, fd, (u_long * )cmds, maxcmds),
-    /* _localcheck */ {if (!(cheri_getperm(cmds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(cmds) && !(cheri_getperm(cmds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(536, int, cap_fcntls_limit,
@@ -3316,7 +3316,7 @@ SYS_STUB(537, int, cap_fcntls_get,
     /* _callargs */ (fd, (__cheri_fromcap uint32_t * )fcntlrightsp),
     /* _callargs_chk */ (&ret, stub_errno, fd, fcntlrightsp),
     /* _callargs_err */ (&errno, fd, (uint32_t * )fcntlrightsp),
-    /* _localcheck */ {if (!(cheri_getperm(fcntlrightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fcntlrightsp) && !(cheri_getperm(fcntlrightsp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(538, int, bindat,
@@ -3326,7 +3326,7 @@ SYS_STUB(538, int, bindat,
     /* _callargs */ (fd, s, (__cheri_fromcap const struct sockaddr * )name, namelen),
     /* _callargs_chk */ (&ret, stub_errno, fd, s, name, namelen),
     /* _callargs_err */ (&errno, fd, s, (const struct sockaddr * )name, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(539, int, connectat,
@@ -3336,7 +3336,7 @@ SYS_STUB(539, int, connectat,
     /* _callargs */ (fd, s, (__cheri_fromcap const struct sockaddr * )name, namelen),
     /* _callargs_chk */ (&ret, stub_errno, fd, s, name, namelen),
     /* _callargs_err */ (&errno, fd, s, (const struct sockaddr * )name, namelen),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(540, int, chflagsat,
@@ -3346,7 +3346,7 @@ SYS_STUB(540, int, chflagsat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, flags, atflag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, flags, atflag),
     /* _callargs_err */ (&errno, fd, (const char * )path, flags, atflag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(541, int, accept4,
@@ -3356,7 +3356,7 @@ SYS_STUB(541, int, accept4,
     /* _callargs */ (s, (__cheri_fromcap struct sockaddr * )name, (__cheri_fromcap __socklen_t * )anamelen, flags),
     /* _callargs_chk */ (&ret, stub_errno, s, name, anamelen, flags),
     /* _callargs_err */ (&errno, s, (struct sockaddr * )name, (__socklen_t * )anamelen, flags),
-    /* _localcheck */ {if (!(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(anamelen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(name) && !(cheri_getperm(name) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(anamelen) && !(cheri_getperm(anamelen) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(542, int, pipe2,
@@ -3366,7 +3366,7 @@ SYS_STUB(542, int, pipe2,
     /* _callargs */ ((__cheri_fromcap int * )fildes, flags),
     /* _callargs_chk */ (&ret, stub_errno, fildes, flags),
     /* _callargs_err */ (&errno, (int * )fildes, flags),
-    /* _localcheck */ {if (!(cheri_getperm(fildes) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fildes) && !(cheri_getperm(fildes) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(543, int, aio_mlock,
@@ -3376,7 +3376,7 @@ SYS_STUB_ARGHASPTRS(543, int, aio_mlock,
     /* _callargs */ ((__cheri_fromcap struct aiocb* )aiocbp),
     /* _callargs_chk */ (&ret, stub_errno, aiocbp),
     /* _callargs_err */ (&errno, (struct aiocb* )aiocbp),
-    /* _localcheck */ {if (!(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(aiocbp) && !(cheri_getperm(aiocbp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(544, int, procctl,
@@ -3386,7 +3386,7 @@ SYS_STUB(544, int, procctl,
     /* _callargs */ (idtype, id, com, (__cheri_fromcap void * )data),
     /* _callargs_chk */ (&ret, stub_errno, idtype, id, com, data),
     /* _callargs_err */ (&errno, idtype, id, com, (void * )data),
-    /* _localcheck */ {if (!(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(data) && !(cheri_getperm(data) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(545, int, ppoll,
@@ -3396,7 +3396,7 @@ SYS_STUB(545, int, ppoll,
     /* _callargs */ ((__cheri_fromcap struct pollfd * )fds, nfds, (__cheri_fromcap const struct timespec * )ts, (__cheri_fromcap const sigset_t * )set),
     /* _callargs_chk */ (&ret, stub_errno, fds, nfds, ts, set),
     /* _callargs_err */ (&errno, (struct pollfd * )fds, nfds, (const struct timespec * )ts, (const sigset_t * )set),
-    /* _localcheck */ {if (!(cheri_getperm(fds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(ts) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(fds) && !(cheri_getperm(fds) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(ts) && !(cheri_getperm(ts) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(set) && !(cheri_getperm(set) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(546, int, futimens,
@@ -3406,7 +3406,7 @@ SYS_STUB(546, int, futimens,
     /* _callargs */ (fd, (__cheri_fromcap const struct timespec * )times),
     /* _callargs_chk */ (&ret, stub_errno, fd, times),
     /* _callargs_err */ (&errno, fd, (const struct timespec * )times),
-    /* _localcheck */ {if (!(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(times) && !(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(547, int, utimensat,
@@ -3416,7 +3416,7 @@ SYS_STUB(547, int, utimensat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, (__cheri_fromcap const struct timespec * )times, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, times, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, (const struct timespec * )times, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(times) && !(cheri_getperm(times) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(550, int, fdatasync,
@@ -3436,7 +3436,7 @@ SYS_STUB(551, int, fstat,
     /* _callargs */ (fd, (__cheri_fromcap struct stat * )sb),
     /* _callargs_chk */ (&ret, stub_errno, fd, sb),
     /* _callargs_err */ (&errno, fd, (struct stat * )sb),
-    /* _localcheck */ {if (!(cheri_getperm(sb) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(sb) && !(cheri_getperm(sb) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(552, int, fstatat,
@@ -3446,7 +3446,7 @@ SYS_STUB(552, int, fstatat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, (__cheri_fromcap struct stat * )buf, flag),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, buf, flag),
     /* _callargs_err */ (&errno, fd, (const char * )path, (struct stat * )buf, flag),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(553, int, fhstat,
@@ -3456,7 +3456,7 @@ SYS_STUB(553, int, fhstat,
     /* _callargs */ ((__cheri_fromcap const struct fhandle * )u_fhp, (__cheri_fromcap struct stat * )sb),
     /* _callargs_chk */ (&ret, stub_errno, u_fhp, sb),
     /* _callargs_err */ (&errno, (const struct fhandle * )u_fhp, (struct stat * )sb),
-    /* _localcheck */ {if (!(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(sb) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(u_fhp) && !(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(sb) && !(cheri_getperm(sb) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(554, ssize_t, getdirentries,
@@ -3466,7 +3466,7 @@ SYS_STUB(554, ssize_t, getdirentries,
     /* _callargs */ (fd, (__cheri_fromcap char * )buf, count, (__cheri_fromcap off_t * )basep),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf, count, basep),
     /* _callargs_err */ (&errno, fd, (char * )buf, count, (off_t * )basep),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (!(cheri_getperm(basep) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} if (cheri_gettag(basep) && !(cheri_getperm(basep) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((ssize_t)-1);} }
 )
 
 SYS_STUB(555, int, statfs,
@@ -3476,7 +3476,7 @@ SYS_STUB(555, int, statfs,
     /* _callargs */ ((__cheri_fromcap char * )path, (__cheri_fromcap struct statfs * )buf),
     /* _callargs_chk */ (&ret, stub_errno, path, buf),
     /* _callargs_err */ (&errno, (char * )path, (struct statfs * )buf),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(556, int, fstatfs,
@@ -3486,7 +3486,7 @@ SYS_STUB(556, int, fstatfs,
     /* _callargs */ (fd, (__cheri_fromcap struct statfs * )buf),
     /* _callargs_chk */ (&ret, stub_errno, fd, buf),
     /* _callargs_err */ (&errno, fd, (struct statfs * )buf),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(557, int, getfsstat,
@@ -3496,7 +3496,7 @@ SYS_STUB(557, int, getfsstat,
     /* _callargs */ ((__cheri_fromcap struct statfs * )buf, bufsize, mode),
     /* _callargs_chk */ (&ret, stub_errno, buf, bufsize, mode),
     /* _callargs_err */ (&errno, (struct statfs * )buf, bufsize, mode),
-    /* _localcheck */ {if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(558, int, fhstatfs,
@@ -3506,7 +3506,7 @@ SYS_STUB(558, int, fhstatfs,
     /* _callargs */ ((__cheri_fromcap const struct fhandle * )u_fhp, (__cheri_fromcap struct statfs * )buf),
     /* _callargs_chk */ (&ret, stub_errno, u_fhp, buf),
     /* _callargs_err */ (&errno, (const struct fhandle * )u_fhp, (struct statfs * )buf),
-    /* _localcheck */ {if (!(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(u_fhp) && !(cheri_getperm(u_fhp) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(buf) && !(cheri_getperm(buf) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB(559, int, mknodat,
@@ -3516,7 +3516,7 @@ SYS_STUB(559, int, mknodat,
     /* _callargs */ (fd, (__cheri_fromcap const char * )path, mode, dev),
     /* _callargs_chk */ (&ret, stub_errno, fd, path, mode, dev),
     /* _callargs_err */ (&errno, fd, (const char * )path, mode, dev),
-    /* _localcheck */ {if (!(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(path) && !(cheri_getperm(path) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
 SYS_STUB_ARGHASPTRS(560, int, kevent,
@@ -3526,6 +3526,6 @@ SYS_STUB_ARGHASPTRS(560, int, kevent,
     /* _callargs */ (fd, (__cheri_fromcap const struct kevent* )changelist, nchanges, (__cheri_fromcap struct kevent* )eventlist, nevents, (__cheri_fromcap const struct timespec * )timeout),
     /* _callargs_chk */ (&ret, stub_errno, fd, changelist, nchanges, eventlist, nevents, timeout),
     /* _callargs_err */ (&errno, fd, (const struct kevent* )changelist, nchanges, (struct kevent* )eventlist, nevents, (const struct timespec * )timeout),
-    /* _localcheck */ {if (!(cheri_getperm(changelist) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(eventlist) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (!(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
+    /* _localcheck */ {if (cheri_gettag(changelist) && !(cheri_getperm(changelist) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(eventlist) && !(cheri_getperm(eventlist) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} if (cheri_gettag(timeout) && !(cheri_getperm(timeout) & CHERI_PERM_GLOBAL)) {errno = EPROT; return ((int)-1);} }
 )
 
