@@ -149,9 +149,8 @@ static int MS_CALLBACK cheri_read(BIO *b, char *out, int outl)
 
     if (b->init && (out != NULL)) {
         ret = libcheri_fd_read_c(b->obj, out, (size_t)outl);
-        if (fd_ret.lcfr_retval0 == 0) {
+        if (ret.lcfr_retval0 == 0) {
             BIO_set_flags(b, BIO_FLAGS_EOF);
-            break;
         } else if (ret.lcfr_retval0 < 0) {
             SYSerr(SYS_F_FREAD, ret.lcfr_retval1);
             BIOerr(BIO_F_CHERI_READ, ERR_R_SYS_LIB);
@@ -184,7 +183,7 @@ static long MS_CALLBACK cheri_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_C_FILE_SEEK:
     case BIO_CTRL_RESET:
-        fd_ret = libcheri_fd_lseek_c(file, num, 0).lcfr_retval0;
+        fd_ret = libcheri_fd_lseek_c(file, num, 0);
         ret = fd_ret.lcfr_retval0;
         break;
     case BIO_CTRL_EOF:
@@ -239,9 +238,9 @@ static int MS_CALLBACK cheri_gets(BIO *bp, char *buf, int size)
     struct libcheri_fd_ret ret = {0, 0};
 
     for (i = 0; i < size - 1; i++) {
-        ret = libcheri_fd_read_c(b->obj, buf+i, 1);
-        if (fd_ret.lcfr_retval0 == 0) {
-            BIO_set_flags(b, BIO_FLAGS_EOF);
+        ret = libcheri_fd_read_c(bp->obj, buf+i, 1);
+        if (ret.lcfr_retval0 == 0) {
+            BIO_set_flags(bp, BIO_FLAGS_EOF);
             break;
         } else if (ret.lcfr_retval0 < 0) {
             break;
