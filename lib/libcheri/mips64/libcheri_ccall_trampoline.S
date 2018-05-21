@@ -315,7 +315,7 @@ libcheri_ccall_rtld_save_caller_stack:
 	 * real stack. Entering the main program will always use the separate
 	 * system stack, so we don't need to do anything.
 	 */
-	beq	$t0, $t1, libcheri_call_rtld_load_callee_stack
+	beq	$t0, $t1, libcheri_ccall_rtld_load_callee_stack
 	nop					# Branch-delay slot
 
 	/* Calculate $c14-relative offset to stack frame. */
@@ -732,7 +732,7 @@ libcheri_ccall_invoke_save_caller_stack:
 	 * real stack. Entering the main program will always use the separate
 	 * system stack, so we don't need to do anything.
 	 */
-	beq	$t0, $t1, libcheri_call_invoke_load_callee_stack
+	beq	$t0, $t1, libcheri_ccall_invoke_load_callee_stack
 	nop					# Branch-delay slot
 
 	/* Calculate $c14-relative offset to stack frame. */
