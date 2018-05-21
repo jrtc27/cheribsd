@@ -365,7 +365,7 @@ sandbox_parse_ccall_methods(int fd,
 		} else if (shdr.sh_type == SHT_PROGBITS &&
 		    strcmp("__cheri_sandbox_provided_callbacks", sname) == 0) {
 			pcs->spcs_callback_base = shdr.sh_addr;
-			pcs->scps_ncallbacks = shdr.sh_size
+			pcs->spcs_ncallbacks = shdr.sh_size
 			    / sizeof(struct sandbox_provided_callback);
 #ifdef DEBUG
 			printf("found __cheri_sandbox_provided_callbacks\n");
