@@ -137,9 +137,11 @@ __libcheri_ ## class ## _entry:						\
 	/*								\
 	 * Set up stack pointer for hybrid code; ccall trampomline has	\
 	 * already set $c11.						\
+	 * Hybrid code uses DDC as stack cap with $sp as an offset.	\
 	 */								\
 	ctoptr	$sp, $c11, $c12;					\
 	move	$fp, $sp;						\
+	cmove	$c11, $c12;						\
 									\
 	/*								\
 	 * Set up global pointer.					\
