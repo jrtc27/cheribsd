@@ -81,8 +81,8 @@ struct sandbox_provided_methods {
  * Clang.
  */
 struct sandbox_callback {
-	struct cheri_object		sc_object;
-	int64_t				sc_method_number;
+	struct cheri_object		sc_object;		/* Callee invocation object */
+	int64_t				sc_vtable_offset;	/* Method number */
 };
 
 /*
@@ -741,7 +741,8 @@ sandbox_make_vtable(void *dataptr, const char *class,
 	struct sandbox_provided_method *pm;
 	struct sandbox_provided_methods *pms;
 
-	if (provided_classes->spcs_nclasses == 0)
+	if (provided_classes->spcs_nclasses == 0 &&
+	    provided_classes->spcs_ncallbacks == 0)
 		return (NULL);
 
 	vtable_length = provided_classes->spcs_nmethods +
@@ -826,8 +827,8 @@ sandbox_set_provided_classes_variables(__capability void *datacap,
 		callback_p = cheri_setoffset(datacap,
 		    pcallbacks[i].spc_callback_offset);
 		callback_p->sc_object = callback_invoke_object;
-		callback_p->sc_method_number =
-		    provided_classes->spcs_nmethods + i;
+		callback_p->sc_vtable_offset = sizeof(vm_offset_t) *
+		    (provided_classes->spcs_nmethods + i);
 	}
 	return(0);
 }
