@@ -123,3 +123,17 @@ call_cheri_ccallback(void (* __capability callback)(void) __attribute__((cheri_c
 	(*callback)();
 	return 1248;
 }
+
+__attribute__((cheri_ccallback))
+static void
+call_libcheri_system_helloworld_ccallback(void)
+{
+	libcheri_system_helloworld();
+}
+
+int
+get_cheri_ccallback(void (__attribute__((cheri_ccallback)) * __capability * __capability callbackp)(void))
+{
+	*callbackp = call_libcheri_system_helloworld_ccallback;
+	return (357);
+}

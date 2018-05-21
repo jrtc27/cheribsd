@@ -76,6 +76,20 @@ helloworld_cheri_ccallback(void)
 	puts("hello world (cheri_ccallback)");
 }
 
+__attribute__((cheri_ccallback))
+static void
+helloworld_cheri_ccallback_2(void)
+{
+	call_cheri_ccallback(helloworld_cheri_ccallback);
+}
+
+__attribute__((cheri_ccallback))
+static void
+helloworld_cheri_ccallback_3(void)
+{
+	call_cheri_ccallback(helloworld_cheri_ccallback_2);
+}
+
 int
 main(void)
 {
@@ -85,6 +99,7 @@ main(void)
 	struct libcheri_message msg;
 	struct libcheri_callback cb;
 	int dummy_arg;
+	void (__attribute__((cheri_ccallback)) * __capability ccallback)(void);
 
 	libcheri_init();
 
@@ -121,6 +136,14 @@ main(void)
 	assert(ret >= 0);
 
 	ret = call_cheri_ccallback(helloworld_cheri_ccallback);
+	assert(ret == 1248);
+
+	ret = get_cheri_ccallback((__cheri_tocap void (__attribute__((cheri_ccallback)) * __capability * __capability)(void))&ccallback);
+	assert(ret == 357);
+
+	(*ccallback)()
+
+	ret = call_cheri_ccallback(helloworld_cheri_ccallback_3);
 	assert(ret == 1248);
 
 	libcheri_fd_destroy(sbop);

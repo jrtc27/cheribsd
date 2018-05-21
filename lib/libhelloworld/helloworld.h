@@ -63,4 +63,7 @@ int call_libcheri_fd_write_c(struct cheri_object fd_object);
 CHERI_HELLOWORLD_CCALL
 int call_cheri_ccallback(void (* __capability callback)(void) __attribute__((cheri_ccallback)));
 
+CHERI_HELLOWORLD_CCALL
+int get_cheri_ccallback(void (__attribute__((cheri_ccallback)) * __capability * __capability callbackp)(void));
+
 #endif /* !_CHERI_HELLOWORLD_H_ */
