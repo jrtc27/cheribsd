@@ -163,11 +163,18 @@ __libcheri_ ## class ## _entry:						\
 									\
 0:									\
 	/*								\
+	 * Stash $sp in the offset of $c11 like libcheri_invoke, as it	\
+	 * will be saved in this thread's stack vector on creturn for	\
+	 * subsequent invocations in case this method performed an	\
+	 * invocation and overwrote it.					\
+	 */								\
+	cgetdefault	$c2;						\
+	csetoffset	$c11, $c2, $sp					\
+	/*								\
 	 * Return to caller - load creturn capability from		\
 	 * __cheri_object_creturn into $c1, $c2, and then ccall.	\
 	 */								\
 	dla	$t0, __libcheri_object_creturn;				\
-	cgetdefault	$c2;						\
 	clc	$c1, $t0, 0($c2);					\
 	clc	$c2, $t0, CHERICAP_SIZE($c2);				\
 	ccall	$c1, $c2, 1;						\
