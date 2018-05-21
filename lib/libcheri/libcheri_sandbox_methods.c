@@ -83,7 +83,7 @@ struct sandbox_provided_methods {
 struct sandbox_callback {
 	struct cheri_object		sc_object;
 	int64_t				sc_method_number;
-}
+};
 
 /*
  * Contents of a __cheri_sandbox_provided_callbacks entry.  This must match the
@@ -94,7 +94,7 @@ struct sandbox_provided_callback {
 	vm_offset_t			spc_name_offset; /* Offset of callback name */
 	vm_offset_t			spc_callback_offset; /* Offset of callback struct */
 	vm_offset_t			spc_callback_fn_offset; /* Offset of callback entry point */
-}
+};
 
 /*
  * List of classes provided by a sandbox binary.  Each binary can
@@ -365,7 +365,7 @@ sandbox_parse_ccall_methods(int fd,
 		} else if (shdr.sh_type == SHT_PROGBITS &&
 		    strcmp("__cheri_sandbox_provided_callbacks", sname) == 0) {
 			pcs->spcs_callback_base = shdr.sh_addr;
-			pcs->ncallbacks = shdr.sh_size
+			pcs->scps_ncallbacks = shdr.sh_size
 			    / sizeof(struct sandbox_provided_callback);
 #ifdef DEBUG
 			printf("found __cheri_sandbox_provided_callbacks\n");
@@ -765,8 +765,9 @@ sandbox_make_vtable(void *dataptr, const char *class,
 #endif
 	cheri_ccallee_base = (vm_offset_t *)dataptr +
 	    provided_classes->spcs_callee_base / sizeof(vm_offset_t);
-	cheri_ccallback_base = (struct sandbox_provided_callback *)
-	    ((char *)dataptr + provided_classes->spcs_callback_base);
+	cheri_ccallback_base = (struct sandbox_provided_callback *)dataptr +
+	    provided_classes->spcs_callback_base
+	    / sizeof(struct sandbox_provided_callback);
 	methods_length = provided_classes->spcs_nmethods * sizeof(*vtable);
 
 	/*

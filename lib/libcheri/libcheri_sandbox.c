@@ -168,7 +168,7 @@ sandbox_program_init(void)
 	    libcheri_sandbox_make_sealed_invoke_object(
 	    (__cheri_tocap __capability struct sandbox_object *)
 	    main_callback_sbop);
-	if (sandbox_set_provided_class_variables(cheri_getdefault(),
+	if (sandbox_set_provided_classes_variables(cheri_getdefault(),
 	    main_provided_classes, main_callback_object) == -1) {
 		warnx("%s: sandbox_set_provided_class_variables for main "
 		    "program", __func__);
