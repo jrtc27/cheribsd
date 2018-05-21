@@ -399,6 +399,16 @@ sandbox_object_load(struct sandbox_class *sbcp, struct sandbox_object *sbop)
 	    (__cheri_tocap __capability struct sandbox_object *)sbop);
 
 	/*
+	 * Configure callbacks for object.
+	 */
+	if (sandbox_set_provided_classes_variables(idc,
+	    sbcp->sbc_provided_classes, sbop->sbo_cheri_object_invoke) == -1) {
+		saved_errno = EINVAL;
+		warnx("%s: sandbox_set_provided_classes_variables", __func__);
+		goto error;
+	}
+
+	/*
 	 * Set up a CHERI system object to service the sandbox's requests to
 	 * the ambient environment.
 	 *
@@ -502,6 +512,12 @@ sandbox_object_reload(struct sandbox_object *sbop)
 	    == -1) {
 		saved_errno = EINVAL;
 		warnx("%s: sandbox_set_ccaller_method_variables", __func__);
+		goto error;
+	}
+	if (sandbox_set_provided_classes_variables(datacap,
+	    sbcp->sbc_provided_classes, sbop->sbo_cheri_object_invoke) == -1) {
+		saved_errno = EINVAL;
+		warnx("%s: sandbox_set_provided_classes_variables", __func__);
 		goto error;
 	}
 

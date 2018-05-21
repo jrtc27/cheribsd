@@ -85,6 +85,9 @@ static struct sandbox_required_methods	*main_required_methods;
  */
 __capability vm_offset_t	*libcheri_system_vtable;
 
+static struct sandbox_object	*main_callback_sbop;
+static struct cheri_object	main_callback_object;
+LIBCHERI_CLASS_DECL(libcheri_main_callback);
 
 static int	sandbox_program_init(void);
 
@@ -123,6 +126,8 @@ sandbox_program_init(void)
 	mib[3] = -1;
 	char buf[MAXPATHLEN];
 	size_t cb = sizeof(buf);
+	void * __capability main_callback_invoke_pcc;
+	vm_offset_t * __capability main_callback_vtable;
 
 	/* XXXBD: do this with RTLD or hypothentical getexecfd(). */
 	if ((sysctl(mib, 4, buf, &cb, NULL, 0) != -1) && cb > 0) {
@@ -138,18 +143,43 @@ sandbox_program_init(void)
 		close(fd);
 		return (-1);
 	}
+	close(fd);
 	if (sandbox_set_required_method_variables(cheri_getdefault(),
 	    main_required_methods) == -1) {
 		warnx("%s: sandbox_set_required_method_variables for main "
 		    "program", __func__);
 		return (-1);
 	}
+
+	main_callback_invoke_pcc = cheri_getpcc();
+	main_callback_invoke_pcc = cheri_setoffset(main_callback_invoke_pcc,
+	    (register_t)LIBCHERI_CLASS_ENTRY(libcheri_main_callback));
+
+	main_callback_vtable = sandbox_make_vtable(NULL,
+	    __libcheri_callback_class, main_provided_classes);
+
+	if (sandbox_object_new_system_object(NULL, main_callback_invoke_pcc,
+	    main_callback_vtable, &main_callback_sbop) == -1) {
+		warnx("%s: sandbox_object_new_system_object for main "
+		    "program callbacks", __func__);
+		return (-1);
+	}
+	main_callback_object =
+	    libcheri_sandbox_make_sealed_invoke_object(
+	    (__cheri_tocap __capability struct sandbox_object *)
+	    main_callback_sbop);
+	if (sandbox_set_provided_class_variables(cheri_getdefault(),
+	    main_provided_classes, main_callback_object) == -1) {
+		warnx("%s: sandbox_set_provided_class_variables for main "
+		    "program", __func__);
+		return (-1);
+	}
+
 	/* XXXBD: cheri_system needs to do this. */
 	libcheri_system_vtable = sandbox_make_vtable(NULL,
 	    "_libcheri_system_object", main_provided_classes);
 	libcheri_fd_vtable = sandbox_make_vtable(NULL, "libcheri_fd",
 	    main_provided_classes);
-	close(fd);
 	return (0);
 }
 

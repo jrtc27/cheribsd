@@ -77,6 +77,26 @@ struct sandbox_provided_methods {
 };
 
 /*
+ * Contents of a .CHERI_CALLBACK entry.  This must match the layout emitted by
+ * Clang.
+ */
+struct sandbox_callback {
+	struct cheri_object		sc_object;
+	int64_t				sc_method_number;
+}
+
+/*
+ * Contents of a __cheri_sandbox_provided_callbacks entry.  This must match the
+ * layout emitted by Clang.
+ */
+struct sandbox_provided_callback {
+	int64_t				spc_flags; /* Flags */
+	vm_offset_t			spc_name_offset; /* Offset of callback name */
+	vm_offset_t			spc_callback_offset; /* Offset of callback struct */
+	vm_offset_t			spc_callback_fn_offset; /* Offset of callback entry point */
+}
+
+/*
  * List of classes provided by a sandbox binary.  Each binary can
  * support one or more classes.  No two binaries can provide the same
  * class as vtable offsets would be inconsistant.
@@ -86,7 +106,9 @@ struct sandbox_provided_classes {
 	size_t				  spcs_nclasses; /* Number of methods */
 	size_t				  spcs_maxclasses; /* Array size */
 	size_t				  spcs_nmethods; /* Total methods */
-	vm_offset_t			  spcs_base;	/* Base of vtable */
+	vm_offset_t			  spcs_callee_base;	/* Base of callee vtable */
+	size_t				  spcs_ncallbacks; /* Number of callbacks */
+	vm_offset_t			  spcs_callback_base;	/* Base of provided callback table */
 };
 
 /*
@@ -118,12 +140,15 @@ static void	sandbox_free_provided_methods(
 
 extern int sb_verbose;
 
+/* Dummy class to get a unique pointer */
+const char __libcheri_callback_class[] = "";
+
 int
 sandbox_class_method_get_number(struct sandbox_class *sbcp,
     const char *name)
 {
 	struct sandbox_provided_classes *cls = sbcp->sbc_provided_classes;
-	vm_offset_t vtable_base = cls->spcs_base;
+	vm_offset_t vtable_base = cls->spcs_callee_base;
 
 	for (size_t i=0; i<cls->spcs_nclasses; i++) {
 		struct sandbox_provided_methods *methods = cls->spcs_classes[i];
@@ -326,7 +351,7 @@ sandbox_parse_ccall_methods(int fd,
 #endif
 		} else if (shdr.sh_type == SHT_PROGBITS &&
 		    strcmp(".CHERI_CALLEE", sname) == 0) {
-			pcs->spcs_base = shdr.sh_addr;
+			pcs->spcs_callee_base = shdr.sh_addr;
 			cheri_callee_idx = i;
 #ifdef DEBUG
 			printf("found .CHERI_CALLEE\n");
@@ -336,6 +361,14 @@ sandbox_parse_ccall_methods(int fd,
 			cheri_caller_idx = i;
 #ifdef DEBUG
 			printf("found .CHERI_CALLER\n");
+#endif
+		} else if (shdr.sh_type == SHT_PROGBITS &&
+		    strcmp("__cheri_sandbox_provided_callbacks", sname) == 0) {
+			pcs->spcs_callback_base = shdr.sh_addr;
+			pcs->ncallbacks = shdr.sh_size
+			    / sizeof(struct sandbox_provided_callback);
+#ifdef DEBUG
+			printf("found __cheri_sandbox_provided_callbacks\n");
 #endif
 		}
 	}
@@ -612,7 +645,7 @@ sandbox_resolve_methods(struct sandbox_provided_classes *provided_classes,
 
 	for (i = 0; i < provided_classes->spcs_nclasses; i++)
 		resolved += sandbox_resolve_methods_one_class(
-		    provided_classes->spcs_base,
+		    provided_classes->spcs_callee_base,
 		    provided_classes->spcs_classes[i], required_methods);
 
 	return (resolved);
@@ -703,15 +736,18 @@ sandbox_make_vtable(void *dataptr, const char *class,
 {
 	__capability vm_offset_t *vtable;
 	vm_offset_t *cheri_ccallee_base;
-	size_t i, index, length, m;
+	struct sandbox_provided_callback *cheri_ccallback_base;
+	size_t i, index, vtable_length, methods_length, m;
 	struct sandbox_provided_method *pm;
 	struct sandbox_provided_methods *pms;
 
 	if (provided_classes->spcs_nclasses == 0)
 		return (NULL);
 
-	if ((vtable = calloc_c(provided_classes->spcs_nmethods,
-	    sizeof(*vtable))) == NULL) {
+	vtable_length = provided_classes->spcs_nmethods +
+	    provided_classes->spcs_ncallbacks;
+
+	if ((vtable = calloc_c(vtable_length, sizeof(*vtable))) == NULL) {
 		warnx("%s: calloc", __func__);
 		return (NULL);
 	}
@@ -727,13 +763,25 @@ sandbox_make_vtable(void *dataptr, const char *class,
 	if (dataptr == NULL)
 		dataptr = cheri_getdefault();
 #endif
-	cheri_ccallee_base = (vm_offset_t *)dataptr + provided_classes->spcs_base
-	    / sizeof(vm_offset_t);
-	length = provided_classes->spcs_nmethods * sizeof(*vtable);
+	cheri_ccallee_base = (vm_offset_t *)dataptr +
+	    provided_classes->spcs_callee_base / sizeof(vm_offset_t);
+	cheri_ccallback_base = (struct sandbox_provided_callback *)
+	    ((char *)dataptr + provided_classes->spcs_callback_base);
+	methods_length = provided_classes->spcs_nmethods * sizeof(*vtable);
 
-	if (class == NULL) {
-		memcpy_c_tocap(vtable, cheri_ccallee_base, length);
-		return (cheri_andperm(vtable, CHERI_PERM_LOAD));
+	/*
+	 * Pointer equality is deliberate; callbacks don't have a class, so
+	 * this is just a dummy string used as a unique pointer.
+	 */
+	if (class == NULL || class == __libcheri_callback_class) {
+		if (class == NULL)
+			memcpy_c_tocap(vtable, cheri_ccallee_base, methods_length);
+		for (i = 0; i < provided_classes->spcs_ncallbacks; i++) {
+			index = provided_classes->spcs_nmethods + i;
+			vtable[index] =
+			    cheri_ccallback_base[i].spc_callback_fn_offset;
+		}
+		goto done;
 	}
 
 	for (i = 0; i < provided_classes->spcs_nclasses; i++) {
@@ -744,13 +792,43 @@ sandbox_make_vtable(void *dataptr, const char *class,
 		for (m = 0; m < pms->spms_nmethods; m++) {
 			pm = pms->spms_methods + m;
 			index = (pm->spm_index_offset -
-			    provided_classes->spcs_base) / sizeof(*vtable);
+			    provided_classes->spcs_callee_base) / sizeof(*vtable);
 			vtable[index] = cheri_ccallee_base[index];
 		}
-		return (cheri_andperm(vtable, CHERI_PERM_LOAD));
+		goto done;
 	}
+
 	free_c(vtable);
 	return (NULL);
+
+done:
+	return (cheri_andperm(vtable, CHERI_PERM_LOAD));
+}
+
+int
+sandbox_set_provided_classes_variables(__capability void *datacap,
+    struct sandbox_provided_classes *provided_classes,
+    struct cheri_object callback_invoke_object)
+{
+	size_t i;
+	struct sandbox_provided_callback * __capability pcallbacks;
+	struct sandbox_callback * __capability callback_p;
+
+	assert(provided_classes != NULL);
+	pcallbacks = cheri_setoffset(datacap,
+	    provided_classes->spcs_callback_base);
+
+	/* Ensure the capability is capability aligned. */
+	assert(!(cheri_getbase(datacap) & (sizeof(datacap) - 1)));
+
+	for (i = 0; i < provided_classes->spcs_ncallbacks; i++) {
+		callback_p = cheri_setoffset(datacap,
+		    pcallbacks[i].spc_callback_offset);
+		callback_p->sc_object = callback_invoke_object;
+		callback_p->sc_method_number =
+		    provided_classes->spcs_nmethods + i;
+	}
+	return(0);
 }
 
 int

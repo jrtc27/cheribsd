@@ -40,3 +40,4 @@
 
 LIBCHERI_CLASS_ASM(libcheri_system);
 LIBCHERI_CLASS_ASM(libcheri_fd);
+LIBCHERI_CLASS_ASM(libcheri_main_callback);

@@ -39,6 +39,8 @@
 struct sandbox_provided_classes;
 struct sandbox_required_methods;
 
+extern const char __libcheri_callback_class[];
+
 int	sandbox_parse_ccall_methods(int fd,
 	    struct sandbox_provided_classes **provided_classesp,
 	    struct sandbox_required_methods **required_methodsp);
@@ -56,6 +58,9 @@ void	sandbox_warn_unresolved_methods(
 __capability vm_offset_t *sandbox_make_vtable(void *datacap, const char *class,
 	    struct sandbox_provided_classes *provided_classes);
 
+int	sandbox_set_provided_classes_variables(__capability void *datacap,
+	    struct sandbox_provided_classes *provided_classes,
+	    struct cheri_object callback_invoke_object)
 int	sandbox_set_required_method_variables(__capability void *datacap,
 	    struct sandbox_required_methods *required_methods);
 
