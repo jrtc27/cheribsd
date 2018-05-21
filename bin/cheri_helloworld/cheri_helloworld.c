@@ -46,6 +46,7 @@
 #include <assert.h>
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -141,7 +142,7 @@ main(void)
 	ret = get_cheri_ccallback((__cheri_tocap void (__attribute__((cheri_ccallback)) * __capability * __capability)(void))&ccallback);
 	assert(ret == 357);
 
-	(*ccallback)()
+	(*ccallback)();
 
 	ret = call_cheri_ccallback(helloworld_cheri_ccallback_3);
 	assert(ret == 1248);
