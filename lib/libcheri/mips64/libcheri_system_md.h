@@ -169,7 +169,7 @@ __libcheri_ ## class ## _entry:						\
 	 * invocation and overwrote it.					\
 	 */								\
 	cgetdefault	$c2;						\
-	csetoffset	$c11, $c2, $sp					\
+	csetoffset	$c11, $c2, $sp;					\
 	/*								\
 	 * Return to caller - load creturn capability from		\
 	 * __cheri_object_creturn into $c1, $c2, and then ccall.	\
