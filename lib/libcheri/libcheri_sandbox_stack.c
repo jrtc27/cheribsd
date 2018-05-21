@@ -86,10 +86,17 @@ void libcheri_sandbox_stack_init(void)
 	stackmem = mmap(0, LIBCHERI_SYSTEM_STACK_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_ANON, -1, 0);
 
+#ifdef __CHERI_PURE_CAPABILITY__
 	stackcap = cheri_ptrperm(stackmem,
 	    LIBCHERI_SYSTEM_STACK_SIZE,
 	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
 	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP);
+#else
+	stackcap = cheri_andperm(cheri_getdefault() + (size_t)stackmem,
+	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
+	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP |
+	    CHERI_PERM_GLOBAL);
+#endif
 	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 
@@ -109,10 +116,17 @@ void libcheri_sandbox_stack_thread_started(void)
 	stackmem = mmap(0, LIBCHERI_SYSTEM_STACK_SIZE, PROT_READ | PROT_WRITE,
 	    MAP_ANON, -1, 0);
 
+#ifdef __CHERI_PURE_CAPABILITY__
 	stackcap = cheri_ptrperm(stackmem,
 	    LIBCHERI_SYSTEM_STACK_SIZE,
 	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
 	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP);
+#else
+	stackcap = cheri_andperm(cheri_getdefault() + (size_t)stackmem,
+	    CHERI_PERM_LOAD | CHERI_PERM_LOAD_CAP | CHERI_PERM_STORE |
+	    CHERI_PERM_STORE_CAP | CHERI_PERM_STORE_LOCAL_CAP |
+	    CHERI_PERM_GLOBAL);
+#endif
 	__libcheri_sandbox_stacks.stacks[0] =
 		(char * __capability)stackcap + LIBCHERI_SYSTEM_STACK_SIZE;
 

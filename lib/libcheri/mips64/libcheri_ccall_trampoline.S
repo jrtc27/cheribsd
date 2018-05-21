@@ -42,10 +42,7 @@
  * Userspace implementation of libcheri invocation and return semantics.
  * These vectors are intended to run on the inside of sealed call and return
  * code capabilities, perform any necessary checks, transform the capability
- * register file, and then jump into the target domain.  We also provide a
- * simply lock around each object to prevent concurrent entry; an error is
- * returned if this is attempted.  In the future, we may instead want to
- * support multiple stacks per sandbox as well as reentrance onto the stack.
+ * register file, and then jump into the target domain.
  *
  * The design is similar to our earlier prototype based on a dedicated
  * exception handler, in that we rely on hardware acceleration of certain
@@ -102,8 +99,10 @@
  *
  * Local register use key:
  * $c12		Target $pcc to jump to in the destination object.
+ * $c13		Earlier: thread stack info.  Later: thread stack vector.
  * $c14		Earlier: trusted stack.  Later: trusted stack frame.
- * $c15		Pointer to sandbox object's lock
+ * $c15		Pointer to thread's lock.
+ * $c16		Caller's object description (if any).
  * $c17		Earlier: return code capability.  Later: target $pcc.
  * $c26		IDC as provided by CCall -- pointer to object description.
  *
@@ -257,7 +256,7 @@ libcheri_ccall_rtld_fetch_stack:
 	daddu	$at, $t0, $at
 	clc		$c13, $zero, (5*CHERICAP_SIZE)($c26)
 	csetoffset	$c14, $c13, $at
-	/* Also load this thread's sandbox stacks vector. */
+	/* Also load this thread's sandbox stacks info. */
 	lui	$at, %tprel_hi(__libcheri_sandbox_stacks)
 	daddiu	$at, $at, %tprel_lo(__libcheri_sandbox_stacks)
 	daddu	$at, $t0, $at
@@ -266,8 +265,8 @@ libcheri_ccall_rtld_fetch_stack:
 libcheri_ccall_rtld_check_stack:
 	/*
 	 * Check that we have room on the trusted stack before we try to
-	 * acquire a lock on the sandbox.  Leave this block with the current
-	 * trusted-stack offset in $t0.
+	 * save the sandbox's stack for this thread.  Leave this block with the
+	 * current trusted-stack offset in $t0.
 	 *
 	 * Retrieve current trusted stack pointer - cs_tsp.
 	 */
@@ -277,25 +276,25 @@ libcheri_ccall_rtld_check_stack:
 	beqz	$t0, libcheri_ccall_rtld_stack_overflow
 	nop					# Branch-delay slot
 
-libcheri_ccall_rtld_lock_stack:
+libcheri_ccall_rtld_switch_stack:
 	/*
-	 * After we've performed all checks, the only remaining things to
-	 * confirm is that the object isn't busy in this thread.  Attempt
-	 * to lock the object, and don't perturb $t0 as we will need that later.
-	 * Once we get past this point, we are committed to the transition, so we
-	 * shouldn't need to undo the lock operation.
+	 * After we've performed all checks, save the caller's stack in case of
+	 * reentrance, and don't perturb $t0 as we will need that later.  Once
+	 * we get past this point, we are committed to the transition, so we
+	 * shouldn't need to undo the stack save operation.
 	 *
 	 * XXXRW: There is a race condition if a signal delivers between
-	 * setting the lock and updating the trusted-stack pointer, in which
-	 * an object that has not actually been entered might not get
-	 * unlocked.  This could be resolved by having the signal handler know
-	 * about the window between these labels and cover that case as part
-	 * of unwind.
+	 * saving the sandbox stack pointer and updating the trusted-stack
+	 * pointer, in which an object that has not actually been entered might
+	 * not get its sandbox stack pointer restored.  This could be resolved
+	 * by having the signal handler know about the window between these
+	 * labels and cover that case as part of unwind.
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
 	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_ccall_rtld_lock_thread_stacks_loop:
+	/* Lock the thread lock. */
 	cllw	$t1, $c15
 	bnez	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
@@ -303,20 +302,43 @@ libcheri_ccall_rtld_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_rtld_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_rtld_do_lock_stack:
 	/*
-	 * In-use sandbox thread stacks are offset tagged with 1.
+	 * Load the stacks vector from this thread's info struct.
 	 */
 	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
+libcheri_ccall_rtld_save_caller_stack:
+	/* Retrieve size of trusted stack. */
+	cld	$t1, $zero, 8($c14)		# XXXRW: Hard-coded offset
+
+	/*
+	 * Check for underflow, i.e. caller is the main program on the thread's
+	 * real stack. Entering the main program will always use the separate
+	 * system stack, so we don't need to do anything.
+	 */
+	beq	$t0, $t1, libcheri_call_rtld_load_callee_stack
+	nop					# Branch-delay slot
+
+	/* Calculate $c14-relative offset to stack frame. */
+	daddiu	$t1, $t0, 32			# XXXRW: Hard-coded offset
+
+	/* Load caller sandbox pointer. */
+	clc	$c16, $t1, (2*CHERICAP_SIZE)($c14)    # XXXRW: Hard-coded offset
+
+	/* Load caller sandbox stack offset. */
+	clwu	$at, $zero, (6*CHERICAP_SIZE)($c16)	# XXXJC: Hard-coded offset
+
+	/* Save caller return $csp as reentrant $csp. */
+	csc	$c11, $at, 0($c13)
+
+libcheri_ccall_rtld_load_callee_stack:
+	/* Load callee sandbox stack offset. */
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
-	clc	$c12, $at, 0($c13)		# Load thread's stack
-	cgetoffset	$t1, $c12		# Check for reentrance
-	andi	$t2, $t1, 1
-	bnez	$t2, libcheri_ccall_rtld_sandbox_busy
-	ori	$t1, $t1, 1			# Branch-delay slot
-	csetoffset	$c16, $c12, $t1		# Tag stack
-	csc	$c16, $at, 0($c13)
-	csw	$zero, $zero, 0($c15)		# Unlock thread lock
+
+	/* Load callee sandbox stack for this thread. */
+	clc	$c12, $at, 0($c13)
+
+	/* Unlock the thread lock */
+	csw	$zero, $zero, 0($c15)
 
 libcheri_ccall_rtld_push_stack:
 	/*
@@ -420,12 +442,6 @@ libcheri_ccall_rtld_local_argument:
 
 libcheri_ccall_rtld_stack_overflow:
 	dli	$a0, LIBCHERI_ERRNO_INVOKE_OVERFLOW
-	b	libcheri_ccall_rtld_error_return
-	nop
-
-libcheri_ccall_rtld_sandbox_busy:
-	csw	$zero, $zero, 0($c15)		# Unlock thread lock
-	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
 	b	libcheri_ccall_rtld_error_return
 	nop
 
@@ -657,7 +673,7 @@ libcheri_ccall_invoke_fetch_stack:
 	daddu	$at, $t0, $at
 	clc		$c13, $zero, (5*CHERICAP_SIZE)($c26)
 	csetoffset	$c14, $c13, $at
-	/* Also load this thread's sandbox stacks vector. */
+	/* Also load this thread's sandbox stacks info. */
 	lui	$at, %tprel_hi(__libcheri_sandbox_stacks)
 	daddiu	$at, $at, %tprel_lo(__libcheri_sandbox_stacks)
 	daddu	$at, $t0, $at
@@ -666,8 +682,8 @@ libcheri_ccall_invoke_fetch_stack:
 libcheri_ccall_invoke_check_stack:
 	/*
 	 * Check that we have room on the trusted stack before we try to
-	 * acquire a lock on the sandbox.  Leave this block with the current
-	 * trusted-stack offset in $t0.
+	 * save the sandbox's stack for this thread.  Leave this block with the
+	 * current trusted-stack offset in $t0.
 	 *
 	 * Retrieve current trusted stack pointer - cs_tsp.
 	 */
@@ -677,25 +693,25 @@ libcheri_ccall_invoke_check_stack:
 	beqz	$t0, libcheri_ccall_invoke_stack_overflow
 	nop					# Branch-delay slot
 
-libcheri_ccall_invoke_lock_stack:
+libcheri_ccall_invoke_switch_stack:
 	/*
-	 * After we've performed all checks, the only remaining things to
-	 * confirm is that the object isn't busy in this thread.  Attempt
-	 * to lock the object, and don't perturb $t0 as we will need that later.
-	 * Once we get past this point, we are committed to the transition, so we
-	 * shouldn't need to undo the lock operation.
+	 * After we've performed all checks, save the caller's stack in case of
+	 * reentrance, and don't perturb $t0 as we will need that later.  Once
+	 * we get past this point, we are committed to the transition, so we
+	 * shouldn't need to undo the stack save operation.
 	 *
 	 * XXXRW: There is a race condition if a signal delivers between
-	 * setting the lock and updating the trusted-stack pointer, in which
-	 * an object that has not actually been entered might not get
-	 * unlocked.  This could be resolved by having the signal handler know
-	 * about the window between these labels and cover that case as part
-	 * of unwind.
+	 * saving the sandbox stack pointer and updating the trusted-stack
+	 * pointer, in which an object that has not actually been entered might
+	 * not get its sandbox stack pointer restored.  This could be resolved
+	 * by having the signal handler know about the window between these
+	 * labels and cover that case as part of unwind.
 	 *
 	 * XXXRW: It would be nice if clld had an immediate operand.
 	 */
 	cincoffset	$c15, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_ccall_invoke_lock_thread_stacks_loop:
+	/* Lock the thread lock. */
 	cllw	$t1, $c15
 	bnez	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
@@ -703,20 +719,43 @@ libcheri_ccall_invoke_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_ccall_invoke_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_ccall_invoke_do_lock_stack:
 	/*
-	 * In-use sandbox thread stacks are offset tagged with 1.
+	 * Load the stacks vector from this thread's info struct.
 	 */
 	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
+libcheri_ccall_invoke_save_caller_stack:
+	/* Retrieve size of trusted stack. */
+	cld	$t1, $zero, 8($c14)		# XXXRW: Hard-coded offset
+
+	/*
+	 * Check for underflow, i.e. caller is the main program on the thread's
+	 * real stack. Entering the main program will always use the separate
+	 * system stack, so we don't need to do anything.
+	 */
+	beq	$t0, $t1, libcheri_call_invoke_load_callee_stack
+	nop					# Branch-delay slot
+
+	/* Calculate $c14-relative offset to stack frame. */
+	daddiu	$t1, $t0, 32			# XXXRW: Hard-coded offset
+
+	/* Load caller sandbox pointer. */
+	clc	$c16, $t1, (2*CHERICAP_SIZE)($c14)    # XXXRW: Hard-coded offset
+
+	/* Load caller sandbox stack offset. */
+	clwu	$at, $zero, (6*CHERICAP_SIZE)($c16)	# XXXJC: Hard-coded offset
+
+	/* Save caller return $csp as reentrant $csp. */
+	csc	$c11, $at, 0($c13)
+
+libcheri_ccall_invoke_load_callee_stack:
+	/* Load callee sandbox stack offset. */
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c26)	# XXXJC: Hard-coded offset
-	clc	$c12, $at, 0($c13)		# Load thread's stack
-	cgetoffset	$t1, $c12		# Check for reentrance
-	andi	$t2, $t1, 1
-	bnez	$t2, libcheri_ccall_invoke_sandbox_busy
-	ori	$t1, $t1, 1			# Branch-delay slot
-	csetoffset	$c16, $c12, $t1		# Tag stack
-	csc	$c16, $at, 0($c13)
-	csw	$zero, $zero, 0($c15)		# Unlock thread lock
+
+	/* Load callee sandbox stack for this thread. */
+	clc	$c12, $at, 0($c13)
+
+	/* Unlock the thread lock */
+	csw	$zero, $zero, 0($c15)
 
 libcheri_ccall_invoke_push_stack:
 	/*
@@ -823,12 +862,6 @@ libcheri_ccall_invoke_stack_overflow:
 	b	libcheri_ccall_invoke_error_return
 	nop
 
-libcheri_ccall_invoke_sandbox_busy:
-	csw	$zero, $zero, 0($c15)		# Unlock thread lock
-	dli	$a0, LIBCHERI_ERRNO_INVOKE_BUSY
-	b	libcheri_ccall_invoke_error_return
-	nop
-
 libcheri_ccall_invoke_error_return:
 libcheri_ccall_invoke_error_clear_regs:
 	CHERI_CLEAR_GPLO16( \
@@ -911,8 +944,11 @@ libcheri_ccall_invoke_error_jump:
  * used for CReturn.
  *
  * Local register use key:
+ * $c13		Earlier: thread stack info.  Later: thread stack vector.
  * $c14		Earlier: trusted stack.  Later: trusted stack frame.
- * $c17		Target $pcc to jump back to in the caller destination object.
+ * $c15		Callee's object description.
+ * $c17		Earlier: Pointer to thread's lock.  Later: Target $pcc to jump
+ *     		back to in the caller destination object.
  * $c26		IDC as provided by CCall -- pointer to object description.
  */
 	.global libcheri_creturn_vector
@@ -949,10 +985,10 @@ libcheri_creturn_fetch_stack:
 	daddu	$at, $t0, $at
 	csetoffset	$c13, $c26, $at
 
-libcheri_creturn_pop_stack_unlock_sandbox:
+libcheri_creturn_pop_stack:
 	/*
-	 * Unlock the sandbox object before we start hitting conditional
-	 * checks, as we will unlock unconditionally.
+	 * Restore the sandbox object's stack for this thread before we start
+	 * hitting conditional checks, as we will return unconditionally.
 	 *
 	 * Retrieve current trusted stack pointer.
 	 */
@@ -974,12 +1010,14 @@ libcheri_creturn_pop_stack_unlock_sandbox:
 	daddiu	$t0, $t0, 32			# XXXRW: Hard-coded offset
 
 	/*
-	 * Pop callee sandbox object pointer for unlock, and unlock this
-	 * thread's stack. */
+	 * Pop callee sandbox object pointer for stack restoration, and perform
+	 * the restore.
+	 */
 	clc	$c15, $t0, (2*CHERICAP_SIZE)($c14)    # XXXRW: Hard-coded offset
 
 	cincoffset	$c17, $c13, CHERICAP_SIZE	# XXXJC: Hard-coded offset
 libcheri_creturn_lock_thread_stacks_loop:
+	/* Lock the thread lock. */
 	cllw	$t1, $c17
 	bnez	$t1, libcheri_creturn_lock_thread_stacks_loop
 	dli	$t1, 1				# Branch-delay slot
@@ -987,19 +1025,19 @@ libcheri_creturn_lock_thread_stacks_loop:
 	beqz	$t1, libcheri_creturn_lock_thread_stacks_loop
 	nop					# Branch-delay slot
 
-libcheri_creturn_unlock_stack:
 	/*
-	 * Remove 1 from stack tag
+	 * Load the stacks vector from this thread's info struct.
 	 */
 	clc	$c13, $zero, 0($c13)		# XXXJC: Hard-coded offset
+libcheri_creturn_save_callee_stack:
+	/* Load callee sandbox stack offset. */
 	clwu	$at, $zero, (6*CHERICAP_SIZE)($c15)	# XXXJC: Hard-coded offset
-	clc	$c12, $at, 0($c13)		# Load thread's stack
-	cgetoffset	$t1, $c12
-	dli	$t2, -2				# -2 is ~1
-	and	$t1, $t1, $t2
-	csetoffset	$c12, $c12, $t1		# Untag stack
-	csc	$c12, $at, 0($c13)
-	csw	$zero, $zero, 0($c17)		# Unlock thread lock
+
+	/* Save current $csp as callee sandbox stack for this thread. */
+	csc	$c11, $at, 0($c13)
+
+	/* Unlock the thread lock. */
+	csw	$zero, $zero, 0($c17)
 
 	/* Pop caller return $pcc. */
 	clc	$c17, $t0, 0($c14)		# XXXRW: Hard-coded offset
