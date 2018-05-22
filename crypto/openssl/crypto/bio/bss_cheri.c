@@ -149,11 +149,16 @@ static int MS_CALLBACK cheri_read(BIO *b, char *out, int outl)
 
     if (b->init && (out != NULL)) {
         ret = libcheri_fd_read_c(b->obj, out, (size_t)outl);
-        if (ret.lcfr_retval0 == 0) {
-            BIO_set_flags(b, BIO_FLAGS_EOF);
-        } else if (ret.lcfr_retval0 < 0) {
-            SYSerr(SYS_F_FREAD, ret.lcfr_retval1);
-            BIOerr(BIO_F_CHERI_READ, ERR_R_SYS_LIB);
+        BIO_clear_retry_flags(b);
+        if (ret.lcfr_retval0 <= 0) {
+            if (BIO_cheri_should_retry(ret.lcfr_retval0, ret.lcfr_retval1)) {
+                BIO_set_retry_read(b);
+            } else if (ret.lcfr_retval0 == 0) {
+                BIO_set_flags(b, BIO_FLAGS_EOF);
+            } else {
+                SYSerr(SYS_F_FREAD, ret.lcfr_retval1);
+                BIOerr(BIO_F_CHERI_READ, ERR_R_SYS_LIB);
+            }
         }
     }
     return (ret.lcfr_retval0);
@@ -165,8 +170,11 @@ static int MS_CALLBACK cheri_write(BIO *b, const char *in, int inl)
 
     if (b->init && (in != NULL)) {
         ret = libcheri_fd_write_c(b->obj, in, (size_t)inl);
-        if (ret.lcfr_retval0)
-            ret.lcfr_retval0 = inl;
+        BIO_clear_retry_flags(b);
+        if (ret.lcfr_retval0 <= 0) {
+            if (BIO_cheri_should_retry(ret.lcfr_retval0, ret.lcfr_retval1))
+                BIO_set_retry_write(b);
+        }
     }
     return (ret.lcfr_retval0);
 }
@@ -265,4 +273,58 @@ static int MS_CALLBACK cheri_puts(BIO *bp, const char *str)
     return (ret);
 }
 
+int BIO_cheri_should_retry(int ret, int err)
+{
+    if ((ret == 0) || (ret == -1)) {
+        return (BIO_cheri_non_fatal_error(err));
+    }
+    return (0);
+}
+
+int BIO_cheri_non_fatal_error(int err)
+{
+    switch (err) {
+
+# ifdef EWOULDBLOCK
+#  ifdef WSAEWOULDBLOCK
+#   if WSAEWOULDBLOCK != EWOULDBLOCK
+    case EWOULDBLOCK:
+#   endif
+#  else
+    case EWOULDBLOCK:
+#  endif
+# endif
+
+# if defined(ENOTCONN)
+    case ENOTCONN:
+# endif
+
+# ifdef EINTR
+    case EINTR:
+# endif
+
+# ifdef EAGAIN
+#  if EWOULDBLOCK != EAGAIN
+    case EAGAIN:
+#  endif
+# endif
+
+# ifdef EPROTO
+    case EPROTO:
+# endif
+
+# ifdef EINPROGRESS
+    case EINPROGRESS:
+# endif
+
+# ifdef EALREADY
+    case EALREADY:
+# endif
+        return (1);
+        /* break; */
+    default:
+        break;
+    }
+    return (0);
+}
 #endif                          /* HEADER_BSS_CHERI_C */

@@ -733,6 +733,11 @@ BIO_METHOD *BIO_s_datagram_sctp(void);
 
 /* BIO_METHOD *BIO_f_ber(void); */
 
+# ifdef LIBSSL_COMPARTMENT
+int BIO_cheri_should_retry(int ret, int error);
+int BIO_cheri_non_fatal_error(int error);
+# endif
+
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
 int BIO_dgram_non_fatal_error(int error);
