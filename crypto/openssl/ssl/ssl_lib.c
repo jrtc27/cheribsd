@@ -790,6 +790,72 @@ int SSL_set_rfd(SSL *s, int fd)
  err:
     return (ret);
 }
+
+# ifdef LIBSSL_COMPARTMENT
+int SSL_set_cheri_fd(SSL *s, struct cheri_object fd)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+
+    bio = BIO_new(BIO_s_cheri());
+
+    if (bio == NULL) {
+        SSLerr(SSL_F_SSL_SET_CHERI_FD, ERR_R_BUF_LIB);
+        goto err;
+    }
+    BIO_set_cheri(bio, &fd, BIO_NOCLOSE);
+    SSL_set_bio(s, bio, bio);
+    ret = 1;
+ err:
+    return (ret);
+}
+
+int SSL_set_cheri_wfd(SSL *s, struct cheri_object fd)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    struct cheri_object cur_fd;
+
+    if ((s->rbio == NULL) || (BIO_method_type(s->rbio) != BIO_TYPE_CHERI)
+        || (BIO_get_cheri(s->rbio, &cur_fd) && (cur_fd != fd))) {
+        bio = BIO_new(BIO_s_cheri());
+
+        if (bio == NULL) {
+            SSLerr(SSL_F_SSL_SET_CHERI_WFD, ERR_R_BUF_LIB);
+            goto err;
+        }
+        BIO_set_cheri(bio, fd, BIO_NOCLOSE);
+        SSL_set_bio(s, SSL_get_rbio(s), bio);
+    } else
+        SSL_set_bio(s, SSL_get_rbio(s), SSL_get_rbio(s));
+    ret = 1;
+ err:
+    return (ret);
+}
+
+int SSL_set_cheri_rfd(SSL *s, struct cheri_object fd)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    struct cheri_object cur_fd;
+
+    if ((s->wbio == NULL) || (BIO_method_type(s->wbio) != BIO_TYPE_CHERI)
+        || (BIO_get_cheri(s->wbio, &cur_fd) && (cur_fd != fd))) {
+        bio = BIO_new(BIO_s_socket());
+
+        if (bio == NULL) {
+            SSLerr(SSL_F_SSL_SET_CHERI_RFD, ERR_R_BUF_LIB);
+            goto err;
+        }
+        BIO_set_cheri(bio, fd, BIO_NOCLOSE);
+        SSL_set_bio(s, bio, SSL_get_wbio(s));
+    } else
+        SSL_set_bio(s, SSL_get_wbio(s), SSL_get_wbio(s));
+    ret = 1;
+ err:
+    return (ret);
+}
+# endif
 #endif
 
 /* return length of latest Finished message we sent, copy to 'buf' */

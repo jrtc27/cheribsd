@@ -2153,9 +2153,14 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
 int SSL_get_read_ahead(const SSL *s);
 int SSL_pending(const SSL *s);
 # ifndef OPENSSL_NO_SOCK
-CHERI_LIBSSL_CCALL int SSL_set_fd(SSL *s, int fd);
+int SSL_set_fd(SSL *s, int fd);
 int SSL_set_rfd(SSL *s, int fd);
 int SSL_set_wfd(SSL *s, int fd);
+#  ifdef LIBSSL_COMPARTMENT
+CHERI_LIBSSL_CCALL int SSL_set_cheri_fd(SSL *s, struct cheri_object fd);
+CHERI_LIBSSL_CCALL int SSL_set_cheri_rfd(SSL *s, struct cheri_object fd);
+CHERI_LIBSSL_CCALL int SSL_set_cheri_wfd(SSL *s, struct cheri_object fd);
+#  endif
 # endif
 # ifndef OPENSSL_NO_BIO
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
@@ -2791,6 +2796,9 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
 # define SSL_F_SSL_SESS_CERT_NEW                          225
 # define SSL_F_SSL_SET_CERT                               191
+# define SSL_F_SSL_SET_CHERI_FD                           426
+# define SSL_F_SSL_SET_CHERI_RFD                          427
+# define SSL_F_SSL_SET_CHERI_WFD                          428
 # define SSL_F_SSL_SET_CIPHER_LIST                        271
 # define SSL_F_SSL_SET_FD                                 192
 # define SSL_F_SSL_SET_PKEY                               193
