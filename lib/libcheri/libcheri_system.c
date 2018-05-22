@@ -256,9 +256,9 @@ libcheri_syscall_check_t libcheri_syscall_checks[SYS_MAXSYSCALL] = {
 
 __attribute__((noinline))
 static void
-libcheri_syscall_log_deny(int num, char *name)
+libcheri_syscall_log_deny(int num, const char *name)
 {
-	fprintf(stderr, "Returning ENOSYS for %s (%d) inside sandbox\n", num, name);
+	fprintf(stderr, "Returning ENOSYS for %s (%d) inside sandbox\n", name, num);
 }
 
 /*
