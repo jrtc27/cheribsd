@@ -817,7 +817,8 @@ int SSL_set_cheri_wfd(SSL *s, struct cheri_object fd)
     struct cheri_object cur_fd;
 
     if ((s->rbio == NULL) || (BIO_method_type(s->rbio) != BIO_TYPE_CHERI)
-        || (BIO_get_cheri(s->rbio, &cur_fd) && (cur_fd != fd))) {
+        || (BIO_get_cheri(s->rbio, &cur_fd)
+            && !memcmp(&cur_fd, &fd, sizeof(fd)))) {
         bio = BIO_new(BIO_s_cheri());
 
         if (bio == NULL) {
@@ -840,7 +841,8 @@ int SSL_set_cheri_rfd(SSL *s, struct cheri_object fd)
     struct cheri_object cur_fd;
 
     if ((s->wbio == NULL) || (BIO_method_type(s->wbio) != BIO_TYPE_CHERI)
-        || (BIO_get_cheri(s->wbio, &cur_fd) && (cur_fd != fd))) {
+        || (BIO_get_cheri(s->wbio, &cur_fd)
+            && !memcmp(&cur_fd, &fd, sizeof(fd)))) {
         bio = BIO_new(BIO_s_socket());
 
         if (bio == NULL) {
