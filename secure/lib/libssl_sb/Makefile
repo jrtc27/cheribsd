@@ -34,6 +34,9 @@ INCS=	dtls1.h kssl.h srtp.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
 INCSDIR=${INCLUDEDIR}/openssl
 
 LIBADD=	c_cheri
+# We manually add libcrypto_cheri with --whole-archive in LDFLAGS, so we need
+# to inform the build system of this extra dependency lest we miss a re-link.
+DPADD+=	${LIBCRYPTO_CHERI}
 
 CFLAGS+=	-I${LCRYPTO_SRC}/crypto
 CFLAGS+=	-DLIBSSL_INSIDE_COMPARTMENT
