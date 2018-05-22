@@ -775,6 +775,10 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  endif
 # endif
 
+# if defined(LIBSSL_COMPARTMENT)
+#  define GETPID_IS_MEANINGLESS
+# endif
+
 #ifdef  __cplusplus
 }
 #endif
