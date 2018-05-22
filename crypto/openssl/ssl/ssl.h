@@ -1244,9 +1244,9 @@ SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (struct ssl_st *ssl,
                                                        unsigned char *Data,
                                                        int len, int *copy);
 CHERI_LIBSSL_CCALL void SSL_CTX_set_info_callback(SSL_CTX *ctx,
-                               void (*cb) (const SSL *ssl, int type,
+                               void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type,
                                            int val));
-void (*SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type,
+void (CHERI_LIBSSL_CCALLBACK *SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type,
                                                  int val);
 void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
                                 int (*client_cert_cb) (SSL *ssl, X509 **x509,
@@ -2450,8 +2450,8 @@ CHERI_LIBSSL_CCALL SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a referenc
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl);
 CHERI_LIBSSL_CCALL SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx);
 void SSL_set_info_callback(SSL *ssl,
-                           void (*cb) (const SSL *ssl, int type, int val));
-void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
+                           void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val));
+void (CHERI_LIBSSL_CCALLBACK *SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
 CHERI_LIBSSL_CCALL int SSL_state(const SSL *ssl);
 void SSL_set_state(SSL *ssl, int state);

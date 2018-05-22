@@ -147,7 +147,7 @@ int ssl23_connect(SSL *s)
 {
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
-    void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val) = NULL;
     int ret = -1;
     int new_state, state;
 
@@ -747,7 +747,7 @@ static int ssl23_get_server_hello(SSL *s)
         if (p[0] == SSL3_RT_ALERT && p[5] != SSL3_AL_WARNING) {
             /* fatal alert */
 
-            void (*cb) (const SSL *ssl, int type, int val) = NULL;
+            void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val) = NULL;
             int j;
 
             if (s->info_callback != NULL)

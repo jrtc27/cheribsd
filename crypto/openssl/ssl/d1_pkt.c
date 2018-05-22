@@ -846,7 +846,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
     int al, i, j, ret;
     unsigned int n;
     SSL3_RECORD *rr;
-    void (*cb) (const SSL *ssl, int type2, int val) = NULL;
+    void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type2, int val) = NULL;
 
     if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
         if (!ssl3_setup_buffers(s))
@@ -1848,7 +1848,7 @@ static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 int dtls1_dispatch_alert(SSL *s)
 {
     int i, j;
-    void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val) = NULL;
     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
     unsigned char *ptr = &buf[0];
 

@@ -165,7 +165,7 @@ int dtls1_connect(SSL *s)
 {
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
-    void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val) = NULL;
     int ret = -1;
     int new_state, state, skip = 0;
 #ifndef OPENSSL_NO_SCTP

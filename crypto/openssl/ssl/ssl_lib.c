@@ -3242,7 +3242,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 #endif
 
 void SSL_set_info_callback(SSL *ssl,
-                           void (*cb) (const SSL *ssl, int type, int val))
+                           void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val))
 {
     ssl->info_callback = cb;
 }
@@ -3251,7 +3251,7 @@ void SSL_set_info_callback(SSL *ssl,
  * One compiler (Diab DCC) doesn't like argument names in returned function
  * pointer.
  */
-void (*SSL_get_info_callback(const SSL *ssl)) (const SSL * /* ssl */ ,
+void (CHERI_LIBSSL_CCALLBACK *SSL_get_info_callback(const SSL *ssl)) (const SSL * /* ssl */ ,
                                                int /* type */ ,
                                                int /* val */ ) {
     return ssl->info_callback;

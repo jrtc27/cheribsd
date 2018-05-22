@@ -456,9 +456,9 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_GET_CALLBACK:
         {
-            void (**fptr) (const SSL *xssl, int type, int val);
+            void (CHERI_LIBSSL_CCALLBACK **fptr) (const SSL *xssl, int type, int val);
 
-            fptr = (void (**)(const SSL *xssl, int type, int val))ptr;
+            fptr = (void (CHERI_LIBSSL_CCALLBACK **)(const SSL *xssl, int type, int val))ptr;
             *fptr = SSL_get_info_callback(ssl);
         }
         break;
@@ -484,7 +484,7 @@ static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
              * FIXME: setting this via a completely different prototype seems
              * like a crap idea
              */
-            SSL_set_info_callback(ssl, (void (*)(const SSL *, int, int))fp);
+            SSL_set_info_callback(ssl, (void (CHERI_LIBSSL_CCALLBACK *)(const SSL *, int, int))fp);
         }
         break;
     default:

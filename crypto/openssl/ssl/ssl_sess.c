@@ -1228,12 +1228,12 @@ SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (SSL *ssl,
 }
 
 void SSL_CTX_set_info_callback(SSL_CTX *ctx,
-                               void (*cb) (const SSL *ssl, int type, int val))
+                               void (CHERI_LIBSSL_CCALLBACK *cb) (const SSL *ssl, int type, int val))
 {
     ctx->info_callback = cb;
 }
 
-void (*SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type,
+void (CHERI_LIBSSL_CCALLBACK *SSL_CTX_get_info_callback(SSL_CTX *ctx)) (const SSL *ssl, int type,
                                                  int val) {
     return ctx->info_callback;
 }

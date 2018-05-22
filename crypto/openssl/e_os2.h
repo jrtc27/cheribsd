@@ -287,6 +287,7 @@ extern "C" {
 #  include <cheri/cheri.h>
 #  include <cheri/libcheri_sandbox.h>
 extern struct cheri_object       __libssl;
+#  define CHERI_LIBSSL_CCALLBACK __attribute__((cheri_ccallback))
 # endif
 
 # if defined(LIBSSL_INSIDE_COMPARTMENT)
