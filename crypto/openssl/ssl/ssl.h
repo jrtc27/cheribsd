@@ -1018,7 +1018,7 @@ struct ssl_ctx_st {
     /* Default values used when no per-SSL value is defined follow */
 
     /* used if SSL's info_callback is NULL */
-    void (*info_callback) (const SSL *ssl, int type, int val);
+    void (CHERI_LIBSSL_CCALLBACK *info_callback) (const SSL *ssl, int type, int val);
 
     /* what we put in client cert requests */
     STACK_OF(X509_NAME) *client_CA;
@@ -1548,7 +1548,7 @@ struct ssl_st {
     /* fail if callback returns 0 */
     int (*verify_callback) (int ok, X509_STORE_CTX *ctx);
     /* optional informational callback */
-    void (*info_callback) (const SSL *ssl, int type, int val);
+    void (CHERI_LIBSSL_CCALLBACK *info_callback) (const SSL *ssl, int type, int val);
     /* error bytes to be written */
     int error;
     /* actual code */
