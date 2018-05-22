@@ -483,10 +483,8 @@ static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
             /*
              * FIXME: setting this via a completely different prototype seems
              * like a crap idea
-             * XXXJC: non-ccallback to ccallback casts aren't allowed, so cast
-             * via (void *) instead.
              */
-            SSL_set_info_callback(ssl, (void (CHERI_LIBSSL_CCALLBACK *)(const SSL *, int, int))(void *)fp);
+            SSL_set_info_callback(ssl, (void (CHERI_LIBSSL_CCALLBACK *)(const SSL *, int, int))fp);
         }
         break;
     default:
