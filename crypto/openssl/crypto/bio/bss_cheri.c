@@ -181,8 +181,9 @@ static long MS_CALLBACK cheri_ctrl(BIO *b, int cmd, long num, void *ptr)
     int st;
 
     switch (cmd) {
-    case BIO_C_FILE_SEEK:
     case BIO_CTRL_RESET:
+        num = 0;
+    case BIO_C_FILE_SEEK:
         fd_ret = libcheri_fd_lseek_c(file, num, 0);
         ret = fd_ret.lcfr_retval0;
         break;
@@ -191,8 +192,8 @@ static long MS_CALLBACK cheri_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
-        /* TODO */
-        ret = 0;
+        fd_ret = libcheri_fd_lseek_c(file, 0, 1);
+        ret = fd_ret.lcfr_retval0;
         break;
     case BIO_C_SET_CHERI_FILE:
         cheri_free(b);
@@ -215,7 +216,7 @@ static long MS_CALLBACK cheri_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         break;
     case BIO_CTRL_FLUSH:
-        ret = 0;
+        ret = 1;
         break;
     case BIO_CTRL_DUP:
         ret = 1;
