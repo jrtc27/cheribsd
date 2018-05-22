@@ -4004,7 +4004,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #endif
 #ifndef OPENSSL_NO_TLSEXT
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
-        ctx->tlsext_servername_callback = (int (*)(SSL *, int *, void *))fp;
+        ctx->tlsext_servername_callback = (int (CHERI_LIBSSL_CCALLBACK *)(SSL *, int *, void *))fp;
         break;
 
 # ifdef TLSEXT_TYPE_opaque_prf_input

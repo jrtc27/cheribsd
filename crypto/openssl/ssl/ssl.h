@@ -1073,7 +1073,7 @@ struct ssl_ctx_st {
 
 #  ifndef OPENSSL_NO_TLSEXT
     /* TLS extensions servername callback */
-    int (*tlsext_servername_callback) (SSL *, int *, void *);
+    int (CHERI_LIBSSL_CCALLBACK *tlsext_servername_callback) (SSL *, int *, void *);
     void *tlsext_servername_arg;
     /* RFC 4507 session ticket keys */
     unsigned char tlsext_tick_key_name[16];
