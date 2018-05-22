@@ -825,7 +825,7 @@ int SSL_set_cheri_wfd(SSL *s, struct cheri_object fd)
             SSLerr(SSL_F_SSL_SET_CHERI_WFD, ERR_R_BUF_LIB);
             goto err;
         }
-        BIO_set_cheri(bio, fd, BIO_NOCLOSE);
+        BIO_set_cheri(bio, &fd, BIO_NOCLOSE);
         SSL_set_bio(s, SSL_get_rbio(s), bio);
     } else
         SSL_set_bio(s, SSL_get_rbio(s), SSL_get_rbio(s));
@@ -849,7 +849,7 @@ int SSL_set_cheri_rfd(SSL *s, struct cheri_object fd)
             SSLerr(SSL_F_SSL_SET_CHERI_RFD, ERR_R_BUF_LIB);
             goto err;
         }
-        BIO_set_cheri(bio, fd, BIO_NOCLOSE);
+        BIO_set_cheri(bio, &fd, BIO_NOCLOSE);
         SSL_set_bio(s, bio, SSL_get_wbio(s));
     } else
         SSL_set_bio(s, SSL_get_wbio(s), SSL_get_wbio(s));
