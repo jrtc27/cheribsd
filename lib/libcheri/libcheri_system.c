@@ -254,6 +254,13 @@ libcheri_syscall_check_t libcheri_syscall_checks[SYS_MAXSYSCALL] = {
 	[SYS___sysctl] = (libcheri_syscall_check_t)libcheri_syscall_sysctl_random,
 };
 
+__attribute__((noinline))
+static void
+libcheri_syscall_log_deny(int num, char *name)
+{
+	fprintf(stderr, "Returning ENOSYS for %s (%d) inside sandbox\n", num, name);
+}
+
 /*
  * Generate stubs for all syscalls with stub macros.
  */
@@ -269,6 +276,7 @@ __libcheri_system_sys_##_sys _protoargs_err				\
 									\
 	checkfunc = (int(*)_protoargs_chk)libcheri_syscall_checks[_num];\
 	if (checkfunc == NULL) {					\
+		libcheri_syscall_log_deny(_num, #_sys);			\
 		*stub_errno = ENOSYS;					\
 		return ((_ret)-1);					\
 	} else {							\
@@ -294,6 +302,7 @@ _ret									\
 __libcheri_system_sys_##_sys _protoargs_err				\
 {									\
 									\
+	libcheri_syscall_log_deny(_num, #_sys);				\
 	*stub_errno = ENOSYS;						\
 									\
 	return (-1);							\
@@ -315,6 +324,7 @@ __libcheri_system_sys_##_sys _protoargs_err				\
 									\
 	checkfunc = (int(*)_protoargs_chk)libcheri_syscall_checks[_num];\
 	if (checkfunc == NULL) {					\
+		libcheri_syscall_log_deny(_num, #_sys);			\
 		*stub_errno = ENOSYS;					\
 		return ((_ret)-1);					\
 	} else {							\
