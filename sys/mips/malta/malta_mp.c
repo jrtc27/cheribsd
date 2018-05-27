@@ -265,6 +265,8 @@ platform_start_ap(int cpuid)
 
 	evpe();
 
+	__asm__ __volatile__ ("li $zero, 0xbeef");
+
 	if (atomic_cmpset_32(&malta_ap_boot, ~0, cpuid) == 0)
 		return (-1);
 
