@@ -50,7 +50,8 @@ __FBSDID("$FreeBSD$");
 
 #define	VPECONF0_VPA	(1 << 0)
 #define	MVPCONTROL_VPC	(1 << 1)
-#define	MVPCONF0_PVPE	(0xf << 10)
+#define	MVPCONF0_PVPE_SHIFT	10
+#define	MVPCONF0_PVPE	(0xf << MVPCONF0_PVPE_SHIFT)
 #define	TCSTATUS_A	(1 << 13)
 
 unsigned malta_ap_boot = ~0;
@@ -211,7 +212,7 @@ platform_cpu_mask(cpuset_t *mask)
 	uint32_t i, m, ncpus, reg;
 
 	reg = mftc0(0, 2);
-	ncpus = reg & (MVPCONF0_PVPE);
+	ncpus = ((reg & MVPCONF0_PVPE) >> MVPCONF0_PVPE_SHIFT) + 1;
 
 	CPU_ZERO(mask);
 	for (i = 0, m = 1 ; i < ncpus; i++, m <<= 1)
