@@ -10,3 +10,5 @@ options 	CPU_CHERI
 options 	COMPAT_CHERIABI
 
 options 	TMPFS
+
+options 	SMP
