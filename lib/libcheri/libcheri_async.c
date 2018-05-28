@@ -34,6 +34,7 @@
 #include <cheri/cheric.h>
 
 #include <err.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 
 #include <pthread.h>
@@ -60,6 +61,7 @@ struct libcheri_ring_message
 struct libcheri_ring
 {
 	struct sandbox_object *sbop;
+	struct libcheri_ring *next;
 	struct libcheri_ring_message buf[RING_BUFSZ];
 	size_t head, tail, count, reqcount;
 	pthread_mutex_t lock;
@@ -72,6 +74,8 @@ static struct libcheri_ring program_ring = {
 	.cond_enqueue = PTHREAD_COND_INITIALIZER,
 	.cond_dequeue = PTHREAD_COND_INITIALIZER
 };
+
+static _Atomic(struct libcheri_ring *) rings;
 
 static pthread_attr_t worker_attr;
 
@@ -212,8 +216,8 @@ libcheri_async_alloc_ring(struct sandbox_object *sbop)
 	return (ring);
 }
 
-int
-libcheri_async_start_worker(struct libcheri_ring *ring)
+static int
+libcheri_async_start_worker2(struct libcheri_ring *ring)
 {
 	pthread_t thread;
 	int ret;
@@ -223,6 +227,36 @@ libcheri_async_start_worker(struct libcheri_ring *ring)
 		warn("%s: pthread_create", __func__);
 
 	return (ret);
+}
+
+int
+libcheri_async_start_worker(struct libcheri_ring *ring)
+{
+	struct libcheri_ring *next;
+
+	next = atomic_load_explicit(&rings, memory_order_relaxed);
+	do {
+		ring->next = next;
+	} while (!atomic_compare_exchange_weak_explicit(
+		&rings, &next, ring, memory_order_release, memory_order_relaxed));
+
+	return (libcheri_async_start_worker2(ring));
+}
+
+void
+libcheri_async_reinit(void)
+{
+	struct libcheri_ring *ring;
+
+	for (ring = rings; ring; ring = ring->next) {
+		free(ring->lock);
+		free(ring->cond_enqueue);
+		free(ring->cond_dequeue);
+		ring->lock = PTHREAD_MUTEX_INITIALIZER;
+		ring->cond_enqueue = PTHREAD_COND_INITIALIZER;
+		ring->cond_dequeue = PTHREAD_COND_INITIALIZER;
+		libcheri_async_start_worker2(ring);
+	}
 }
 
 void
@@ -241,6 +275,10 @@ libcheri_async_init(void)
 	ret = libcheri_async_start_worker(&program_ring);
 	if (ret != 0)
 		err(1, "%s: libcheri_async_start_worker", __func__);
+
+	ret = pthread_atfork(NULL, NULL, libcheri_async_reinit);
+	if (ret != 0)
+		err(1, "%s: pthread_atfork", __func__);
 }
 
 struct libcheri_ring * __capability
