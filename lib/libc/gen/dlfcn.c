@@ -165,7 +165,6 @@ dlinfo(void * __restrict handle, int request, void * __restrict p)
 void
 _rtld_thread_init(void * li)
 {
-	PRINT_FUNCTION_NOT_AVAILABLE();
 }
 
 static pthread_once_t dl_phdr_info_once = PTHREAD_ONCE_INIT;
