@@ -297,10 +297,10 @@ extern struct cheri_object       __libssl;
     __attribute__((cheri_ccallee))                \
     __attribute__((cheri_method_class(__libssl)))
 # elif defined(LIBSSL_COMPARTMENT)
-#  define CHERI_LIBSSL_CCALL                                \
-    __attribute__((cheri_ccall))                            \
-    __attribute__((cheri_method_suffix("_cap")))            \
-    __attribute__((cheri_method_num_suffix("_method_num"))) \
+#  define CHERI_LIBSSL_CCALL                                   \
+    __attribute__((cheri_ccall))                               \
+    __attribute__((cheri_method_suffix("_cap")))               \
+    __attribute__((cheri_method_number_suffix("_method_num"))) \
     __attribute__((cheri_method_class(__libssl)))
 # else
 #  define CHERI_LIBSSL_CCALL
