@@ -52,7 +52,7 @@ static bool user_mode_only = false;
 static void
 usage(void)
 {
-	warnx("usage: qtrace [-u/--user-mode] (start|stop|exec)");
+	warnx("usage: qtrace [-u/--user-mode] (start|stop|exec|spin|sleep)");
 	exit (1);
 }
 
@@ -152,6 +152,10 @@ main(int argc, char **argv)
 	} else if (strcmp("stop", argv[0]) == 0) {
 		stop_trace();
 		exit(0);
+	} else if (strcmp("spin", argv[0]) == 0) {
+		__asm__ __volatile__ ("li $0, 0xc0fe");
+	} else if (strcmp("sleep", argv[0]) == 0) {
+		__asm__ __volatile__ ("li $0, 0xdcaf");
 	} else {
 		warnx("Unknown command %s\n", argv[0]);
 		usage();
