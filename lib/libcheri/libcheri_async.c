@@ -61,7 +61,7 @@ struct libcheri_ring
 {
 	struct sandbox_object *sbop;
 	struct libcheri_ring_message buf[RING_BUFSZ];
-	size_t head, tail, count;
+	size_t head, tail, count, reqcount;
 	pthread_mutex_t lock;
 	pthread_cond_t cond_enqueue;
 	pthread_cond_t cond_dequeue;
@@ -109,13 +109,16 @@ libcheri_async_enqueue_request_unsealed(struct libcheri_ring *ring,
     struct libcheri_message *req)
 {
 	pthread_mutex_lock(&ring->lock);
-	while (ring->head == ring->tail && ring->count != 0)
+	/* Ensure there's always space for responses */
+	while (ring->reqcount >= RING_BUFSZ/2
+	       || (ring->head == ring->tail && ring->count != 0))
 		pthread_cond_wait(&ring->cond_enqueue, &ring->lock);
 
 	ring->buf[ring->tail].type = libcheri_ring_message_request;
 	ring->buf[ring->tail].msg = *req;
 	ring->tail = (ring->tail + 1) % RING_BUFSZ;
 	++ring->count;
+	++ring->reqcount;
 	pthread_cond_signal(&ring->cond_dequeue);
 	pthread_mutex_unlock(&ring->lock);
 }
@@ -158,6 +161,9 @@ libcheri_async_worker(void *arg)
 
 		--ring->count;
 		msg = ring->buf[ring->head];
+		if (msg.type == libcheri_ring_message_request)
+			--ring->reqcount;
+
 		ring->head = (ring->head + 1) % RING_BUFSZ;
 		pthread_cond_signal(&ring->cond_enqueue);
 		pthread_mutex_unlock(&ring->lock);
