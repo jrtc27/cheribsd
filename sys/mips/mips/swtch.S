@@ -316,7 +316,7 @@ mips_sw1:
 	PTR_LA	t2, _C_LABEL(qemu_trace_perthread)	# Load address of var
 	lw	t2, 0(t2)				# Load var value
 	beqz	t2, done_qemu_tracing			# Skip if value is 0
-	nop
+	li	$0, 0xf00d				# Inform QEMU of context switch
 
 	/*
 	 * If per-thread tracing is enabled, update Qemu-internal state to
