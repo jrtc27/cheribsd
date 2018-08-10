@@ -4704,7 +4704,7 @@ get_tls_block_ptr(void *tcb, size_t tcbsize)
 
     /* Compute fragments sizes. */
     extra_size = tcbsize - TLS_TCB_SIZE;
-    post_size = calculate_tls_post_size(tls_init_align)
+    post_size = calculate_tls_post_size(tls_init_align);
     tls_block_size = tcbsize + post_size;
     pre_size = roundup2(tls_block_size, tls_init_align) - tls_block_size;
 
@@ -4741,7 +4741,7 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 
     /* Compute fragmets sizes. */
     extra_size = tcbsize - TLS_TCB_SIZE;
-    post_size = calculate_tls_post_size(tls_init_align)
+    post_size = calculate_tls_post_size(tls_init_align);
     tls_block_size = tcbsize + post_size;
     pre_size = roundup2(tls_block_size, tls_init_align) - tls_block_size;
     tls_block_size += pre_size + tls_static_space - TLS_TCB_SIZE - post_size;
@@ -4798,7 +4798,7 @@ free_tls(void *tcb, size_t tcbsize, size_t tcbalign)
     tls_init_align = MAX(obj_main->tlsalign, 1);
 
     /* Compute fragments sizes. */
-    post_size = calculate_tls_post_size(tls_init_align)
+    post_size = calculate_tls_post_size(tls_init_align);
 
     tlsstart = (Elf_Addr)tcb + TLS_TCB_SIZE + post_size;
     tlsend = (Elf_Addr)tcb + tls_static_space;
