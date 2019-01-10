@@ -44,7 +44,8 @@ END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	/* Load the _setjmp magic */
-	ld	a2, .Lmagic
+1:	auipc a2, %pcrel_hi(.Lmagic)
+	ld	a2, %pcrel_lo(1b)(a2)
 	ld	a3, 0(a0)
 
 	/* Check the magic */

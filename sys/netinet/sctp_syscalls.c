@@ -117,11 +117,11 @@ static struct syscall_helper_data sctp_syscalls_cheriabi[] = {
 
 static int	kern_sys_sctp_generic_sendmsg(struct thread *td, int sd,
 		    void * __capability msg, int mlen,
-		    struct sockaddr * __capability uto, socklen_t tolen,
+		    const struct sockaddr * __capability uto, socklen_t tolen,
 		    struct sctp_sndrcvinfo * __capability usinfo, int flags);
 static int	kern_sctp_generic_sendmsg_iov(struct thread *td, int sd,
 		    void * __capability uiov, int iovlen,
-		    struct sockaddr * __capability uto, socklen_t tolen,
+		    const struct sockaddr * __capability uto, socklen_t tolen,
 		    struct sctp_sndrcvinfo * __capability usinfo, int flags);
 static int	kern_sctp_generic_recvmsg(struct thread *td, int sd,
 		    void * __capability uiov, int iovlen,
@@ -271,7 +271,7 @@ cheriabi_sctp_generic_sendmsg(struct thread *td,
 
 static int
 kern_sys_sctp_generic_sendmsg(struct thread *td, int sd,
-    void * __capability msg, int mlen, struct sockaddr * __capability uto,
+    void * __capability msg, int mlen, const struct sockaddr * __capability uto,
     socklen_t tolen, struct sctp_sndrcvinfo * __capability usinfo, int flags)
 {
 #if (defined(INET) || defined(INET6)) && defined(SCTP)
@@ -408,7 +408,7 @@ cheriabi_sctp_generic_sendmsg_iov(struct thread *td,
 
 static int
 kern_sctp_generic_sendmsg_iov(struct thread *td, int sd,
-    void * __capability uiov, int iovlen, struct sockaddr * __capability uto,
+    void * __capability uiov, int iovlen, const struct sockaddr * __capability uto,
     socklen_t tolen, struct sctp_sndrcvinfo * __capability usinfo, int flags)
 {
 #if (defined(INET) || defined(INET6)) && defined(SCTP)

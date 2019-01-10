@@ -418,10 +418,10 @@ CFLAGS += -mcpu=8540 -Wa,-me500 -mspe=yes -mabi=spe -mfloat-gprs=double
 # ignored, but due to how GNU as processes .align, it relies upon the linker
 # being able to remove unnecessary NOPs, even if it would otherwise not relax
 # any other code.
-AFLAGS_NO_RELAX.lld= -mno-relax
-CFLAGS_NO_RELAX.lld= -mno-relax -Wa,-mno-relax
-AFLAGS += ${AFLAGS_NO_RELAX.${LINKER_TYPE}}
-CFLAGS += ${CFLAGS_NO_RELAX.${LINKER_TYPE}}
+AFLAGS_NO_RELAX.gcc.lld= -mno-relax
+CFLAGS_NO_RELAX.gcc.lld= -mno-relax -Wa,-mno-relax
+AFLAGS += ${AFLAGS_NO_RELAX.${COMPILER_TYPE}.${LINKER_TYPE}}
+CFLAGS += ${CFLAGS_NO_RELAX.${COMPILER_TYPE}.${LINKER_TYPE}}
 .if ${MACHINE_ARCH:Mriscv*sf}
 CFLAGS += -march=rv64imac -mabi=lp64
 .else

@@ -53,8 +53,8 @@ ENTRY(setjmp)
 	addi	sp, sp, (2 * 8)
 
 	/* Store the magic value and stack pointer */
-	la	t0, .Lmagic
-	ld	t0, 0(t0)
+1:	auipc t0, %pcrel_hi(.Lmagic)
+	ld	t0, %pcrel_lo(1b)(t0)
 	sd	t0, (0 * 8)(a0)
 	sd	sp, (1 * 8)(a0)
 	addi	a0, a0, (2 * 8)
@@ -119,8 +119,8 @@ ENTRY(longjmp)
 
 	/* Check the magic value */
 	ld	t0, 0(a0)
-	la	t1, .Lmagic
-	ld	t1, 0(t1)
+1:	auipc t1, %pcrel_hi(.Lmagic)
+	ld	t1, %pcrel_lo(1b)(t1)
 	bne	t0, t1, botch
 
 	/* Restore the stack pointer */
