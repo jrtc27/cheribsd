@@ -170,7 +170,7 @@ static void
 data_abort(struct trapframe *frame, int lower)
 {
 	struct vm_map *map;
-	uint64_t sbadaddr;
+	uint64_t stval;
 	struct thread *td;
 	struct pcb *pcb;
 	vm_prot_t ftype;
@@ -189,7 +189,7 @@ data_abort(struct trapframe *frame, int lower)
 
 	td = curthread;
 	pcb = td->td_pcb;
-	sbadaddr = frame->tf_sbadaddr;
+	stval = frame->tf_stval;
 
 	p = td->td_proc;
 
@@ -197,13 +197,13 @@ data_abort(struct trapframe *frame, int lower)
 		map = &td->td_proc->p_vmspace->vm_map;
 	else {
 		/* The top bit tells us which range to use */
-		if ((sbadaddr >> 63) == 1)
+		if ((stval >> 63) == 1)
 			map = kernel_map;
 		else
 			map = &td->td_proc->p_vmspace->vm_map;
 	}
 
-	va = trunc_page(sbadaddr);
+	va = trunc_page(stval);
 
 	if ((frame->tf_scause == EXCP_FAULT_STORE) ||
 	    (frame->tf_scause == EXCP_STORE_PAGE_FAULT)) {
@@ -247,7 +247,7 @@ data_abort(struct trapframe *frame, int lower)
 				ucode = SEGV_ACCERR;
 			else
 				ucode = SEGV_MAPERR;
-			call_trapsignal(td, sig, ucode, (void *)sbadaddr);
+			call_trapsignal(td, sig, ucode, (void *)stval);
 		} else {
 			if (td->td_intr_nesting_level == 0 &&
 			    pcb->pcb_onfault != 0) {
@@ -257,7 +257,7 @@ data_abort(struct trapframe *frame, int lower)
 			}
 			dump_regs(frame);
 			panic("vm_fault failed: %lx, va 0x%016lx",
-				frame->tf_sepc, sbadaddr);
+				frame->tf_sepc, stval);
 		}
 	}
 
@@ -321,7 +321,7 @@ do_trap_supervisor(struct trapframe *frame)
 	default:
 		dump_regs(frame);
 		panic("Unknown kernel exception %x badaddr %lx\n",
-			exception, frame->tf_sbadaddr);
+			exception, frame->tf_stval);
 	}
 }
 
@@ -389,6 +389,6 @@ do_trap_user(struct trapframe *frame)
 	default:
 		dump_regs(frame);
 		panic("Unknown userland exception %x, badaddr %lx\n",
-			exception, frame->tf_sbadaddr);
+			exception, frame->tf_stval);
 	}
 }
