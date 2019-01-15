@@ -60,9 +60,9 @@ ENTRY(casueword32)
 	la	a6, fsu_fault		/* Load the fault handler */
 	SET_FAULT_HANDLER(a6, a4)	/* And set it */
 	ENTER_USER_ACCESS(a4)
-1:	lr.w	a4, 0(a0)		/* Load-exclusive the data */
+1:	lr.w	a4, (a0)		/* Load-exclusive the data */
 	bne	a4, a1, 2f		/* If not equal then exit */
-	sc.w	a5, a3, 0(a0)		/* Store the new data */
+	sc.w	a5, a3, (a0)		/* Store the new data */
 	bnez	a5, 1b			/* Retry on failure */
 2:	EXIT_USER_ACCESS(a5)
 	SET_FAULT_HANDLER(x0, a5)	/* Reset the fault handler */
@@ -80,9 +80,9 @@ ENTRY(casueword)
 	la	a6, fsu_fault		/* Load the fault handler */
 	SET_FAULT_HANDLER(a6, a4)	/* And set it */
 	ENTER_USER_ACCESS(a4)
-1:	lr.d	a4, 0(a0)		/* Load-exclusive the data */
+1:	lr.d	a4, (a0)		/* Load-exclusive the data */
 	bne	a4, a1, 2f		/* If not equal then exit */
-	sc.d	a5, a3, 0(a0)		/* Store the new data */
+	sc.d	a5, a3, (a0)		/* Store the new data */
 	bnez	a5, 1b			/* Retry on failure */
 2:	EXIT_USER_ACCESS(a5)
 	SET_FAULT_HANDLER(x0, a5)	/* Reset the fault handler */
