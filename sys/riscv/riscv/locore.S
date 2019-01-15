@@ -196,57 +196,6 @@ va:
 	call	_C_LABEL(initriscv)	/* Off we go */
 	call	_C_LABEL(mi_startup)
 
-	.align  4
-initstack:
-	.space  (PAGE_SIZE * KSTACK_PAGES)
-initstack_end:
-
-ENTRY(sigcode)
-	mv	a0, sp
-	addi	a0, a0, SF_UC
-
-1:
-	li	t0, SYS_sigreturn
-	ecall
-
-	/* sigreturn failed, exit */
-	li	t0, SYS_exit
-	ecall
-
-	j	1b
-END(sigcode)
-	/* This may be copied to the stack, keep it 16-byte aligned */
-	.align	3
-esigcode:
-
-	.data
-	.align	3
-	.global	szsigcode
-szsigcode:
-	.quad	esigcode - sigcode
-
-	.align	12
-pagetable_l1:
-	.space	PAGE_SIZE
-pagetable_l2:
-	.space	PAGE_SIZE
-pagetable_l2_devmap:
-	.space	PAGE_SIZE
-
-        .align 3
-virt_map:
-        .quad   virt_map
-
-	/* Not in use, but required for linking. */
-	.align 3
-	.globl __global_pointer$
-__global_pointer$:
-	.space	8
-
-	.globl init_pt_va
-init_pt_va:
-	.quad pagetable_l2	/* XXX: Keep page tables VA */
-
 #ifndef SMP
 ENTRY(mpentry)
 1:
@@ -312,3 +261,54 @@ mpva:
 	call	init_secondary
 END(mpentry)
 #endif
+
+ENTRY(sigcode)
+	mv	a0, sp
+	addi	a0, a0, SF_UC
+
+1:
+	li	t0, SYS_sigreturn
+	ecall
+
+	/* sigreturn failed, exit */
+	li	t0, SYS_exit
+	ecall
+
+	j	1b
+END(sigcode)
+	/* This may be copied to the stack, keep it 16-byte aligned */
+	.align	3
+esigcode:
+
+	.data
+	.align	3
+	.global	szsigcode
+szsigcode:
+	.quad	esigcode - sigcode
+
+	.align	12
+pagetable_l1:
+	.space	PAGE_SIZE
+pagetable_l2:
+	.space	PAGE_SIZE
+pagetable_l2_devmap:
+	.space	PAGE_SIZE
+
+        .align 3
+virt_map:
+        .quad   virt_map
+
+	/* Not in use, but required for linking. */
+	.align 3
+	.globl __global_pointer$
+__global_pointer$:
+	.space	8
+
+	.globl init_pt_va
+init_pt_va:
+	.quad pagetable_l2	/* XXX: Keep page tables VA */
+
+	.align  4
+initstack:
+	.space  (PAGE_SIZE * KSTACK_PAGES)
+initstack_end:
