@@ -796,7 +796,9 @@ kassert_panic(const char *fmt, ...)
 #endif /* KASSERT_PANIC_OPTIONAL */
 #endif
 
-extern void nonexistent_function_so_that_panic_saves_retaddr(void);
+/* XXX: RISC-V LLD doesn't support R_RISCV_CALL with undefined weak, so use
+ * function pointer instead. */
+extern void (*nonexistent_function_so_that_panic_saves_retaddr)(void);
 #pragma weak nonexistent_function_so_that_panic_saves_retaddr
 
 /*
