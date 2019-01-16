@@ -797,9 +797,10 @@ kassert_panic(const char *fmt, ...)
 #endif
 
 /* XXX: RISC-V LLD doesn't support R_RISCV_CALL with undefined weak, so use
- * function pointer instead. */
-extern void (*nonexistent_function_so_that_panic_saves_retaddr)(void);
-#pragma weak nonexistent_function_so_that_panic_saves_retaddr
+ * NULL function pointer instead. */
+void (*nonexistent_function_so_that_panic_saves_retaddr)(void);
+//extern void nonexistent_function_so_that_panic_saves_retaddr(void);
+//#pragma weak nonexistent_function_so_that_panic_saves_retaddr
 
 /*
  * Panic is called on unresolvable fatal errors.  It prints "panic: mesg",
