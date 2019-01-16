@@ -437,7 +437,8 @@ get_elf_header(int fd, const char *path, const struct stat *sbp, const char* mai
 	}
 
 #ifndef rtld_validate_target_eflags
-#define rtld_validate_target_eflags(path, hdr, main_path) true
+#define rtld_validate_target_eflags(path, hdr, main_path) \
+	((void)path, (void)hdr, (void)main_path, true)
 #endif
 	if (!rtld_validate_target_eflags(path, hdr, main_path)) {
 		goto error;
