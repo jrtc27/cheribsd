@@ -314,7 +314,9 @@ main(int argc, char *argv[])
 			}
 		}
 
+#if RTLD_DIRECT_EXEC_TRACE_SUPPORTED == 1
 wait_for_child:
+#endif
 		if (child != -1) {
 			if (waitpid(child, &status, 0) < 0) {
 				warn("waitpid(%d)", child);
