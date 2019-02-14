@@ -16,6 +16,11 @@ CFLAGS+=	-I${SRCTOP}/contrib/cheri-libcxxrt
 CFLAGS+=	-I${SRCTOP}/contrib/libcxxrt
 .endif
 
+# Avoid __fixunsdfdi and others calling themselves
+.if ${MACHINE_ARCH:Mriscv*sf}
+CFLAGS+=	-D__SOFT_FP__
+.endif
+
 .if ${COMPILER_TYPE} == "clang"
 CWARNFLAGS.gcc_personality_v0.c+= -Wno-typedef-redefinition
 .endif
