@@ -784,7 +784,10 @@ handle_el1_sync_excp(struct hypctx *hypctx, struct vm_exit *vme_ret,
 		arm64_gen_reg_emul_data(esr_iss, vme_ret);
 		vme_ret->exitcode = VM_EXITCODE_REG_EMUL;
 		break;
-
+	case EXCP_BRK:
+		vmm_stat_incr(hypctx->vcpu, VMEXIT_BRK, 1);
+		vme_ret->exitcode = VM_EXITCODE_BRK;
+		break;
 	case EXCP_INSN_ABORT_L:
 	case EXCP_DATA_ABORT_L:
 		vmm_stat_incr(hypctx->vcpu, esr_ec == EXCP_DATA_ABORT_L ?
@@ -999,18 +1002,25 @@ vmmops_gla2gpa(void *vcpui, struct vm_guest_paging *paging, uint64_t gla,
 	 */
 	switch (granule_shift) {
 	case PAGE_SHIFT_4K:
+	case PAGE_SHIFT_16K:
 		/*
 		 * See "Table D8-11 4KB granule, determining stage 1 initial
-		 * lookup level" from the "Arm Architecture Reference Manual
-		 * for A-Profile architecture" revision I.a for the minimum
-		 * and maximum values.
+		 * lookup level" and "Table D8-21 16KB granule, determining
+		 * stage 1 initial lookup level" from the "Arm Architecture
+		 * Reference Manual for A-Profile architecture" revision I.a
+		 * for the minimum and maximum values.
+		 *
+		 * TODO: Support less than 16 when FEAT_LPA2 is implemented
+		 * and TCR_EL1.DS == 1
+		 * TODO: Support more than 39 when FEAT_TTST is implemented
 		 */
 		if (tsz < 16 || tsz > 39) {
 			*is_fault = 1;
 			return (EINVAL);
 		}
 		break;
-	/* TODO: Support non-4k granule */
+	case PAGE_SHIFT_64K:
+	/* TODO: Support 64k granule. It will probably work, but is untested */
 	default:
 		*is_fault = 1;
 		return (EINVAL);
@@ -1045,13 +1055,18 @@ vmmops_gla2gpa(void *vcpui, struct vm_guest_paging *paging, uint64_t gla,
 	for (;levels > 0; levels--) {
 		int idx;
 
-		/* TODO: ptp_hold works on host pages */
-		ptep = ptp_hold(hypctx->vcpu, pte_addr, 1 << granule_shift,
-		    &cookie);
 		pte_shift = (levels - 1) * (granule_shift - PTE_SHIFT) +
 		    granule_shift;
 		idx = (gla >> pte_shift) &
 		    ((1ul << (granule_shift - PTE_SHIFT)) - 1);
+		while (idx > PAGE_SIZE / sizeof(pte)) {
+			idx -= PAGE_SIZE / sizeof(pte);
+			pte_addr += PAGE_SIZE;
+		}
+
+		ptep = ptp_hold(hypctx->vcpu, pte_addr, PAGE_SIZE, &cookie);
+		if (ptep == NULL)
+			goto error;
 		pte = ptep[idx];
 
 		/* Calculate the level we are looking at */
@@ -1117,6 +1132,9 @@ done:
 	ptp_release(&cookie);
 	return (0);
 
+error:
+	ptp_release(&cookie);
+	return (EFAULT);
 fault:
 	*is_fault = 1;
 	ptp_release(&cookie);
@@ -1403,6 +1421,7 @@ vmmops_exception(void *vcpui, uint64_t esr, uint64_t far)
 int
 vmmops_getcap(void *vcpui, int num, int *retval)
 {
+	struct hypctx *hypctx = vcpui;
 	int ret;
 
 	ret = ENOENT;
@@ -1410,6 +1429,10 @@ vmmops_getcap(void *vcpui, int num, int *retval)
 	switch (num) {
 	case VM_CAP_UNRESTRICTED_GUEST:
 		*retval = 1;
+		ret = 0;
+		break;
+	case VM_CAP_BPT_EXIT:
+		*retval = (hypctx->mdcr_el2 & MDCR_EL2_TDE) != 0;
 		ret = 0;
 		break;
 	default:
@@ -1422,6 +1445,20 @@ vmmops_getcap(void *vcpui, int num, int *retval)
 int
 vmmops_setcap(void *vcpui, int num, int val)
 {
+	struct hypctx *hypctx = vcpui;
+	int ret;
 
-	return (ENOENT);
+	ret = ENOENT;
+
+	switch (num) {
+	case VM_CAP_BPT_EXIT:
+		if (val != 0)
+			hypctx->mdcr_el2 |= MDCR_EL2_TDE;
+		else
+			hypctx->mdcr_el2 &= ~MDCR_EL2_TDE;
+		ret = 0;
+		break;
+	}
+
+	return (ret);
 }

@@ -361,9 +361,9 @@ vm_cheri_revoke_skip_fault(vm_object_t object)
 }
 
 enum vm_cro_at {
-	VM_CHERI_REVOKE_AT_OK    = 0,
-	VM_CHERI_REVOKE_AT_TICK  = 1,
-	VM_CHERI_REVOKE_AT_VMERR = 2
+	VM_CHERI_REVOKE_AT_OK    = 0,	/* page successfully scanned */
+	VM_CHERI_REVOKE_AT_TICK  = 1,	/* VM map changed, relookup */
+	VM_CHERI_REVOKE_AT_VMERR = 2,	/* VM fault error */
 };
 
 /*
@@ -371,7 +371,9 @@ enum vm_cro_at {
  * for revocation.  The entry must have an object.
  *
  * The map must be read-locked on entry and will be read-locked on return,
- * but this lock may be dropped in the interim.
+ * but this lock may be dropped in the interim.  If the map was modified during
+ * this window, the return value will signal to the caller that it should
+ * re-lookup the current map entry.
  *
  * The entry's object must be wlocked on entry and will be returned
  * wlocked on success and unlocked on failure.  Even on success, the lock
@@ -513,6 +515,13 @@ vm_cheri_revoke_object_at(const struct vm_cheri_revoke_cookie *crc, int flags,
 		    VM_FAULT_NOFILL, &m);
 		vm_map_lock_read(map);
 
+		if (last_timestamp != map->timestamp) {
+			/*
+			 * The map has changed out from under us; bail and
+			 * the caller will look up the new map entry.
+			 */
+			return (VM_CHERI_REVOKE_AT_TICK);
+		}
 		if (res == KERN_PAGE_NOT_FILLED) {
 			/*
 			 * NOFILL did its thing, and, as far as we know, there
@@ -526,13 +535,6 @@ vm_cheri_revoke_object_at(const struct vm_cheri_revoke_cookie *crc, int flags,
 		if (res != KERN_SUCCESS) {
 			*vmres = res;
 			return (VM_CHERI_REVOKE_AT_VMERR);
-		}
-		if (last_timestamp != map->timestamp) {
-			/*
-			 * The map has changed out from under us; bail and
-			 * the caller will look up the new map entry.
-			 */
-			return (VM_CHERI_REVOKE_AT_TICK);
 		}
 
 		/*
@@ -960,7 +962,8 @@ SYSCTL_BOOL(_vm_cheri_revoke, OID_AUTO, core_shadow, CTLFLAG_RW,
 int
 vm_map_install_cheri_revoke_shadow(struct vm_map *map, struct sysentvec *sv)
 {
-	int cow = cheri_revoke_core_shadow ? 0 : MAP_DISABLE_COREDUMP;
+	int cow = MAP_CREATE_SHADOW |
+	    (cheri_revoke_core_shadow ? 0 : MAP_DISABLE_COREDUMP);
 	int error = KERN_SUCCESS;
 	bool reserved_shadow = false;
 	bool reserved_info = false;
@@ -1020,7 +1023,7 @@ vm_map_install_cheri_revoke_shadow(struct vm_map *map, struct sysentvec *sv)
 
 	error = vm_map_insert(map, vmo_info, 0, start, end_addr,
 	    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ | VM_PROT_WRITE,
-	    cow, start_addr);
+	    0, start_addr);
 
 	if (error != KERN_SUCCESS)
 		goto out;

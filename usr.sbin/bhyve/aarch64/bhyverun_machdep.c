@@ -93,6 +93,7 @@ bhyve_usage(int code)
 	    "       -C: include guest memory in core file\n"
 	    "       -c: number of CPUs and/or topology specification\n"
 	    "       -D: destroy on power-off\n"
+	    "       -G: start a debug server\n"
 	    "       -h: help\n"
 	    "       -k: key=value flat config file\n"
 	    "       -m: memory size\n"
@@ -113,7 +114,7 @@ bhyve_optparse(int argc, char **argv)
 	const char *optstr;
 	int c;
 
-	optstr = "hCDSWk:f:o:p:c:s:m:U:";
+	optstr = "hCDG:SWk:f:o:p:c:s:m:U:";
 	while ((c = getopt(argc, argv, optstr)) != -1) {
 		switch (c) {
 		case 'c':
@@ -127,6 +128,9 @@ bhyve_optparse(int argc, char **argv)
 			break;
 		case 'D':
 			set_config_bool("destroy_on_poweroff", true);
+			break;
+		case 'G':
+			bhyve_parse_gdb_options(optarg);
 			break;
 		case 'k':
 			bhyve_parse_simple_config_file(optarg);
