@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_var.h>
 #include <net/if_media.h>
 #include <net/ethernet.h>
@@ -1223,6 +1224,7 @@ void
 ieee80211_recv_bar(struct ieee80211_node *ni, struct mbuf *m0)
 {
 	struct ieee80211vap *vap = ni->ni_vap;
+	struct ifnet *ifp = vap->iv_ifp;
 	struct ieee80211_frame_bar *wh;
 	struct ieee80211_rx_ampdu *rap;
 	ieee80211_seq rxseq;
@@ -1237,6 +1239,26 @@ ieee80211_recv_bar(struct ieee80211_node *ni, struct mbuf *m0)
 		return;
 	}
 	wh = mtod(m0, struct ieee80211_frame_bar *);
+	/*
+	 * XXX: sta_input does not filter control frames, so filter irrelevant
+	 * BARs here instead as a workaround.
+	 */
+	if (!IEEE80211_ADDR_EQ(wh->i_ta, ni->ni_bssid)) {
+		IEEE80211_DISCARD_MAC(vap,
+		    IEEE80211_MSG_INPUT | IEEE80211_MSG_11N,
+		    ni->ni_macaddr, "BAR", "%s", "not to bss");
+		vap->iv_stats.is_ampdu_bar_bad++;
+		return;
+	}
+	if (!IEEE80211_IS_MULTICAST(wh->i_ra) &&
+	    !IEEE80211_ADDR_EQ(wh->i_ra, IF_LLADDR(ifp))) {
+		IEEE80211_DISCARD_MAC(vap,
+		    IEEE80211_MSG_INPUT | IEEE80211_MSG_11N,
+		    ni->ni_macaddr, "BAR", "not to cur sta: lladdr=%6D, RA=%6D",
+		    IF_LLADDR(ifp), wh->i_ra);
+		vap->iv_stats.is_ampdu_bar_bad++;
+		return;
+	}
 	/* XXX check basic BAR */
 	tid = _IEEE80211_MASKSHIFT(le16toh(wh->i_ctl), IEEE80211_BAR_TID);
 	rap = &ni->ni_rx_ampdu[tid];
