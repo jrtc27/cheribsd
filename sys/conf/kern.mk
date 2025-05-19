@@ -171,6 +171,14 @@ CFLAGS+=	-mabi=aapcs
 .endif
 .endif
 
+.if ${MACHINE_ABI:Mpurecap}
+.if ${OPT_CHERI_TGOT_TLS} == "yes"
+CFLAGS+=	-cheri-tgot-tls
+.elif ${OPT_CHERI_TGOT_TLS} == "compat"
+CFLAGS+=	-cheri-tgot-tls=compat
+.endif
+.endif
+
 #
 # For RISC-V we specify the soft-float ABI (lp64) to avoid the use of floating
 # point registers within the kernel. However, we include the F and D extensions

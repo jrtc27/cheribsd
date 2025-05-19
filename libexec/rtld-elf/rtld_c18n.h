@@ -271,9 +271,15 @@ void *_rtld_sandbox_code(void *, struct func_sig);
 void *_rtld_safebox_code(void *, struct func_sig);
 
 void _rtld_bind_start_c18n(void);
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 void *_rtld_tlsdesc_static_c18n(void *);
 void *_rtld_tlsdesc_undef_c18n(void *);
 void *_rtld_tlsdesc_dynamic_c18n(void *);
+#endif
+#ifdef TLS_TGOT
+void *_rtld_tgot_tlsdesc_static_c18n(void *);
+void *_rtld_tgot_tlsdesc_dynamic_c18n(void *);
+#endif
 
 void c18n_init(Obj_Entry *, Elf_Auxinfo *[]);
 void c18n_init2(Obj_Entry *);

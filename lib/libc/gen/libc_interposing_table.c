@@ -44,7 +44,12 @@ interpos_func_t __libc_interposing[INTERPOS_MAX] = {
 #ifndef __CHERI_PURE_CAPABILITY__
 	SLOT(map_stacks_exec, __libc_map_stacks_exec),
 #endif
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 	SLOT(distribute_static_tls, __libc_distribute_static_tls),
+#endif
+#ifdef TLS_TGOT
+	SLOT(iterate_tcb, __libc_iterate_tcb),
+#endif
 };
 #undef SLOT
 

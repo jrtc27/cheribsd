@@ -142,12 +142,28 @@ uintptr_t reloc_jmpslot(uintptr_t *where, uintptr_t target,
 
 #define	round(size, align)				\
 	(((size) + (align) - 1) & ~((align) - 1))
+
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 #define	calculate_first_tls_offset(size, align, offset)	\
 	round(TLS_TCB_SIZE, align)
 #define	calculate_tls_offset(prev_offset, prev_size, size, align, offset) \
 	round(prev_offset + prev_size, align)
 #define calculate_tls_post_size(align) \
 	round(TLS_TCB_SIZE, align) - TLS_TCB_SIZE
+#endif
+
+#ifdef TLS_TGOT
+#ifdef TLS_TGOT_COMPAT
+size_t calculate_first_tgot_offset(size_t size, size_t align, size_t offset);
+size_t calculate_tgot_offset(size_t prev_offset, size_t prev_size, size_t size,
+    size_t align, size_t offset);
+#else
+#define	calculate_first_tgot_offset(size, align, offset)	\
+	round(TLS_TCB_SIZE, align)
+#define	calculate_tgot_offset(prev_offset, prev_size, size, align, offset) \
+	round(prev_offset + prev_size, align)
+#endif
+#endif
 
 typedef struct {
     unsigned long ti_module;

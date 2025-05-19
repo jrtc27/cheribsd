@@ -363,6 +363,7 @@ _thr_find_thread(struct pthread *curthread, struct pthread *thread,
 
 #include "pthread_tls.h"
 
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 static void
 thr_distribute_static_tls(uintptr_t tlsbase, void *src, size_t len,
     size_t total_len)
@@ -392,3 +393,22 @@ __pthread_distribute_static_tls(size_t offset, void *src, size_t len,
 	}
 	THREAD_LIST_UNLOCK(curthread);
 }
+#endif
+
+#ifdef TLS_TGOT
+void
+__pthread_iterate_tcb(void (*cb)(struct tcb *, void *), void *data)
+{
+	struct pthread *curthread, *thrd;
+
+	if (!_thr_is_inited()) {
+		cb(_tcb_get(), data);
+		return;
+	}
+	curthread = _get_curthread();
+	THREAD_LIST_RDLOCK(curthread);
+	TAILQ_FOREACH(thrd, &_thread_list, tle)
+		cb(thrd->tcb, data);
+	THREAD_LIST_UNLOCK(curthread);
+}
+#endif

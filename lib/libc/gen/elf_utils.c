@@ -118,6 +118,7 @@ __pthread_map_stacks_exec(void)
 }
 #endif
 
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 void
 __libc_distribute_static_tls(size_t offset, void *src, size_t len,
     size_t total_len)
@@ -138,3 +139,20 @@ __pthread_distribute_static_tls(size_t offset, void *src, size_t len,
 	((void (*)(size_t, void *, size_t, size_t))__libc_interposing[
 	    INTERPOS_distribute_static_tls])(offset, src, len, total_len);
 }
+#endif
+
+#ifdef TLS_TGOT
+void
+__libc_iterate_tcb(void (*cb)(struct tcb *, void *), void *data)
+{
+	cb(_tcb_get(), data);
+}
+
+#pragma weak __pthread_iterate_tcb
+void
+__pthread_iterate_tcb(void (*cb)(struct tcb *, void *), void *data)
+{
+	((void (*)(void (*)(struct tcb *, void *), void *))__libc_interposing[
+	    INTERPOS_iterate_tcb])(cb, data);
+}
+#endif

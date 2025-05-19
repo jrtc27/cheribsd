@@ -96,6 +96,16 @@ struct dlerror_save {
 	char *msg;
 };
 
+#ifdef TLS_TGOT
+struct dtv_defer_slot {
+	struct dtv_slot			slot;
+	int				index;
+	SLIST_ENTRY(dtv_defer_slot)	next;
+};
+
+SLIST_HEAD(dtv_defer, dtv_defer_slot);
+#endif
+
 /*
  * Function declarations.
  */
@@ -106,7 +116,12 @@ static bool digest_dynamic1(Obj_Entry *, int, const Elf_Dyn **,
 static bool digest_dynamic2(Obj_Entry *, const Elf_Dyn *, const Elf_Dyn *,
     const Elf_Dyn *);
 static Obj_Entry *digest_phdr(const Elf_Phdr *, int, dlfunc_t, const char *);
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 static void distribute_static_tls(Objlist *, RtldLockState *);
+#endif
+#ifdef TLS_TGOT
+static void distribute_static_tgot(Objlist *, RtldLockState *);
+#endif
 static Obj_Entry *dlcheck(void *);
 static int dlclose_locked(void *, RtldLockState *);
 static Obj_Entry *dlopen_object(const char *name, int fd, Obj_Entry *refobj,
@@ -186,7 +201,6 @@ static int symlook_list(SymLook *, const Objlist *, DoneList *);
 static int symlook_needed(SymLook *, const Needed_Entry *, DoneList *);
 static int symlook_obj1_sysv(SymLook *, const Obj_Entry *);
 static int symlook_obj1_gnu(SymLook *, const Obj_Entry *);
-static void *tls_get_addr_slow(struct dtv **, int, size_t, bool) __noinline;
 static void trace_loaded_objects(Obj_Entry *, bool);
 static void unlink_object(Obj_Entry *);
 static void unload_object(Obj_Entry *, RtldLockState *lockstate);
@@ -203,7 +217,7 @@ static void object_add_name(Obj_Entry *, const char *);
 static int  object_match_name(const Obj_Entry *, const char *);
 static void ld_utrace_log(int, void *, void *, size_t, int, const char *);
 static void rtld_fill_dl_phdr_info(const Obj_Entry *obj,
-    struct dl_phdr_info *phdr_info);
+    struct dl_phdr_info *phdr_info, RtldLockState *lockstate);
 static uint32_t gnu_hash(const char *);
 static bool matched_symbol(SymLook *, const Obj_Entry *, Sym_Match_Result *,
     const unsigned long);
@@ -245,6 +259,10 @@ static unsigned int obj_count;	/* Number of objects in obj_list */
 static unsigned int obj_loads;	/* Number of loads of objects (gen count) */
 size_t ld_static_tls_extra =	/* Static TLS extra space (bytes) */
   RTLD_STATIC_TLS_EXTRA;
+#ifdef TLS_TGOT
+size_t ld_static_tgot_extra =	/* Static TGOT extra space (bytes) */
+  RTLD_STATIC_TGOT_EXTRA;
+#endif
 
 static Objlist list_global =	/* Objects dlopened with RTLD_GLOBAL */
   STAILQ_HEAD_INITIALIZER(list_global);
@@ -276,6 +294,7 @@ int _rtld_addr_phdr(const void *, struct dl_phdr_info *) __exported;
 int _rtld_get_stack_prot(void) __exported;
 int _rtld_is_dlopened(void *) __exported;
 void _rtld_error(const char *, ...) __exported __printflike(1, 2);
+void *_rtld_tls_get_block(unsigned long) __exported;
 
 /* Only here to fix -Wmissing-prototypes warnings */
 int __getosreldate(void);
@@ -314,10 +333,18 @@ char **main_argv;
 /*
  * Globals to control TLS allocation.
  */
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 size_t tls_last_offset;		/* Static TLS offset of last module */
 size_t tls_last_size;		/* Static TLS size of last module */
 size_t tls_static_space;	/* Static TLS space allocated */
 static size_t tls_static_max_align;
+#endif
+#ifdef TLS_TGOT
+size_t tgot_last_offset;	/* Static TGOT offset of last module */
+size_t tgot_last_size;		/* Static TGOT size of last module */
+size_t tgot_static_space;	/* Static TGOT space allocated */
+static size_t tgot_static_max_align;
+#endif
 Elf_Addr tls_dtv_generation = 1;	/* Used to detect when dtv size changes */
 int tls_max_index = 1;		/* Largest module index allocated */
 
@@ -561,7 +588,8 @@ _rtld(Elf_Addr *sp, func_ptr_type *exit_proc, Obj_Entry **objp)
     struct stat st;
     Elf_Addr *argcp;
     char **argv, **env, *kexecpath;
-    const char *argv0, *binpath, *library_path_rpath, *static_tls_extra;
+    const char *argv0, *binpath, *library_path_rpath, *static_tls_extra,
+	*static_tgot_extra;
     struct ld_env_var_desc *lvd;
 #ifndef __CHERI_PURE_CAPABILITY__
     char **envp;
@@ -817,10 +845,20 @@ _rtld(Elf_Addr *sp, func_ptr_type *exit_proc, Obj_Entry **objp)
 	if (sz >= RTLD_STATIC_TLS_EXTRA && sz <= SIZE_T_MAX)
 	    ld_static_tls_extra = sz;
     }
+#ifdef TLS_TGOT
+    static_tgot_extra = ld_get_env_var(LD_STATIC_TGOT_EXTRA);
+    if (static_tgot_extra != NULL && static_tgot_extra[0] != '\0') {
+	sz = parse_integer(static_tgot_extra);
+	if (sz >= RTLD_STATIC_TGOT_EXTRA && sz <= SIZE_T_MAX)
+	    ld_static_tgot_extra = sz;
+    }
+#else
+    static_tgot_extra = NULL;
+#endif
     dangerous_ld_env = libmap_disable || libmap_override != NULL ||
 	ld_library_path != NULL || ld_preload != NULL ||
 	ld_elf_hints_path != NULL || ld_loadfltr || !ld_dynamic_weak ||
-	static_tls_extra != NULL;
+	static_tls_extra != NULL || static_tgot_extra != NULL;
     if (!ld_tracing)
 	ld_tracing = ld_get_env_var(LD_TRACE_LOADED_OBJECTS);
     ld_utrace = ld_get_env_var(LD_UTRACE);
@@ -1054,7 +1092,12 @@ _rtld(Elf_Addr *sp, func_ptr_type *exit_proc, Obj_Entry **objp)
 	 * Allocate all the initial objects out of the static TLS
 	 * block even if they didn't ask for it.
 	 */
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 	allocate_tls_offset(entry->obj);
+#endif
+#ifdef TLS_TGOT
+	allocate_tgot_offset(entry->obj);
+#endif
     }
 
     if (relocate_objects(obj_main,
@@ -1600,6 +1643,9 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
     unsigned long i, jmprel, pltrelsz, pltgot;
     int bloom_size32;
     int plttype = DT_REL;
+#ifdef TLS_TGOT
+    int tgottype = DT_REL;
+#endif
 
     jmprel = pltrelsz = pltgot = 0;
     *dyn_rpath = NULL;
@@ -1681,6 +1727,34 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 	case DT_SYMENT:
 	    assert(dynp->d_un.d_val == sizeof(Elf_Sym));
 	    break;
+
+	case DT_CHERI_TGOTREL:
+#ifdef TLS_TGOT
+	    obj->tgotrel = (const Elf_Rel *)
+	      (obj->relocbase + dynp->d_un.d_ptr);
+	    break;
+#else
+	    _rtld_error("%s: TGOT not supported", obj->path);
+	    return (false);
+#endif
+
+	case DT_CHERI_TGOTRELSZ:
+#ifdef TLS_TGOT
+	    obj->tgotrelsize = dynp->d_un.d_val;
+	    break;
+#else
+	    _rtld_error("%s: TGOT not supported", obj->path);
+	    return (false);
+#endif
+
+	case DT_CHERI_TGOTRELT:
+#ifdef TLS_TGOT
+	    tgottype = dynp->d_un.d_val;
+	    break;
+#else
+	    _rtld_error("%s: TGOT not supported", obj->path);
+	    return (false);
+#endif
 
 #ifdef CHERI_LIB_C18N
 	case DT_CHERI_C18N_SIG:
@@ -1883,8 +1957,14 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 		    obj->textrel = true;
 		if (dynp->d_un.d_val & DF_BIND_NOW)
 		    obj->bind_now = true;
-		if (dynp->d_un.d_val & DF_STATIC_TLS)
+		if (dynp->d_un.d_val & DF_STATIC_TLS) {
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 		    obj->static_tls = true;
+#endif
+#ifdef TLS_TGOT
+		    obj->static_tgot = true;
+#endif
+		}
 	    break;
 
 #ifdef RTLD_HAS_CAPRELOCS
@@ -1958,6 +2038,15 @@ digest_dynamic1(Obj_Entry *obj, int early, const Elf_Dyn **dyn_rpath,
 	    plt->relsize = 0;
 	}
     }
+
+#ifdef TLS_TGOT
+    if (tgottype == DT_RELA) {
+	obj->tgotrela = (const Elf_Rela *)obj->tgotrel;
+	obj->tgotrel = NULL;
+	obj->tgotrelasize = obj->tgotrelsize;
+	obj->tgotrelsize = 0;
+    }
+#endif
 
     /* Determine size of dynsym table (equal to nchains of sysv hash) */
     if (obj->valid_hash_sysv)
@@ -2136,6 +2225,21 @@ digest_phdr(const Elf_Phdr *phdr, int phnum, dlfunc_t entry, const char *path)
 	    obj->tlsinit = (void*)(ph->p_vaddr + obj->relocbase);
 	    obj->tlspoffset = ph->p_offset;
 	    break;
+
+	case PT_CHERI_TGOT:
+#ifdef TLS_TGOT
+	    obj->tlsindex = 1;
+	    obj->tgotsize = ph->p_memsz;
+	    obj->tgotalign = ph->p_align;
+	    obj->tgotinitsize = ph->p_filesz;
+	    obj->tgotinit = (void *)(ph->p_vaddr + obj->relocbase);
+	    obj->tgotpoffset = ph->p_offset;
+	    break;
+#else
+	    _rtld_error("%s: TGOT not supported", path);
+	    obj_free(obj);
+	    return (NULL);
+#endif
 
 	case PT_GNU_STACK:
 #ifdef __CHERI_PURE_CAPABILITY__
@@ -4361,12 +4465,22 @@ dlopen_object(const char *name, int fd, Obj_Entry *refobj, int lo_flags,
 	    if ((lo_flags & RTLD_LO_DEEPBIND) != 0)
 		obj->deepbind = true;
 	    result = 0;
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 	    if ((lo_flags & (RTLD_LO_EARLY | RTLD_LO_IGNSTLS)) == 0 &&
 	      obj->static_tls && !allocate_tls_offset(obj)) {
 		_rtld_error("%s: No space available "
 		  "for static Thread Local Storage", obj->path);
 		result = -1;
 	    }
+#endif
+#ifdef TLS_TGOT
+	    if ((lo_flags & (RTLD_LO_EARLY | RTLD_LO_IGNSTLS)) == 0 &&
+	      obj->static_tgot && !allocate_tgot_offset(obj)) {
+		_rtld_error("%s: No space available "
+		  "for static Thread Global Offset Table", obj->path);
+		result = -1;
+	    }
+#endif
 	    if (result != -1)
 		result = load_needed_objects(obj, lo_flags & (RTLD_LO_DLOPEN |
 		  RTLD_LO_EARLY | RTLD_LO_IGNSTLS | RTLD_LO_TRACE));
@@ -4433,8 +4547,14 @@ dlopen_object(const char *name, int fd, Obj_Entry *refobj, int lo_flags,
 #ifndef __CHERI_PURE_CAPABILITY__
 	map_stacks_exec(lockstate);
 #endif
-	if (obj != NULL)
+	if (obj != NULL) {
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 	    distribute_static_tls(&initlist, lockstate);
+#endif
+#ifdef TLS_TGOT
+	    distribute_static_tgot(&initlist, lockstate);
+#endif
+	}
     }
 
     if (initlist_objects_ifunc(&initlist, (mode & RTLD_MODEMASK) == RTLD_NOW,
@@ -4471,7 +4591,6 @@ do_dlsym(void *handle, const char *name, void *retaddr, const Ver_Entry *ve,
     const Elf_Sym *def;
     SymLook req;
     RtldLockState lockstate;
-    tls_index ti;
     void *sym;
     int res;
 
@@ -4603,9 +4722,7 @@ do_dlsym(void *handle, const char *name, void *retaddr, const Ver_Entry *ve,
 	    sym = rtld_resolve_ifunc(defobj, def);
 	    dbg("dlsym(%s) is ifunc. Resolved to: " PTR_FMT, name, sym);
 	} else if (ELF_ST_TYPE(def->st_info) == STT_TLS) {
-	    ti.ti_module = defobj->tlsindex;
-	    ti.ti_offset = def->st_value - TLS_DTV_OFFSET;
-	    sym = __tls_get_addr(&ti);
+	    sym = (char *)_rtld_tls_get_block(defobj->tlsindex) + def->st_value;
 	    /* CHERI-RISC-V ABI does not yet set TLS bounds; mirror in dlsym */
 #if !defined(__riscv) && defined(__CHERI_PURE_CAPABILITY__)
 	    sym = cheri_setbounds(sym, def->st_size);
@@ -4681,7 +4798,7 @@ _rtld_addr_phdr(const void *addr, struct dl_phdr_info *phdr_info)
 	lock_release(rtld_bind_lock, &lockstate);
         return (0);
     }
-    rtld_fill_dl_phdr_info(obj, phdr_info);
+    rtld_fill_dl_phdr_info(obj, phdr_info, &lockstate);
     lock_release(rtld_bind_lock, &lockstate);
     return (1);
 }
@@ -4807,7 +4924,8 @@ dlinfo(void *handle, int request, void *p)
 }
 
 static void
-rtld_fill_dl_phdr_info(const Obj_Entry *obj, struct dl_phdr_info *phdr_info)
+rtld_fill_dl_phdr_info(const Obj_Entry *obj, struct dl_phdr_info *phdr_info,
+    RtldLockState *lockstate)
 {
 	struct dtv **dtvp;
 
@@ -4824,8 +4942,8 @@ rtld_fill_dl_phdr_info(const Obj_Entry *obj, struct dl_phdr_info *phdr_info)
 	phdr_info->dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
 	phdr_info->dlpi_tls_modid = obj->tlsindex;
 	dtvp = &_tcb_get()->tcb_dtv;
-	phdr_info->dlpi_tls_data = (char *)tls_get_addr_slow(dtvp,
-	    obj->tlsindex, 0, true);
+	phdr_info->dlpi_tls_data = (char *)tls_get_block(dtvp, obj->tlsindex,
+	    false, true, lockstate);
 	phdr_info->dlpi_adds = obj_loads;
 	phdr_info->dlpi_subs = obj_loads - obj_count;
 }
@@ -4859,7 +4977,7 @@ dl_iterate_phdr(__dl_iterate_hdr_callback callback, void *param)
 	wlock_acquire(rtld_bind_lock, &bind_lockstate);
 	for (obj = globallist_curr(TAILQ_FIRST(&obj_list)); obj != NULL;) {
 		TAILQ_INSERT_AFTER(&obj_list, obj, &marker, next);
-		rtld_fill_dl_phdr_info(obj, &phdr_info);
+		rtld_fill_dl_phdr_info(obj, &phdr_info, &bind_lockstate);
 		hold_object(obj);
 		lock_release(rtld_bind_lock, &bind_lockstate);
 
@@ -4877,7 +4995,7 @@ dl_iterate_phdr(__dl_iterate_hdr_callback callback, void *param)
 	}
 
 	if (error == 0) {
-		rtld_fill_dl_phdr_info(&obj_rtld, &phdr_info);
+		rtld_fill_dl_phdr_info(&obj_rtld, &phdr_info, &bind_lockstate);
 		lock_release(rtld_bind_lock, &bind_lockstate);
 		error = callback(&phdr_info, sizeof(phdr_info), param);
 	}
@@ -5456,7 +5574,7 @@ matched_symbol(SymLook *req, const Obj_Entry *obj, Sym_Match_Result *result,
 	case STT_OBJECT:
 	case STT_COMMON:
 	case STT_GNU_IFUNC:
-		if (symp->st_value == 0)
+		if (symp->st_value == 0 || (req->flags & SYMLOOK_IN_TGOT) != 0)
 			return (false);
 		/* fallthrough */
 	case STT_TLS:
@@ -5852,18 +5970,53 @@ unref_dag(Obj_Entry *root)
 /*
  * Common code for MD __tls_get_addr().
  */
-static void *
-tls_get_addr_slow(struct dtv **dtvp, int index, size_t offset, bool locked)
+static __noinline struct dtv_slot *
+tls_get_slot_slow(struct dtv **dtvp, int index, bool remote __unused,
+    bool locked, RtldLockState *lockstate, bool block __unused)
 {
 	struct dtv *newdtv, *dtv;
-	RtldLockState lockstate;
+	RtldLockState lockstatetmp;
+	struct dtv_slot *slot;
 	int to_copy;
+#ifdef TLS_TGOT
+	struct dtv_defer_slot *defer, *ndefer;
+#endif
+
+	if (lockstate == NULL && !locked)
+		lockstate = &lockstatetmp;
+
+#ifndef TLS_TGOT
+	assert(!remote);
+#endif
 
 	dtv = *dtvp;
-	/* Check dtv generation in case new modules have arrived */
+	slot = NULL;
+	/*
+	 * Check dtv generation in case new modules have arrived, but only if
+	 * this is a non-remote request. If it's a remote request, this is for
+	 * distribute_static_tgot, and we can't reallocate another thread's DTV
+	 * in case it's in a resolver reading it without taking the bind lock.
+	 */
+#ifdef TLS_TGOT
+	if (remote) {
+		if (dtv->dtv_gen != tls_dtv_generation &&
+		    (size_t)index > dtv->dtv_size) {
+			if (dtv->dtv_defer == NULL)
+				dtv->dtv_defer = xcalloc(1, sizeof(struct dtv_defer));
+			SLIST_FOREACH(defer, dtv->dtv_defer, next)
+				if (defer->index == index)
+					break;
+			if (defer == NULL) {
+				defer = xcalloc(1, sizeof(struct dtv_defer_slot));
+				SLIST_INSERT_HEAD(dtv->dtv_defer, defer, next);
+			}
+			slot = &defer->slot;
+		}
+	} else
+#endif
 	if (dtv->dtv_gen != tls_dtv_generation) {
 		if (!locked)
-			wlock_acquire(rtld_bind_lock, &lockstate);
+			wlock_acquire(rtld_bind_lock, lockstate);
 		newdtv = xcalloc(1, sizeof(struct dtv) + tls_max_index *
 		    sizeof(struct dtv_slot));
 		to_copy = dtv->dtv_size;
@@ -5873,51 +6026,145 @@ tls_get_addr_slow(struct dtv **dtvp, int index, size_t offset, bool locked)
 		    sizeof(struct dtv_slot));
 		newdtv->dtv_gen = tls_dtv_generation;
 		newdtv->dtv_size = tls_max_index;
+#ifdef TLS_TGOT
+		if (dtv->dtv_defer != NULL) {
+			SLIST_FOREACH_SAFE(defer, dtv->dtv_defer, next,
+			    ndefer) {
+				dtv->dtv_slots[defer->index - 1] = defer->slot;
+				free(defer);
+			}
+			free(dtv->dtv_defer);
+		}
+#endif
 		free(dtv);
 		if (!locked)
-			lock_release(rtld_bind_lock, &lockstate);
+			lock_release(rtld_bind_lock, lockstate);
 		dtv = *dtvp = newdtv;
 	}
 
-	/* Dynamically allocate module TLS if necessary */
-	if (dtv->dtv_slots[index - 1].dtvs_tls == 0) {
+	if (slot == NULL)
+		slot = &dtv->dtv_slots[index - 1];
+
+	/* Dynamically allocate module TLS/TGOT if necessary */
+	if (
+#ifdef TLS_TGOT
+	    !block ? slot->dtvs_tgot == 0 :
+#endif
+	    slot->dtvs_tls == 0
+	    ) {
 		/* Signal safe, wlock will block out signals. */
 		if (!locked)
-			wlock_acquire(rtld_bind_lock, &lockstate);
-		if (!dtv->dtv_slots[index - 1].dtvs_tls)
-			dtv->dtv_slots[index - 1].dtvs_tls =
-			    allocate_module_tls(index);
+			wlock_acquire(rtld_bind_lock, lockstate);
+#ifdef TLS_TGOT
+		if (!block) {
+			if (!slot->dtvs_tgot)
+				slot->dtvs_tgot = allocate_module_tgot(dtvp,
+				    index, remote, lockstate);
+		} else
+#endif
+		{
+			if (!slot->dtvs_tls)
+				slot->dtvs_tls = allocate_module_tls(index);
+		}
 		if (!locked)
-			lock_release(rtld_bind_lock, &lockstate);
+			lock_release(rtld_bind_lock, lockstate);
 	}
-	return (dtv->dtv_slots[index - 1].dtvs_tls + offset);
+
+	return (slot);
+}
+
+static __always_inline struct dtv_slot *
+tls_get_slot(struct dtv **dtvp, int index, bool remote, bool locked,
+    RtldLockState *lockstate, bool block)
+{
+	struct dtv *dtv;
+
+	dtv = *dtvp;
+	/* Check dtv generation in case new modules have arrived */
+	if (__predict_true(dtv->dtv_gen == tls_dtv_generation && (
+#ifdef TLS_TGOT
+	    !block ? dtv->dtv_slots[index - 1].dtvs_tgot != 0 :
+#endif
+	    dtv->dtv_slots[index - 1].dtvs_tls != 0)))
+		return (&dtv->dtv_slots[index - 1]);
+
+	return (tls_get_slot_slow(dtvp, index, remote, locked, lockstate,
+	    block));
 }
 
 void *
 tls_get_addr_common(struct dtv **dtvp, int index, size_t offset)
 {
-	struct dtv *dtv;
-	void *ret;
-
-	dtv = *dtvp;
-	/* Check dtv generation in case new modules have arrived */
-	if (__predict_true(dtv->dtv_gen == tls_dtv_generation &&
-	    dtv->dtv_slots[index - 1].dtvs_tls != 0))
-		return (dtv->dtv_slots[index - 1].dtvs_tls + offset);
-
 #ifdef CHERI_LIB_C18N
 	struct trusted_frame *tf;
+#endif
+	struct dtv_slot *slot;
 
+#ifdef CHERI_LIB_C18N
 	if (C18N_ENABLED)
 		tf = push_dummy_rtld_trusted_frame(get_trusted_stk());
 #endif
-	ret = tls_get_addr_slow(dtvp, index, offset, false);
+
+	slot = tls_get_slot(dtvp, index, false, false, NULL, false);
+
 #ifdef CHERI_LIB_C18N
 	if (C18N_ENABLED)
 		tf = pop_dummy_rtld_trusted_frame(tf);
 #endif
-	return (ret);
+
+#ifdef TLS_TGOT
+	return (*(void **)(slot->dtvs_tgot + offset));
+#else
+	return (slot->dtvs_tls + offset);
+#endif
 }
+
+#ifdef TLS_TGOT_COMPAT
+void *
+tls_get_addr_common_block(struct dtv **dtvp, int index, size_t offset)
+{
+#ifdef CHERI_LIB_C18N
+	struct trusted_frame *tf;
+#endif
+	struct dtv_slot *slot;
+
+#ifdef CHERI_LIB_C18N
+	if (C18N_ENABLED)
+		tf = push_dummy_rtld_trusted_frame(get_trusted_stk());
+#endif
+
+	slot = tls_get_slot(dtvp, index, false, false, NULL, true);
+
+#ifdef CHERI_LIB_C18N
+	if (C18N_ENABLED)
+		tf = pop_dummy_rtld_trusted_frame(tf);
+#endif
+
+	return (slot->dtvs_tls + offset);
+}
+#endif
+
+void *
+tls_get_block(struct dtv **dtvp, unsigned long index, bool remote,
+    bool locked, RtldLockState *lockstate)
+{
+	struct dtv_slot *slot;
+
+	slot = tls_get_slot(dtvp, index, remote, locked, lockstate, true);
+	return (slot->dtvs_tls);
+}
+
+void *
+_rtld_tls_get_block(unsigned long index)
+{
+	struct dtv **dtvp;
+
+	dtvp = &_tcb_get()->tcb_dtv;
+	return (tls_get_block(dtvp, index, false, false, NULL));
+}
+
+#if defined(TLS_TGOT) && !defined(TLS_TGOT_COMPAT)
+#endif	/* defined(TLS_TGOT) && !defined(TLS_TGOT_COMPAT) */
 
 #ifdef TLS_VARIANT_I
 
@@ -5925,9 +6172,9 @@ tls_get_addr_common(struct dtv **dtvp, int index, size_t offset)
  * Return pointer to allocated TLS block
  */
 static void *
-get_tls_block_ptr(void *tcb, size_t tcbsize)
+get_tls_block_ptr(void *tcb, size_t tcbsize, size_t tcbalign __unused)
 {
-    size_t extra_size, post_size, pre_size, tls_block_size;
+    size_t extra_size, post_size, pre_size, tls_block_size, tgot_size;
     size_t tls_init_align;
 
     tls_init_align = rtld_max(obj_main->tlsalign, 1);
@@ -5937,9 +6184,23 @@ get_tls_block_ptr(void *tcb, size_t tcbsize)
     post_size = calculate_tls_post_size(tls_init_align);
     tls_block_size = tcbsize + post_size;
     pre_size = roundup2(tls_block_size, tls_init_align) - tls_block_size;
+#ifdef TLS_TGOT
+    tgot_size = roundup2(tgot_static_space + ld_static_tgot_extra,
+	rtld_max(tcbalign, tls_static_max_align));
+#else
+    tgot_size = 0;
+#endif
 
-    return ((char *)tcb - pre_size - extra_size);
+    return ((char *)tcb - tgot_size - pre_size - extra_size);
 }
+
+#ifdef TLS_TGOT
+static void *
+get_tgot_ptr(void *tcb, size_t tcbsize, size_t tcbalign)
+{
+	return (get_tls_block_ptr(tcb, tcbsize, tcbalign));
+}
+#endif
 
 /*
  * Allocate Static TLS using the Variant I method.
@@ -5952,7 +6213,8 @@ get_tls_block_ptr(void *tcb, size_t tcbsize)
  *     TLS segment.
  */
 void *
-allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
+allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign,
+    RtldLockState *lockstate __unused)
 {
     Obj_Entry *obj;
     char *tls_block;
@@ -5960,8 +6222,12 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
     struct tcb *tcb;
     char *addr;
     size_t i;
-    size_t extra_size, maxalign, post_size, pre_size, tls_block_size;
+    size_t extra_size, maxalign, post_size, pre_size, tls_block_size,
+	tgot_size;
     size_t tls_init_align, tls_init_offset;
+#ifdef TLS_TGOT
+    size_t tgot_init_offset;
+#endif
 
     if (oldtcb != NULL && tcbsize == TLS_TCB_SIZE)
 	return (oldtcb);
@@ -5969,22 +6235,29 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
     assert(tcbsize >= TLS_TCB_SIZE);
     maxalign = rtld_max(tcbalign, tls_static_max_align);
     tls_init_align = rtld_max(obj_main->tlsalign, 1);
+#ifdef TLS_TGOT
+    tgot_size = roundup2(tgot_static_space + ld_static_tgot_extra, maxalign);
+    maxalign = rtld_max(maxalign, tgot_static_max_align);
+#else
+    tgot_size = 0;
+#endif
 
     /* Compute fragmets sizes. */
     extra_size = tcbsize - TLS_TCB_SIZE;
     post_size = calculate_tls_post_size(tls_init_align);
     tls_block_size = tcbsize + post_size;
     pre_size = roundup2(tls_block_size, tls_init_align) - tls_block_size;
-    tls_block_size += pre_size + tls_static_space - TLS_TCB_SIZE - post_size;
+    tls_block_size += tgot_size + pre_size + tls_static_space - TLS_TCB_SIZE -
+	post_size;
 
     /* Allocate whole TLS block */
     tls_block = xmalloc_aligned(tls_block_size, maxalign, 0);
-    tcb = (struct tcb *)(tls_block + pre_size + extra_size);
+    tcb = (struct tcb *)(tls_block + tgot_size + pre_size + extra_size);
 
     if (oldtcb != NULL) {
-	memcpy(tls_block, get_tls_block_ptr(oldtcb, tcbsize),
+	memcpy(tls_block, get_tls_block_ptr(oldtcb, tcbsize, tcbalign),
 	    tls_static_space);
-	free(get_tls_block_ptr(oldtcb, tcbsize));
+	free(get_tls_block_ptr(oldtcb, tcbsize, tcbalign));
 
 	/* Adjust the DTV. */
 	dtv = tcb->tcb_dtv;
@@ -5993,10 +6266,30 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 		(uintptr_t)oldtcb &&
 		(uintptr_t)dtv->dtv_slots[i].dtvs_tls <
 		(uintptr_t)oldtcb + tls_static_space) {
-		dtv->dtv_slots[i].dtvs_tls = (char *)tcb +
+		addr = (char *)tcb +
 		    (dtv->dtv_slots[i].dtvs_tls -
 		    (char *)oldtcb);
+#if defined(TLS_TGOT) && defined(__CHERI_PURE_CAPABILITY__)
+		addr = cheri_setbounds(addr,
+		    cheri_getlen(dtv->dtv_slots[i].dtvs_tls));
+#endif
+		dtv->dtv_slots[i].dtvs_tls = addr;
 	    }
+#ifdef TLS_TGOT
+	    if ((uintptr_t)dtv->dtv_slots[i].dtvs_tgot >=
+		(uintptr_t)get_tgot_ptr(oldtcb, tcbsize, tcbalign) &&
+		(uintptr_t)dtv->dtv_slots[i].dtvs_tgot <
+		(uintptr_t)oldtcb) {
+		addr = (char *)tcb +
+		    (dtv->dtv_slots[i].dtvs_tgot -
+		    (char *)oldtcb);
+#ifdef __CHERI_PURE_CAPABILITY__
+		addr = cheri_setbounds(addr,
+		    cheri_getlen(dtv->dtv_slots[i].dtvs_tgot));
+#endif
+		dtv->dtv_slots[i].dtvs_tgot = addr;
+	    }
+#endif
 	}
     } else {
 	dtv = xcalloc(1, sizeof(struct dtv) + tls_max_index *
@@ -6011,6 +6304,9 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 		continue;
 	    tls_init_offset = obj->tlspoffset & (obj->tlsalign - 1);
 	    addr = (char *)tcb + obj->tlsoffset;
+#if defined(TLS_TGOT) && defined(__CHERI_PURE_CAPABILITY__)
+	    addr = cheri_setbounds(addr, obj->tlssize);
+#endif
 	    if (tls_init_offset > 0)
 		memset(addr, 0, tls_init_offset);
 	    if (obj->tlsinitsize > 0) {
@@ -6023,18 +6319,49 @@ allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
 	    }
 	    dtv->dtv_slots[obj->tlsindex - 1].dtvs_tls = addr;
 	}
+#ifdef TLS_TGOT
+	for (obj = globallist_curr(objs); obj != NULL;
+	  obj = globallist_next(obj)) {
+	    if (obj->tgotoffset == 0)
+		continue;
+	    tgot_init_offset = obj->tgotpoffset & (obj->tgotalign - 1);
+	    addr = (char *)tcb - obj->tgotoffset;
+#ifdef __CHERI_PURE_CAPABILITY__
+	    addr = cheri_setbounds(addr, obj->tgotsize);
+#endif
+	    if (tgot_init_offset > 0)
+		memset(addr, 0, tgot_init_offset);
+	    if (obj->tgotinitsize > 0) {
+		memcpy(addr + tgot_init_offset, obj->tgotinit,
+		    obj->tgotinitsize);
+	    }
+	    if (obj->tgotsize > obj->tgotinitsize) {
+		memset(addr + tgot_init_offset + obj->tgotinitsize,
+		    0, obj->tgotsize - obj->tgotinitsize - tgot_init_offset);
+	    }
+	    if (obj->tgotsize > 0)
+		if (reloc_tgot(obj, &tcb->tcb_dtv, addr, SYMLOOK_IN_TGOT,
+		    false, lockstate) == -1)
+		    rtld_die();
+	    dtv->dtv_slots[obj->tlsindex - 1].dtvs_tgot = addr;
+	}
+#endif
     }
 
     return (tcb);
 }
 
 void
-free_tls(void *tcb, size_t tcbsize, size_t tcbalign __unused)
+free_tls(void *tcb, size_t tcbsize, size_t tcbalign)
 {
     struct dtv *dtv;
     uintptr_t tlsstart, tlsend;
     size_t post_size;
     size_t i, tls_init_align __unused;
+#ifdef TLS_TGOT
+    uintptr_t tgotstart, tgotend;
+    struct dtv_defer_slot *defer, *ndefer;
+#endif
 
     assert(tcbsize >= TLS_TCB_SIZE);
     tls_init_align = rtld_max(obj_main->tlsalign, 1);
@@ -6044,6 +6371,10 @@ free_tls(void *tcb, size_t tcbsize, size_t tcbalign __unused)
 
     tlsstart = (uintptr_t)tcb + TLS_TCB_SIZE + post_size;
     tlsend = (uintptr_t)tcb + tls_static_space;
+#ifdef TLS_TGOT
+    tgotstart = (uintptr_t)get_tgot_ptr(tcb, tcbsize, tcbalign);
+    tgotend = (uintptr_t)tcb;
+#endif
 
     dtv = ((struct tcb *)tcb)->tcb_dtv;
     for (i = 0; i < dtv->dtv_size; i++) {
@@ -6052,9 +6383,34 @@ free_tls(void *tcb, size_t tcbsize, size_t tcbalign __unused)
 	    (uintptr_t)dtv->dtv_slots[i].dtvs_tls >= tlsend)) {
 	    free(dtv->dtv_slots[i].dtvs_tls);
 	}
+#ifdef TLS_TGOT
+	if (dtv->dtv_slots[i].dtvs_tgot != NULL &&
+	    ((uintptr_t)dtv->dtv_slots[i].dtvs_tgot < tgotstart ||
+	    (uintptr_t)dtv->dtv_slots[i].dtvs_tgot >= tgotend)) {
+	    free(dtv->dtv_slots[i].dtvs_tgot);
+	}
+#endif
     }
+#ifdef TLS_TGOT
+    if (dtv->dtv_defer != NULL) {
+	SLIST_FOREACH_SAFE(defer, dtv->dtv_defer, next, ndefer) {
+	    if (defer->slot.dtvs_tls != NULL &&
+		((uintptr_t)defer->slot.dtvs_tls < tlsstart ||
+		(uintptr_t)defer->slot.dtvs_tls >= tlsend)) {
+		free(defer->slot.dtvs_tls);
+	    }
+	    if (defer->slot.dtvs_tgot != NULL &&
+		((uintptr_t)defer->slot.dtvs_tgot < tgotstart ||
+		(uintptr_t)defer->slot.dtvs_tgot >= tgotend)) {
+		free(defer->slot.dtvs_tgot);
+	    }
+	    free(defer);
+	}
+	free(dtv->dtv_defer);
+    }
+#endif
     free(dtv);
-    free(get_tls_block_ptr(tcb, tcbsize));
+    free(get_tls_block_ptr(tcb, tcbsize, tcbalign));
 }
 
 #endif	/* TLS_VARIANT_I */
@@ -6065,7 +6421,8 @@ free_tls(void *tcb, size_t tcbsize, size_t tcbalign __unused)
  * Allocate Static TLS using the Variant II method.
  */
 void *
-allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign)
+allocate_tls(Obj_Entry *objs, void *oldtcb, size_t tcbsize, size_t tcbalign,
+    RtldLockState *lockstate __unused)
 {
     Obj_Entry *obj;
     size_t size, ralign;
@@ -6193,14 +6550,19 @@ allocate_module_tls(int index)
 		rtld_die();
 	}
 
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 	if (obj->tls_static) {
 #ifdef TLS_VARIANT_I
 		p = (char *)_tcb_get() + obj->tlsoffset + TLS_TCB_SIZE;
 #else
 		p = (char *)_tcb_get() - obj->tlsoffset;
 #endif
+#ifdef TLS_TGOT
+		p = cheri_setbounds(p, obj->tlssize);
+#endif
 		return (p);
 	}
+#endif
 
 	obj->tls_dynamic = true;
 
@@ -6210,6 +6572,52 @@ allocate_module_tls(int index)
 	return (p);
 }
 
+#ifdef TLS_TGOT
+void *
+allocate_module_tgot(struct dtv **dtvp, int index, bool remote,
+    RtldLockState *lockstate)
+{
+	Obj_Entry *obj;
+	char *p;
+
+	TAILQ_FOREACH(obj, &obj_list, next) {
+		if (obj->marker)
+			continue;
+		if (obj->tlsindex == index)
+			break;
+	}
+	if (obj == NULL) {
+		_rtld_error("Can't find module with TLS index %d", index);
+		rtld_die();
+	}
+
+	if (obj->tgot_static) {
+#ifndef TLS_TGOT_COMPAT
+		p = (char *)_tcb_get() + obj->tgotoffset + TLS_TCB_SIZE;
+#else
+		p = (char *)_tcb_get() - obj->tgotoffset;
+#endif
+#ifdef __CHERI_PURE_CAPABILITY__
+		p = cheri_setbounds(p, obj->tgotsize);
+#endif
+		return (p);
+	}
+
+	obj->tgot_dynamic = true;
+
+	p = xmalloc_aligned(obj->tgotsize, obj->tgotalign, obj->tgotpoffset);
+	memcpy(p, obj->tgotinit, obj->tgotinitsize);
+	memset(p + obj->tgotinitsize, 0, obj->tgotsize - obj->tgotinitsize);
+	if (reloc_tgot(obj, dtvp, p, SYMLOOK_IN_TGOT, remote,
+	    lockstate) == -1) {
+		_rtld_error("Can't relocate TGOT for TLS index %d", index);
+		rtld_die();
+	}
+	return (p);
+}
+#endif
+
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 bool
 allocate_tls_offset(Obj_Entry *obj)
 {
@@ -6277,6 +6685,77 @@ free_tls_offset(Obj_Entry *obj)
 	tls_last_size = 0;
     }
 }
+#endif
+
+#ifdef TLS_TGOT
+bool
+allocate_tgot_offset(Obj_Entry *obj)
+{
+    size_t off;
+
+    if (obj->tgot_dynamic)
+	return (false);
+
+    if (obj->tgot_static)
+	return (true);
+
+    if (obj->tgotsize == 0) {
+	obj->tgot_static = true;
+	return (true);
+    }
+
+    if (tgot_last_offset == 0)
+	off = calculate_first_tgot_offset(obj->tgotsize, obj->tgotalign,
+	  obj->tgotpoffset);
+    else
+	off = calculate_tgot_offset(tgot_last_offset, tgot_last_size,
+	  obj->tgotsize, obj->tgotalign, obj->tgotpoffset);
+
+    obj->tgotoffset = off;
+#ifndef TLS_TGOT_COMPAT
+    off += obj->tgotsize;
+#endif
+
+    /*
+     * If we have already fixed the size of the static TGOT block, we
+     * must stay within that size. When allocating the static TGOT, we
+     * leave a small amount of space spare to be used for dynamically
+     * loading modules which use static TGOT.
+     */
+    if (tgot_static_space != 0) {
+	if (off > tgot_static_space)
+	    return (false);
+    } else if (obj->tgotalign > tgot_static_max_align) {
+	    tgot_static_max_align = obj->tgotalign;
+    }
+
+    tgot_last_offset = off;
+    tgot_last_size = obj->tgotsize;
+    obj->tgot_static = true;
+
+    return (true);
+}
+
+void
+free_tgot_offset(Obj_Entry *obj)
+{
+
+    /*
+     * If we were the last thing to allocate out of the static TGOT
+     * block, we give our space back to the 'allocator'. This is a
+     * simplistic workaround to allow libGL.so.1 to be loaded and
+     * unloaded multiple times.
+     */
+    size_t off = obj->tgotoffset;
+#ifndef TLS_TGOT_COMPAT
+    off += obj->tgotsize;
+#endif
+    if (off == tgot_last_offset) {
+	tgot_last_offset -= obj->tgotsize;
+	tgot_last_size = 0;
+    }
+}
+#endif
 
 void *
 _rtld_allocate_tls(void *oldtcb, size_t tcbsize, size_t tcbalign)
@@ -6286,7 +6765,7 @@ _rtld_allocate_tls(void *oldtcb, size_t tcbsize, size_t tcbalign)
 
     wlock_acquire(rtld_bind_lock, &lockstate);
     ret = allocate_tls(globallist_curr(TAILQ_FIRST(&obj_list)), oldtcb,
-      tcbsize, tcbalign);
+      tcbsize, tcbalign, &lockstate);
 #ifdef CHERI_LIB_C18N
     /*
      * Create a fake wrapper TCB containing pointers to the real TCB and stack
@@ -6793,6 +7272,7 @@ map_stacks_exec(RtldLockState *lockstate)
 }
 #endif
 
+#if !defined(TLS_TGOT) || defined(TLS_TGOT_COMPAT)
 static void
 distribute_static_tls(Objlist *list, RtldLockState *lockstate)
 {
@@ -6815,6 +7295,94 @@ distribute_static_tls(Objlist *list, RtldLockState *lockstate)
 		obj->static_tls_copied = true;
 	}
 }
+#endif
+
+#ifdef TLS_TGOT
+struct distribute_static_tgot_ctx {
+	Obj_Entry	*obj;
+	RtldLockState	*lockstate;
+};
+
+static void
+distribute_static_tgot_cb(struct tcb *tcb, void *data)
+{
+	struct distribute_static_tgot_ctx *ctx;
+	RtldLockState *lockstate;
+	size_t tgot_init_offset;
+	Obj_Entry *obj;
+	char *addr;
+
+	ctx = (struct distribute_static_tgot_ctx *)data;
+	lockstate = ctx->lockstate;
+	obj = ctx->obj;
+
+	wlock_acquire(rtld_bind_lock, lockstate);
+
+	tgot_init_offset = obj->tgotpoffset & (obj->tgotalign - 1);
+#ifndef TLS_TGOT_COMPAT
+	addr = (char *)tcb + obj->tgotoffset;
+#else
+	addr = (char *)tcb - obj->tgotoffset;
+#endif
+#ifdef __CHERI_PURE_CAPABILITY__
+	addr = cheri_setbounds(addr, obj->tgotsize);
+#endif
+	if (tgot_init_offset > 0)
+		memset(addr, 0, tgot_init_offset);
+	if (obj->tgotinitsize > 0) {
+		memcpy(addr + tgot_init_offset, obj->tgotinit,
+		    obj->tgotinitsize);
+	}
+	if (obj->tgotsize > obj->tgotinitsize) {
+		memset(addr + tgot_init_offset + obj->tgotinitsize,
+		    0, obj->tgotsize - obj->tgotinitsize - tgot_init_offset);
+	}
+	if (obj->tgotsize > 0)
+		if (reloc_tgot(obj, &tcb->tcb_dtv, addr, SYMLOOK_IN_TGOT,
+		    true, lockstate) == -1)
+			rtld_die();
+
+	lock_release(rtld_bind_lock, lockstate);
+}
+
+static void
+distribute_static_tgot(Objlist *list, RtldLockState *lockstate)
+{
+	struct distribute_static_tgot_ctx ctx;
+	Objlist_Entry *elm;
+	Obj_Entry *obj;
+	void (*iter)(void (*)(struct tcb *, void *), void *);
+	void (*cb)(struct tcb *, void *);
+
+	iter = (void (*)(void (*)(struct tcb *, void *), void *))(uintptr_t)
+	    get_program_var_addr("__pthread_iterate_tcb", lockstate);
+	if (iter == NULL)
+		return;
+	ctx.lockstate = lockstate;
+	cb = &distribute_static_tgot_cb;
+#ifdef CHERI_LIB_C18N
+	cb = (void (*)(struct tcb *, void *))tramp_intern(NULL, RTLD_COMPART_ID,
+	    &(struct tramp_data) {
+		.target = (void *)cb,
+		.defobj = &obj_rtld,
+		.sig = (struct func_sig) {
+			.valid = true,
+			.reg_args = 2, .mem_args = false, .ret_args = NONE
+		}
+	});
+#endif
+	STAILQ_FOREACH(elm, list, link) {
+		obj = elm->obj;
+		if (obj->marker || !obj->tgot_static || obj->static_tgot_copied)
+			continue;
+		lock_release(rtld_bind_lock, lockstate);
+		ctx.obj = obj;
+		iter(&distribute_static_tgot_cb, &ctx);
+		wlock_acquire(rtld_bind_lock, lockstate);
+		obj->static_tgot_copied = true;
+	}
+}
+#endif
 
 void
 symlook_init(SymLook *dst, const char *name)
@@ -7049,14 +7617,21 @@ parse_args(char* argv[], int argc, bool *use_pathp, int *fdp,
 				    "Default hint file %s\n"
 				    "Hint file %s\n"
 				    "libmap file %s\n"
-				    "Optional static TLS size %zd bytes\n",
-				    machine,
+				    "Optional static TLS size %zd bytes\n"
+#ifdef TLS_TGOT
+				    "Optional static TGOT size %zd bytes\n"
+#endif
+				    , machine,
 				    __FreeBSD_version, ld_standard_library_path,
 				    gethints(false),
 				    ld_env_prefix, ld_elf_hints_default,
 				    ld_elf_hints_path,
 				    ld_path_libmap_conf,
-				    ld_static_tls_extra);
+				    ld_static_tls_extra
+#ifdef TLS_TGOT
+				    , ld_static_tgot_extra
+#endif
+				    );
 				_exit(0);
 			} else {
 				_rtld_error("Invalid argument: '%s'", arg);

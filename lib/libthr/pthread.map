@@ -136,7 +136,12 @@ FBSDprivate_1.0 {
 	__pthread_mutex_lock;
 	__pthread_mutex_timedlock;
 	__pthread_mutex_trylock;
+#if !defined(__CHERI_TGOT_TLS__) || defined(__ARM_MORELLO_TGOT_TLS_COMPAT)
 	__pthread_distribute_static_tls;
+#endif
+#ifdef __CHERI_TGOT_TLS__
+	__pthread_iterate_tcb;
+#endif
 	_pthread_atfork;
 	_pthread_barrier_destroy;
 	_pthread_barrier_init;

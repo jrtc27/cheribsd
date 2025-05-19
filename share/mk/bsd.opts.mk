@@ -110,10 +110,26 @@ BROKEN_OPTIONS+=	BRANCH_PROTECTION
 .endif
 
 __SINGLE_OPTIONS = \
+   CHERI_TGOT_TLS \
    INIT_ALL
+
+__CHERI_TGOT_TLS_OPTIONS=	no compat yes
+.if ${MACHINE_CPUARCH} == "aarch64"
+__CHERI_TGOT_TLS_DEFAULT=	compat
+.else
+__CHERI_TGOT_TLS_DEFAULT=	yes
+.endif
 
 __INIT_ALL_OPTIONS=	none pattern zero
 __INIT_ALL_DEFAULT=	none
+
+.if ${MACHINE_CPUARCH} != "aarch64"
+BROKEN_SINGLE_OPTIONS+=	CHERI_TGOT_TLS yes no
+.endif
+
+.if ${MACHINE_CPUARCH} != "aarch64"
+BROKEN_SINGLE_OPTIONS+=	CHERI_TGOT_TLS compat no
+.endif
 
 .-include <local.opts.mk>
 

@@ -49,6 +49,14 @@
     !defined(CRT_IRELOC_SUPPRESS)
 #undef	CRT_IRELOC_RELA
 #define	CRT_IRELOC_SUPPRESS
+#undef	CRT_TGOT_RELOC_RELA
+#define	CRT_TGOT_RELOC_SUPPRESS
+#endif
+
+#ifndef TLS_TGOT
+#undef	CRT_TGOT_RELOC_RELA
+#undef	CRT_TGOT_RELOC_REL
+#define	CRT_TGOT_RELOC_SUPPRESS
 #endif
 
 extern void (*__preinit_array_start[])(int, char **, char **) __hidden;
@@ -68,6 +76,11 @@ extern void _init(void) __hidden;
 extern int _DYNAMIC __no_subobject_bounds;
 #pragma weak _DYNAMIC
 
+#if defined(CRT_IRELOC_RELA) || defined(CRT_IRELOC_REL) || \
+    defined(CRT_TGOT_RELOC_RELA) || defined(CRT_TGOT_RELOC_REL)
+#include "reloc.c"
+#endif
+
 #if defined(CRT_IRELOC_RELA)
 #ifdef __CHERI_PURE_CAPABILITY__
 extern Elf_Auxinfo *__auxargs;
@@ -75,8 +88,6 @@ extern Elf_Auxinfo *__auxargs;
 
 extern const Elf_Rela __rela_iplt_start[] __weak_symbol __hidden;
 extern const Elf_Rela __rela_iplt_end[] __weak_symbol __hidden;
-
-#include "reloc.c"
 
 static void
 #ifdef __CHERI_PURE_CAPABILITY__
@@ -98,8 +109,6 @@ process_irelocs(void)
 extern const Elf_Rel __rel_iplt_start[] __weak_symbol __hidden;
 extern const Elf_Rel __rel_iplt_end[] __weak_symbol __hidden;
 
-#include "reloc.c"
-
 static void
 process_irelocs(void)
 {
@@ -109,6 +118,35 @@ process_irelocs(void)
 		crt1_handle_rel(r);
 }
 #elif defined(CRT_IRELOC_SUPPRESS)
+#else
+#error "Define platform reloc type"
+#endif
+
+#if defined(CRT_TGOT_RELOC_RELA)
+extern const Elf_Rela __rela_tgot_start[] __weak_symbol __hidden;
+extern const Elf_Rela __rela_tgot_end[] __weak_symbol __hidden;
+
+static void
+process_tgot_relocs(void *tgot, Elf_Addr init, void *tls)
+{
+	const Elf_Rela *r;
+
+	for (r = &__rela_tgot_start[0]; r < &__rela_tgot_end[0]; r++)
+		crt1_handle_tgot_rela(r, tgot, init, tls);
+}
+#elif defined(CRT_TGOT_RELOC_REL)
+extern const Elf_Rel __rel_tgot_start[] __weak_symbol __hidden;
+extern const Elf_Rel __rel_tgot_end[] __weak_symbol __hidden;
+
+static void
+process_tgot_relocs(void *tgot, Elf_Addr init, void *tls)
+{
+	const Elf_Rel *r;
+
+	for (r = &__rel_tgot_start[0]; r < &__rel_tgot_end[0]; r++)
+		crt1_handle_tgot_rel(r, tgot, init, tls);
+}
+#elif defined(CRT_TGOT_RELOC_SUPPRESS)
 #else
 #error "Define platform reloc type"
 #endif
@@ -264,5 +302,13 @@ __libc_start1_gcrt(int argc, char *argv[], char *env[],
 
 	handle_static_init(argc, argv, env);
 	exit(mainX(argc, argv, env));
+}
+#endif
+
+#ifndef CRT_TGOT_RELOC_SUPPRESS
+void
+__libc_init_tgot(void *tgot, const void *init, size_t size, void *tls)
+{
+	process_tgot_relocs(tgot, (Elf_Addr)init, tls);
 }
 #endif
