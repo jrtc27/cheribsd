@@ -456,6 +456,8 @@ vmmops_modinit(int ipinum)
 	el2_regs.vtcr_el2 = VTCR_EL2_RES1;
 	el2_regs.vtcr_el2 |=
 	    min(pa_range_bits << VTCR_EL2_PS_SHIFT, VTCR_EL2_PS_48BIT);
+	if (pmap_vs_enabled())
+		el2_regs.vtcr_el2 |= VTCR_EL2_VS;
 	el2_regs.vtcr_el2 |= VTCR_EL2_IRGN0_WBWA | VTCR_EL2_ORGN0_WBWA;
 	el2_regs.vtcr_el2 |= VTCR_EL2_T0SZ(64 - vmm_virt_bits);
 	el2_regs.vtcr_el2 |= vmm_vtcr_el2_sl(vmm_pmap_levels);
